@@ -1,0 +1,351 @@
+order_id,date,time,restaurant,courier_id,distance_km,delivery_time_min,portion_size,delivered,delayed
+ORD-1000,2025-10-07,08:08,Triangle BBQ Co.,CR-4,7.27,12,small,True,False
+ORD-1001,2025-10-08,06:14,UrbanEats,CR-7,7.61,30,medium,True,False
+ORD-1002,2025-10-08,07:04,Village Noodle Bar,CR-23,6.24,35,medium,True,True
+ORD-1003,2025-10-07,19:47,Eastside Deli,CR-18,2.68,10,medium,True,False
+ORD-1004,2025-10-11,11:15,Village Noodle Bar,CR-8,0.34,31,small,True,True
+ORD-1005,2025-10-07,00:18,Oak Street Bistro,CR-27,6.96,19,large,True,False
+ORD-1006,2025-10-11,14:55,Southside Pizza Lab,CR-3,5.84,10,large,True,False
+ORD-1007,2025-10-07,03:39,Triangle BBQ Co.,CR-21,12.34,21,small,True,False
+ORD-1008,2025-10-09,08:50,Triangle BBQ Co.,CR-15,5.33,25,small,True,False
+ORD-1009,2025-10-07,23:42,Eastside Deli,CR-28,6.44,21,medium,True,False
+ORD-1010,2025-10-09,13:23,Roosevelt Oyster House,CR-24,2.63,23,small,True,False
+ORD-1011,2025-10-06,12:31,Eastside Deli,CR-28,10.65,30,small,True,False
+ORD-1012,2025-10-07,22:33,Village Noodle Bar,CR-12,9.78,15,medium,True,False
+ORD-1013,2025-10-09,01:15,Oak Street Bistro,CR-12,2.03,18,medium,True,False
+ORD-1014,2025-10-07,07:05,Roosevelt Oyster House,CR-13,5.17,28,medium,True,False
+ORD-1015,2025-10-10,09:19,Capital City Tacos,CR-26,0.08,32,medium,True,True
+ORD-1016,2025-10-07,21:32,Oak Street Bistro,CR-5,4.53,16,large,False,False
+ORD-1017,2025-10-06,16:00,Southside Pizza Lab,CR-4,1.96,6,medium,True,False
+ORD-1018,2025-10-11,11:48,UrbanEats,CR-22,7.47,20,medium,True,False
+ORD-1019,2025-10-12,22:55,Roosevelt Oyster House,CR-25,1.13,9,medium,True,False
+ORD-1020,2025-10-06,07:52,Southside Pizza Lab,CR-16,3.99,33,medium,True,True
+ORD-1021,2025-10-10,16:18,Capital City Tacos,CR-2,4.22,7,small,True,False
+ORD-1022,2025-10-09,13:48,Eastside Deli,CR-23,4.26,17,large,True,False
+ORD-1023,2025-10-12,13:27,UrbanEats,CR-8,3.09,19,large,True,False
+ORD-1024,2025-10-11,21:44,GreenBite Cafe,CR-23,4.31,25,large,True,False
+ORD-1025,2025-10-07,02:00,Roosevelt Oyster House,CR-22,10.55,29,large,True,False
+ORD-1026,2025-10-11,11:35,Village Noodle Bar,CR-22,4.19,11,large,True,False
+ORD-1027,2025-10-10,09:05,Southside Pizza Lab,CR-27,12.72,20,large,True,False
+ORD-1028,2025-10-06,14:54,Eastside Deli,CR-21,5.04,19,small,True,False
+ORD-1029,2025-10-11,08:08,Capital City Tacos,CR-28,5.59,18,small,True,False
+ORD-1030,2025-10-11,14:15,Village Noodle Bar,CR-8,3.28,15,medium,True,False
+ORD-1031,2025-10-06,13:44,GreenBite Cafe,CR-8,4.9,15,large,True,False
+ORD-1032,2025-10-10,07:23,Roosevelt Oyster House,CR-27,2.86,20,small,True,False
+ORD-1033,2025-10-11,05:21,Capital City Tacos,CR-26,4.24,32,large,True,True
+ORD-1034,2025-10-07,00:02,Capital City Tacos,CR-15,2.95,28,medium,True,False
+ORD-1035,2025-10-11,15:48,Eastside Deli,CR-4,8.74,3,medium,True,False
+ORD-1036,2025-10-06,09:47,GreenBite Cafe,CR-18,3.97,17,small,True,False
+ORD-1037,2025-10-12,20:59,UrbanEats,CR-21,0.78,13,medium,True,False
+ORD-1038,2025-10-12,09:33,Hillside Kitchen,CR-21,1.67,34,large,True,True
+ORD-1039,2025-10-09,21:04,Village Noodle Bar,CR-27,7.81,30,small,True,False
+ORD-1040,2025-10-11,04:05,Village Noodle Bar,CR-18,7.17,10,large,True,False
+ORD-1041,2025-10-11,09:11,Village Noodle Bar,CR-23,3.43,23,medium,True,False
+ORD-1042,2025-10-07,02:36,Hillside Kitchen,CR-1,1.33,25,medium,True,False
+ORD-1043,2025-10-09,07:43,GreenBite Cafe,CR-17,4.28,17,medium,True,False
+ORD-1044,2025-10-07,05:01,Eastside Deli,CR-29,7.13,23,small,True,False
+ORD-1045,2025-10-07,14:21,Roosevelt Oyster House,CR-4,3.92,29,medium,True,False
+ORD-1046,2025-10-08,05:29,Hillside Kitchen,CR-4,1.76,24,medium,True,False
+ORD-1047,2025-10-11,04:48,Hillside Kitchen,CR-23,6.78,17,medium,True,False
+ORD-1048,2025-10-10,17:10,Eastside Deli,CR-30,5.98,9,large,True,False
+ORD-1049,2025-10-12,16:47,Oak Street Bistro,CR-25,7.77,18,medium,True,False
+ORD-1050,2025-10-12,16:55,GreenBite Cafe,CR-5,3.43,28,medium,True,False
+ORD-1051,2025-10-12,00:49,Eastside Deli,CR-18,2.89,8,medium,True,False
+ORD-1052,2025-10-11,11:52,GreenBite Cafe,CR-25,0.33,24,small,True,False
+ORD-1053,2025-10-12,13:59,Southside Pizza Lab,CR-24,1.16,34,small,True,True
+ORD-1054,2025-10-10,09:47,UrbanEats,CR-20,1.25,33,medium,True,True
+ORD-1055,2025-10-10,09:02,Roosevelt Oyster House,CR-20,5.63,19,large,False,False
+ORD-1056,2025-10-08,19:47,Triangle BBQ Co.,CR-13,3.37,23,medium,True,False
+ORD-1057,2025-10-11,03:39,Southside Pizza Lab,CR-5,4.89,28,medium,True,False
+ORD-1058,2025-10-11,19:53,Triangle BBQ Co.,CR-27,5.34,21,large,True,False
+ORD-1059,2025-10-09,13:43,GreenBite Cafe,CR-21,3.91,19,small,True,False
+ORD-1060,2025-10-08,09:15,UrbanEats,CR-23,5.92,6,medium,True,False
+ORD-1061,2025-10-09,22:17,Southside Pizza Lab,CR-23,0.96,25,large,True,False
+ORD-1062,2025-10-11,17:35,GreenBite Cafe,CR-23,5.51,18,large,True,False
+ORD-1063,2025-10-07,07:30,Village Noodle Bar,CR-18,5.06,22,medium,True,False
+ORD-1064,2025-10-12,11:49,Roosevelt Oyster House,CR-22,3.38,13,large,True,False
+ORD-1065,2025-10-09,06:04,Roosevelt Oyster House,CR-26,5.59,12,small,True,False
+ORD-1066,2025-10-07,05:04,Eastside Deli,CR-13,6.22,6,small,True,False
+ORD-1067,2025-10-06,15:27,Hillside Kitchen,CR-9,8.09,23,small,True,False
+ORD-1068,2025-10-08,20:25,Southside Pizza Lab,CR-27,5.77,27,small,True,False
+ORD-1069,2025-10-09,08:35,Hillside Kitchen,CR-25,10.0,28,large,True,False
+ORD-1070,2025-10-10,01:56,Capital City Tacos,CR-4,0.52,9,large,True,False
+ORD-1071,2025-10-12,09:25,Hillside Kitchen,CR-24,3.13,20,large,True,False
+ORD-1072,2025-10-10,10:11,Hillside Kitchen,CR-17,6.55,14,large,True,False
+ORD-1073,2025-10-06,12:49,Roosevelt Oyster House,CR-13,5.56,13,medium,True,False
+ORD-1074,2025-10-09,13:22,GreenBite Cafe,CR-2,3.17,8,small,False,False
+ORD-1075,2025-10-08,20:37,Hillside Kitchen,CR-20,2.23,9,medium,True,False
+ORD-1076,2025-10-10,04:25,UrbanEats,CR-18,2.07,28,large,True,False
+ORD-1077,2025-10-08,05:38,Hillside Kitchen,CR-10,2.15,41,medium,True,True
+ORD-1078,2025-10-06,20:20,Southside Pizza Lab,CR-6,6.48,21,large,True,False
+ORD-1079,2025-10-07,08:35,Roosevelt Oyster House,CR-2,2.42,25,medium,True,False
+ORD-1080,2025-10-12,07:59,Triangle BBQ Co.,CR-5,3.27,20,small,True,False
+ORD-1081,2025-10-08,21:38,Eastside Deli,CR-11,12.68,19,medium,True,False
+ORD-1082,2025-10-07,18:16,Eastside Deli,CR-5,8.45,14,medium,True,False
+ORD-1083,2025-10-06,13:53,UrbanEats,CR-27,4.9,34,large,True,True
+ORD-1084,2025-10-11,13:57,UrbanEats,CR-18,3.12,34,medium,True,True
+ORD-1085,2025-10-09,14:47,GreenBite Cafe,CR-8,7.12,15,small,True,False
+ORD-1086,2025-10-06,18:37,GreenBite Cafe,CR-6,6.9,27,medium,True,False
+ORD-1087,2025-10-12,02:38,Roosevelt Oyster House,CR-3,6.87,7,medium,True,False
+ORD-1088,2025-10-08,10:15,Village Noodle Bar,CR-11,2.82,18,medium,True,False
+ORD-1089,2025-10-08,11:39,UrbanEats,CR-17,4.78,24,medium,True,False
+ORD-1090,2025-10-06,02:24,Oak Street Bistro,CR-22,5.53,9,medium,True,False
+ORD-1091,2025-10-08,17:37,UrbanEats,CR-30,6.14,24,large,True,False
+ORD-1092,2025-10-06,10:53,Village Noodle Bar,CR-13,6.68,28,small,True,False
+ORD-1093,2025-10-08,22:03,GreenBite Cafe,CR-24,7.5,23,medium,True,False
+ORD-1094,2025-10-11,21:08,Village Noodle Bar,CR-17,4.79,6,large,True,False
+ORD-1095,2025-10-11,12:55,Eastside Deli,CR-10,6.29,21,large,True,False
+ORD-1096,2025-10-09,15:28,GreenBite Cafe,CR-3,5.81,9,small,True,False
+ORD-1097,2025-10-12,02:54,GreenBite Cafe,CR-1,1.76,28,large,True,False
+ORD-1098,2025-10-08,09:33,Hillside Kitchen,CR-28,4.88,25,large,True,False
+ORD-1099,2025-10-07,04:22,Hillside Kitchen,CR-18,5.08,20,large,False,False
+ORD-1100,2025-10-10,22:50,Oak Street Bistro,CR-24,7.81,15,large,True,False
+ORD-1101,2025-10-06,06:29,Capital City Tacos,CR-23,5.29,16,medium,True,False
+ORD-1102,2025-10-06,23:53,Oak Street Bistro,CR-2,3.7,17,small,True,False
+ORD-1103,2025-10-12,08:23,Oak Street Bistro,CR-19,5.67,16,small,True,False
+ORD-1104,2025-10-10,15:18,Roosevelt Oyster House,CR-15,8.77,12,large,True,False
+ORD-1105,2025-10-10,22:14,Village Noodle Bar,CR-1,4.44,16,medium,True,False
+ORD-1106,2025-10-07,08:18,GreenBite Cafe,CR-1,9.34,21,large,False,False
+ORD-1107,2025-10-06,17:16,UrbanEats,CR-2,8.1,8,large,True,False
+ORD-1108,2025-10-10,01:40,GreenBite Cafe,CR-4,5.8,27,medium,True,False
+ORD-1109,2025-10-09,10:17,UrbanEats,CR-3,5.25,28,medium,False,False
+ORD-1110,2025-10-10,23:30,Roosevelt Oyster House,CR-13,3.45,31,large,True,True
+ORD-1111,2025-10-11,09:25,Southside Pizza Lab,CR-18,11.9,17,small,True,False
+ORD-1112,2025-10-10,10:46,GreenBite Cafe,CR-10,3.66,31,large,True,True
+ORD-1113,2025-10-09,09:23,Village Noodle Bar,CR-1,9.74,15,large,True,False
+ORD-1114,2025-10-07,14:36,Oak Street Bistro,CR-2,3.74,17,small,True,False
+ORD-1115,2025-10-12,18:55,Roosevelt Oyster House,CR-18,0.97,12,large,True,False
+ORD-1116,2025-10-09,11:12,Hillside Kitchen,CR-24,1.99,13,large,False,False
+ORD-1117,2025-10-09,21:53,Hillside Kitchen,CR-14,4.9,21,large,True,False
+ORD-1118,2025-10-07,14:53,Southside Pizza Lab,CR-6,9.65,12,small,True,False
+ORD-1119,2025-10-08,21:00,Hillside Kitchen,CR-4,7.95,18,small,True,False
+ORD-1120,2025-10-12,10:54,Eastside Deli,CR-28,4.85,25,large,True,False
+ORD-1121,2025-10-12,06:05,Oak Street Bistro,CR-10,1.63,23,large,True,False
+ORD-1122,2025-10-08,20:27,Oak Street Bistro,CR-7,5.5,23,large,True,False
+ORD-1123,2025-10-11,13:02,Village Noodle Bar,CR-12,5.87,39,small,True,True
+ORD-1124,2025-10-08,16:02,Oak Street Bistro,CR-10,3.09,15,large,True,False
+ORD-1125,2025-10-08,04:50,Village Noodle Bar,CR-16,3.13,15,medium,True,False
+ORD-1126,2025-10-09,11:28,UrbanEats,CR-5,3.09,29,large,True,False
+ORD-1127,2025-10-10,03:31,Village Noodle Bar,CR-14,9.26,15,small,True,False
+ORD-1128,2025-10-09,13:31,Hillside Kitchen,CR-26,2.5,23,small,True,False
+ORD-1129,2025-10-10,23:05,Triangle BBQ Co.,CR-27,3.34,25,medium,True,False
+ORD-1130,2025-10-09,18:32,Capital City Tacos,CR-15,5.61,7,medium,True,False
+ORD-1131,2025-10-09,11:24,Capital City Tacos,CR-18,9.64,34,small,True,True
+ORD-1132,2025-10-12,21:38,Oak Street Bistro,CR-27,3.16,16,medium,True,False
+ORD-1133,2025-10-12,03:04,Hillside Kitchen,CR-9,5.86,22,large,True,False
+ORD-1134,2025-10-06,20:52,Oak Street Bistro,CR-29,6.98,36,small,True,True
+ORD-1135,2025-10-06,08:31,UrbanEats,CR-19,4.47,13,medium,False,False
+ORD-1136,2025-10-12,17:07,Hillside Kitchen,CR-30,0.86,14,small,True,False
+ORD-1137,2025-10-08,23:09,GreenBite Cafe,CR-29,4.9,34,large,True,True
+ORD-1138,2025-10-07,16:35,Village Noodle Bar,CR-13,3.45,21,small,False,False
+ORD-1139,2025-10-12,17:00,Triangle BBQ Co.,CR-5,4.95,29,medium,True,False
+ORD-1140,2025-10-11,19:22,Oak Street Bistro,CR-13,12.58,15,medium,True,False
+ORD-1141,2025-10-06,02:53,Hillside Kitchen,CR-28,3.53,28,large,True,False
+ORD-1142,2025-10-07,21:17,GreenBite Cafe,CR-5,7.05,34,medium,True,True
+ORD-1143,2025-10-08,00:55,UrbanEats,CR-19,6.75,17,large,True,False
+ORD-1144,2025-10-11,12:01,Village Noodle Bar,CR-2,6.77,28,small,False,False
+ORD-1145,2025-10-11,13:09,Hillside Kitchen,CR-3,7.46,24,medium,True,False
+ORD-1146,2025-10-08,15:54,Eastside Deli,CR-22,8.2,29,small,True,False
+ORD-1147,2025-10-10,02:38,Roosevelt Oyster House,CR-16,9.15,25,medium,True,False
+ORD-1148,2025-10-06,10:53,Village Noodle Bar,CR-4,4.5,21,large,True,False
+ORD-1149,2025-10-09,02:40,Triangle BBQ Co.,CR-19,8.62,13,large,True,False
+ORD-1150,2025-10-07,23:28,Roosevelt Oyster House,CR-21,6.11,16,medium,True,False
+ORD-1151,2025-10-12,16:28,Oak Street Bistro,CR-17,5.09,30,medium,True,False
+ORD-1152,2025-10-08,12:51,GreenBite Cafe,CR-13,5.57,20,medium,True,False
+ORD-1153,2025-10-11,12:56,Capital City Tacos,CR-29,0.92,25,large,True,False
+ORD-1154,2025-10-11,17:02,Southside Pizza Lab,CR-15,6.94,37,small,True,True
+ORD-1155,2025-10-06,21:03,GreenBite Cafe,CR-21,4.08,21,medium,True,False
+ORD-1156,2025-10-07,17:01,Southside Pizza Lab,CR-6,5.75,32,medium,True,True
+ORD-1157,2025-10-07,08:18,Hillside Kitchen,CR-14,4.71,22,medium,False,False
+ORD-1158,2025-10-07,06:56,Capital City Tacos,CR-22,6.82,21,medium,True,False
+ORD-1159,2025-10-08,09:32,UrbanEats,CR-6,3.66,21,large,True,False
+ORD-1160,2025-10-06,06:07,Hillside Kitchen,CR-2,8.22,11,small,True,False
+ORD-1161,2025-10-12,17:45,Southside Pizza Lab,CR-5,5.4,14,large,True,False
+ORD-1162,2025-10-06,10:42,UrbanEats,CR-5,8.59,7,small,True,False
+ORD-1163,2025-10-08,22:31,Southside Pizza Lab,CR-17,3.32,23,medium,True,False
+ORD-1164,2025-10-12,09:54,Eastside Deli,CR-29,9.7,19,large,False,False
+ORD-1165,2025-10-09,05:24,Oak Street Bistro,CR-7,3.33,35,medium,True,True
+ORD-1166,2025-10-11,08:43,Capital City Tacos,CR-6,0.66,3,small,True,False
+ORD-1167,2025-10-12,20:04,Southside Pizza Lab,CR-26,6.32,15,large,False,False
+ORD-1168,2025-10-08,01:39,UrbanEats,CR-22,1.94,25,large,True,False
+ORD-1169,2025-10-07,21:47,Village Noodle Bar,CR-30,5.73,15,medium,True,False
+ORD-1170,2025-10-12,17:16,Oak Street Bistro,CR-8,1.16,26,medium,True,False
+ORD-1171,2025-10-07,12:06,Oak Street Bistro,CR-1,6.95,19,small,True,False
+ORD-1172,2025-10-11,17:43,Roosevelt Oyster House,CR-27,10.54,11,small,True,False
+ORD-1173,2025-10-07,02:17,Southside Pizza Lab,CR-16,0.42,14,large,True,False
+ORD-1174,2025-10-06,10:39,GreenBite Cafe,CR-17,4.86,21,small,True,False
+ORD-1175,2025-10-11,11:41,Southside Pizza Lab,CR-29,4.28,22,large,True,False
+ORD-1176,2025-10-06,00:19,Roosevelt Oyster House,CR-17,1.25,31,medium,True,True
+ORD-1177,2025-10-06,11:51,GreenBite Cafe,CR-14,4.75,28,small,True,False
+ORD-1178,2025-10-10,08:06,Village Noodle Bar,CR-19,6.03,23,large,False,False
+ORD-1179,2025-10-12,13:19,Oak Street Bistro,CR-14,6.71,23,small,True,False
+ORD-1180,2025-10-11,10:17,Hillside Kitchen,CR-30,6.93,30,small,True,False
+ORD-1181,2025-10-12,19:22,GreenBite Cafe,CR-14,5.59,25,medium,True,False
+ORD-1182,2025-10-06,01:29,Eastside Deli,CR-19,4.73,31,large,True,True
+ORD-1183,2025-10-11,21:55,Eastside Deli,CR-13,2.97,34,large,True,True
+ORD-1184,2025-10-09,14:15,Roosevelt Oyster House,CR-12,4.88,8,small,True,False
+ORD-1185,2025-10-10,20:20,UrbanEats,CR-9,5.38,14,medium,True,False
+ORD-1186,2025-10-10,19:39,UrbanEats,CR-12,7.52,14,large,True,False
+ORD-1187,2025-10-10,12:31,Hillside Kitchen,CR-14,3.66,4,large,True,False
+ORD-1188,2025-10-11,11:44,Southside Pizza Lab,CR-12,3.64,3,large,True,False
+ORD-1189,2025-10-11,12:05,Triangle BBQ Co.,CR-10,0.25,26,large,True,False
+ORD-1190,2025-10-10,12:42,Southside Pizza Lab,CR-28,7.36,23,large,True,False
+ORD-1191,2025-10-08,14:44,Capital City Tacos,CR-26,2.1,19,large,True,False
+ORD-1192,2025-10-07,03:22,Hillside Kitchen,CR-17,4.99,10,medium,True,False
+ORD-1193,2025-10-12,06:20,UrbanEats,CR-23,9.51,27,large,True,False
+ORD-1194,2025-10-06,14:12,Southside Pizza Lab,CR-13,4.34,20,large,True,False
+ORD-1195,2025-10-07,00:52,Southside Pizza Lab,CR-16,5.63,3,large,True,False
+ORD-1196,2025-10-07,00:04,Oak Street Bistro,CR-9,4.26,14,small,True,False
+ORD-1197,2025-10-06,21:51,UrbanEats,CR-2,2.0,17,large,True,False
+ORD-1198,2025-10-10,13:24,UrbanEats,CR-21,10.39,25,large,True,False
+ORD-1199,2025-10-12,19:08,Eastside Deli,CR-25,3.29,24,small,True,False
+ORD-1200,2025-10-11,14:59,Capital City Tacos,CR-1,9.2,27,small,True,False
+ORD-1201,2025-10-11,21:29,Triangle BBQ Co.,CR-7,5.18,14,small,True,False
+ORD-1202,2025-10-11,19:24,GreenBite Cafe,CR-23,7.09,23,small,True,False
+ORD-1203,2025-10-07,22:16,Eastside Deli,CR-12,7.69,25,small,True,False
+ORD-1204,2025-10-06,00:04,Southside Pizza Lab,CR-3,8.15,15,medium,False,False
+ORD-1205,2025-10-10,13:04,Village Noodle Bar,CR-22,8.95,21,medium,True,False
+ORD-1206,2025-10-12,16:02,Hillside Kitchen,CR-17,11.23,14,small,False,False
+ORD-1207,2025-10-06,18:44,Oak Street Bistro,CR-18,10.21,21,medium,False,False
+ORD-1208,2025-10-12,08:40,UrbanEats,CR-12,3.05,16,medium,True,False
+ORD-1209,2025-10-08,13:47,UrbanEats,CR-7,4.04,23,medium,True,False
+ORD-1210,2025-10-12,12:59,Eastside Deli,CR-9,6.57,15,small,True,False
+ORD-1211,2025-10-11,18:14,Oak Street Bistro,CR-18,4.93,37,small,True,True
+ORD-1212,2025-10-09,08:21,Village Noodle Bar,CR-4,10.18,23,large,True,False
+ORD-1213,2025-10-12,02:53,UrbanEats,CR-9,5.11,20,large,True,False
+ORD-1214,2025-10-10,06:58,UrbanEats,CR-16,6.84,11,small,False,False
+ORD-1215,2025-10-09,20:45,Capital City Tacos,CR-22,4.23,6,medium,True,False
+ORD-1216,2025-10-06,07:28,Capital City Tacos,CR-4,6.2,25,medium,True,False
+ORD-1217,2025-10-10,08:29,Hillside Kitchen,CR-22,3.55,32,large,True,True
+ORD-1218,2025-10-09,14:12,Roosevelt Oyster House,CR-12,1.32,8,large,True,False
+ORD-1219,2025-10-06,02:39,Triangle BBQ Co.,CR-8,5.67,28,medium,True,False
+ORD-1220,2025-10-10,12:56,Village Noodle Bar,CR-3,10.05,16,large,True,False
+ORD-1221,2025-10-11,10:07,Village Noodle Bar,CR-12,8.24,19,small,True,False
+ORD-1222,2025-10-09,01:28,Southside Pizza Lab,CR-24,4.48,27,large,True,False
+ORD-1223,2025-10-11,16:15,Hillside Kitchen,CR-8,6.96,7,large,True,False
+ORD-1224,2025-10-09,00:28,Hillside Kitchen,CR-8,9.43,31,small,True,True
+ORD-1225,2025-10-10,01:13,Southside Pizza Lab,CR-25,3.12,23,small,True,False
+ORD-1226,2025-10-06,21:25,Capital City Tacos,CR-20,6.48,22,small,False,False
+ORD-1227,2025-10-12,03:51,Eastside Deli,CR-28,3.35,14,medium,True,False
+ORD-1228,2025-10-09,14:07,Capital City Tacos,CR-29,4.92,29,large,True,False
+ORD-1229,2025-10-11,14:01,Southside Pizza Lab,CR-25,6.63,17,large,True,False
+ORD-1230,2025-10-10,12:38,Hillside Kitchen,CR-25,7.32,3,large,True,False
+ORD-1231,2025-10-06,14:47,GreenBite Cafe,CR-26,8.45,6,medium,True,False
+ORD-1232,2025-10-12,03:39,Eastside Deli,CR-17,3.91,11,medium,True,False
+ORD-1233,2025-10-07,23:43,Capital City Tacos,CR-4,1.12,29,large,True,False
+ORD-1234,2025-10-11,05:37,Village Noodle Bar,CR-23,3.6,22,small,True,False
+ORD-1235,2025-10-08,09:32,Roosevelt Oyster House,CR-19,4.86,23,small,True,False
+ORD-1236,2025-10-10,02:44,UrbanEats,CR-28,5.23,9,medium,True,False
+ORD-1237,2025-10-12,05:47,Triangle BBQ Co.,CR-8,7.99,16,medium,True,False
+ORD-1238,2025-10-12,23:24,Village Noodle Bar,CR-12,0.33,16,small,True,False
+ORD-1239,2025-10-10,19:45,Hillside Kitchen,CR-14,9.5,26,large,False,False
+ORD-1240,2025-10-10,05:39,Village Noodle Bar,CR-28,3.95,17,medium,True,False
+ORD-1241,2025-10-11,03:04,Southside Pizza Lab,CR-19,4.04,36,small,True,True
+ORD-1242,2025-10-08,14:24,Oak Street Bistro,CR-24,6.15,23,medium,True,False
+ORD-1243,2025-10-12,07:38,Roosevelt Oyster House,CR-28,8.09,21,medium,True,False
+ORD-1244,2025-10-07,15:49,Southside Pizza Lab,CR-16,4.22,18,small,True,False
+ORD-1245,2025-10-10,19:06,Capital City Tacos,CR-5,4.79,19,large,True,False
+ORD-1246,2025-10-12,01:48,Village Noodle Bar,CR-26,7.18,20,medium,True,False
+ORD-1247,2025-10-08,20:31,GreenBite Cafe,CR-28,7.2,19,large,True,False
+ORD-1248,2025-10-10,12:47,Oak Street Bistro,CR-23,5.24,4,small,True,False
+ORD-1249,2025-10-08,10:50,Triangle BBQ Co.,CR-16,7.75,22,large,True,False
+ORD-1250,2025-10-11,02:50,Village Noodle Bar,CR-9,7.99,3,medium,True,False
+ORD-1251,2025-10-12,09:00,GreenBite Cafe,CR-30,11.27,18,medium,True,False
+ORD-1252,2025-10-06,05:24,Roosevelt Oyster House,CR-4,8.32,11,medium,True,False
+ORD-1253,2025-10-12,21:21,Hillside Kitchen,CR-19,6.84,11,large,True,False
+ORD-1254,2025-10-12,03:01,Southside Pizza Lab,CR-25,3.13,35,medium,True,True
+ORD-1255,2025-10-09,16:46,GreenBite Cafe,CR-16,4.43,21,large,True,False
+ORD-1256,2025-10-06,21:24,Roosevelt Oyster House,CR-20,7.61,23,medium,True,False
+ORD-1257,2025-10-07,15:33,Southside Pizza Lab,CR-21,5.45,22,medium,True,False
+ORD-1258,2025-10-12,23:12,UrbanEats,CR-13,12.21,19,small,True,False
+ORD-1259,2025-10-07,20:14,Village Noodle Bar,CR-8,5.6,28,medium,True,False
+ORD-1260,2025-10-09,07:33,Triangle BBQ Co.,CR-20,8.32,29,large,True,False
+ORD-1261,2025-10-09,02:04,Capital City Tacos,CR-25,6.92,10,medium,False,False
+ORD-1262,2025-10-12,16:16,GreenBite Cafe,CR-15,9.9,10,medium,True,False
+ORD-1263,2025-10-08,02:12,Eastside Deli,CR-5,5.91,13,large,True,False
+ORD-1264,2025-10-08,20:42,Oak Street Bistro,CR-7,4.81,22,small,True,False
+ORD-1265,2025-10-07,04:07,Oak Street Bistro,CR-3,5.96,23,medium,True,False
+ORD-1266,2025-10-06,14:41,Eastside Deli,CR-25,9.84,23,medium,True,False
+ORD-1267,2025-10-06,22:43,Oak Street Bistro,CR-9,4.27,27,large,True,False
+ORD-1268,2025-10-06,23:01,Roosevelt Oyster House,CR-10,8.57,10,small,True,False
+ORD-1269,2025-10-09,05:35,Capital City Tacos,CR-21,6.79,25,small,True,False
+ORD-1270,2025-10-11,23:50,Southside Pizza Lab,CR-1,4.11,31,small,True,True
+ORD-1271,2025-10-10,01:26,Village Noodle Bar,CR-28,4.55,21,medium,True,False
+ORD-1272,2025-10-12,03:36,Triangle BBQ Co.,CR-18,4.48,20,medium,True,False
+ORD-1273,2025-10-12,03:15,Southside Pizza Lab,CR-19,1.71,8,large,True,False
+ORD-1274,2025-10-12,10:00,Roosevelt Oyster House,CR-17,9.78,13,large,True,False
+ORD-1275,2025-10-12,01:45,Triangle BBQ Co.,CR-30,2.03,3,medium,True,False
+ORD-1276,2025-10-12,03:21,Hillside Kitchen,CR-26,3.08,9,small,True,False
+ORD-1277,2025-10-09,12:04,Village Noodle Bar,CR-14,9.93,28,medium,True,False
+ORD-1278,2025-10-09,10:53,Eastside Deli,CR-1,2.94,38,large,False,True
+ORD-1279,2025-10-07,13:13,Village Noodle Bar,CR-10,7.95,17,medium,True,False
+ORD-1280,2025-10-06,02:16,Capital City Tacos,CR-25,2.5,38,medium,True,True
+ORD-1281,2025-10-06,02:29,Roosevelt Oyster House,CR-26,0.83,6,medium,True,False
+ORD-1282,2025-10-08,15:08,Eastside Deli,CR-18,8.07,39,medium,True,True
+ORD-1283,2025-10-10,16:25,GreenBite Cafe,CR-14,9.15,24,medium,True,False
+ORD-1284,2025-10-07,20:35,Roosevelt Oyster House,CR-27,6.78,26,medium,True,False
+ORD-1285,2025-10-08,23:48,Oak Street Bistro,CR-14,7.28,22,large,True,False
+ORD-1286,2025-10-11,21:04,UrbanEats,CR-26,5.31,19,large,True,False
+ORD-1287,2025-10-09,02:14,Triangle BBQ Co.,CR-21,2.74,17,large,True,False
+ORD-1288,2025-10-09,01:24,Roosevelt Oyster House,CR-7,0.08,19,small,True,False
+ORD-1289,2025-10-07,13:18,Triangle BBQ Co.,CR-4,2.03,11,large,True,False
+ORD-1290,2025-10-11,03:38,Triangle BBQ Co.,CR-23,5.54,31,large,True,True
+ORD-1291,2025-10-08,03:16,Village Noodle Bar,CR-1,7.75,7,small,True,False
+ORD-1292,2025-10-12,02:04,Eastside Deli,CR-6,2.03,27,small,True,False
+ORD-1293,2025-10-09,01:30,Southside Pizza Lab,CR-23,2.05,18,medium,False,False
+ORD-1294,2025-10-06,02:14,Hillside Kitchen,CR-3,6.65,12,small,True,False
+ORD-1295,2025-10-11,14:46,Hillside Kitchen,CR-11,5.32,9,medium,True,False
+ORD-1296,2025-10-11,16:05,Village Noodle Bar,CR-15,3.2,22,large,True,False
+ORD-1297,2025-10-09,18:10,Oak Street Bistro,CR-27,0.22,23,small,True,False
+ORD-1298,2025-10-09,00:46,Roosevelt Oyster House,CR-3,4.94,24,large,True,False
+ORD-1299,2025-10-08,01:35,Hillside Kitchen,CR-29,5.67,30,medium,True,False
+ORD-1300,2025-10-06,03:26,Oak Street Bistro,CR-25,5.38,16,large,True,False
+ORD-1301,2025-10-10,09:04,Capital City Tacos,CR-8,5.37,24,large,True,False
+ORD-1302,2025-10-08,06:23,Capital City Tacos,CR-24,5.15,20,small,True,False
+ORD-1303,2025-10-08,08:55,Capital City Tacos,CR-13,2.89,14,large,True,False
+ORD-1304,2025-10-09,16:13,Southside Pizza Lab,CR-21,0.79,33,large,True,True
+ORD-1305,2025-10-12,06:04,GreenBite Cafe,CR-4,1.27,14,medium,True,False
+ORD-1306,2025-10-09,09:35,Hillside Kitchen,CR-12,2.84,27,small,True,False
+ORD-1307,2025-10-08,11:28,Oak Street Bistro,CR-8,4.12,29,large,True,False
+ORD-1308,2025-10-09,16:36,Eastside Deli,CR-6,2.98,22,medium,True,False
+ORD-1309,2025-10-07,08:40,Roosevelt Oyster House,CR-26,2.49,37,small,True,True
+ORD-1310,2025-10-06,11:28,UrbanEats,CR-26,1.44,22,large,True,False
+ORD-1311,2025-10-12,18:48,Southside Pizza Lab,CR-12,6.9,23,small,True,False
+ORD-1312,2025-10-07,19:03,Capital City Tacos,CR-3,4.44,18,large,True,False
+ORD-1313,2025-10-09,20:24,Eastside Deli,CR-2,5.13,18,medium,True,False
+ORD-1314,2025-10-07,18:01,GreenBite Cafe,CR-26,7.89,37,small,True,True
+ORD-1315,2025-10-11,13:12,Hillside Kitchen,CR-11,3.33,9,large,True,False
+ORD-1316,2025-10-09,22:50,Capital City Tacos,CR-24,4.74,40,small,True,True
+ORD-1317,2025-10-10,07:09,Village Noodle Bar,CR-24,2.59,33,small,True,True
+ORD-1318,2025-10-06,10:46,Capital City Tacos,CR-23,10.03,15,medium,True,False
+ORD-1319,2025-10-09,08:28,GreenBite Cafe,CR-23,6.71,33,medium,True,True
+ORD-1320,2025-10-12,10:44,Southside Pizza Lab,CR-18,3.86,18,medium,True,False
+ORD-1321,2025-10-11,07:54,Triangle BBQ Co.,CR-28,3.25,11,large,True,False
+ORD-1322,2025-10-07,19:47,Oak Street Bistro,CR-17,3.05,10,small,True,False
+ORD-1323,2025-10-09,08:44,Triangle BBQ Co.,CR-18,5.1,13,medium,True,False
+ORD-1324,2025-10-06,00:11,GreenBite Cafe,CR-13,5.7,7,large,True,False
+ORD-1325,2025-10-06,05:06,UrbanEats,CR-28,5.99,26,medium,False,False
+ORD-1326,2025-10-08,17:12,Village Noodle Bar,CR-24,0.98,22,small,True,False
+ORD-1327,2025-10-12,03:10,Roosevelt Oyster House,CR-7,8.68,10,large,True,False
+ORD-1328,2025-10-11,15:51,GreenBite Cafe,CR-5,10.02,23,large,True,False
+ORD-1329,2025-10-09,16:05,Roosevelt Oyster House,CR-21,2.88,19,medium,True,False
+ORD-1330,2025-10-07,02:17,GreenBite Cafe,CR-22,6.67,20,small,True,False
+ORD-1331,2025-10-07,11:26,Southside Pizza Lab,CR-28,6.62,12,small,True,False
+ORD-1332,2025-10-07,05:13,Capital City Tacos,CR-7,5.51,8,small,True,False
+ORD-1333,2025-10-12,11:55,Roosevelt Oyster House,CR-22,4.67,12,medium,True,False
+ORD-1334,2025-10-12,17:11,Triangle BBQ Co.,CR-2,2.79,29,medium,True,False
+ORD-1335,2025-10-12,21:27,Oak Street Bistro,CR-1,8.27,24,small,True,False
+ORD-1336,2025-10-11,14:11,Oak Street Bistro,CR-15,1.72,17,large,True,False
+ORD-1337,2025-10-10,02:33,GreenBite Cafe,CR-24,8.64,21,medium,True,False
+ORD-1338,2025-10-06,15:55,UrbanEats,CR-9,11.96,23,large,True,False
+ORD-1339,2025-10-06,19:13,Triangle BBQ Co.,CR-3,5.58,17,small,True,False
+ORD-1340,2025-10-07,02:31,Oak Street Bistro,CR-24,5.4,18,small,True,False
+ORD-1341,2025-10-10,09:13,Hillside Kitchen,CR-7,7.12,27,large,True,False
+ORD-1342,2025-10-08,19:55,UrbanEats,CR-21,2.64,9,small,True,False
+ORD-1343,2025-10-12,08:24,Roosevelt Oyster House,CR-24,0.51,24,small,False,False
+ORD-1344,2025-10-12,13:26,Village Noodle Bar,CR-22,1.69,3,medium,True,False
+ORD-1345,2025-10-10,20:37,Oak Street Bistro,CR-6,6.17,39,small,True,True
+ORD-1346,2025-10-10,13:39,GreenBite Cafe,CR-11,4.98,26,large,True,False
+ORD-1347,2025-10-12,01:47,UrbanEats,CR-15,5.25,19,medium,True,False
+ORD-1348,2025-10-12,06:12,Village Noodle Bar,CR-28,7.76,17,medium,True,False
+ORD-1349,2025-10-10,21:34,Village Noodle Bar,CR-20,5.8,22,small,True,False

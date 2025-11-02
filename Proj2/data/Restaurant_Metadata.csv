@@ -1,0 +1,11 @@
+restaurant,cuisine,capacity,seating_type,avg_daily_orders,has_sustainability_program,zip_code
+Eastside Deli,Seafood,31,Counter,159,True,27606
+Oak Street Bistro,Southern,177,Indoor,324,True,27607
+Southside Pizza Lab,Asian,80,Outdoor,108,False,27609
+Hillside Kitchen,Indian,193,Outdoor,355,False,27608
+Triangle BBQ Co.,Fusion,59,Outdoor,230,False,27604
+Village Noodle Bar,BBQ,187,Counter,93,True,27607
+Roosevelt Oyster House,Southern,91,Outdoor,109,True,27607
+Capital City Tacos,Italian,160,Outdoor,264,True,27608
+GreenBite Cafe,Seafood,77,Outdoor,375,True,27610
+UrbanEats,Italian,155,Outdoor,121,True,27607

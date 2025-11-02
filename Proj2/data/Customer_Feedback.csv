@@ -1,0 +1,251 @@
+restaurant,date,delivery_rating,food_quality_rating,feedback_text
+Capital City Tacos,2025-10-12,5,1,Portion size was perfect.
+Capital City Tacos,2025-10-06,2,2,Too much salt but tasted good.
+GreenBite Cafe,2025-10-10,4,4,Received wrong item.
+Roosevelt Oyster House,2025-10-09,4,4,Food arrived cold and was late.
+UrbanEats,2025-10-06,1,2,Portion size was perfect.
+Triangle BBQ Co.,2025-10-06,2,5,Portion size was perfect.
+Capital City Tacos,2025-10-07,5,4,Packaging sustainable and neat.
+Oak Street Bistro,2025-10-10,5,1,Portion size was perfect.
+GreenBite Cafe,2025-10-12,3,5,Excellent packaging and timely delivery.
+Capital City Tacos,2025-10-12,5,2,Too much salt but tasted good.
+Hillside Kitchen,2025-10-06,3,1,Too much salt but tasted good.
+Village Noodle Bar,2025-10-08,1,4,Excellent packaging and timely delivery.
+Hillside Kitchen,2025-10-12,2,5,Received wrong item.
+UrbanEats,2025-10-08,4,2,Packaging sustainable and neat.
+Hillside Kitchen,2025-10-07,2,1,Packaging sustainable and neat.
+GreenBite Cafe,2025-10-08,3,5,Packaging sustainable and neat.
+Village Noodle Bar,2025-10-07,3,3,Packaging sustainable and neat.
+GreenBite Cafe,2025-10-08,1,2,Too much salt but tasted good.
+Triangle BBQ Co.,2025-10-06,2,2,Food arrived cold and was late.
+Village Noodle Bar,2025-10-07,2,4,Too much salt but tasted good.
+UrbanEats,2025-10-07,3,4,Too much salt but tasted good.
+Oak Street Bistro,2025-10-09,1,4,Packaging sustainable and neat.
+Triangle BBQ Co.,2025-10-11,3,4,Too much salt but tasted good.
+UrbanEats,2025-10-08,1,1,Received wrong item.
+Village Noodle Bar,2025-10-09,1,5,Too much salt but tasted good.
+Roosevelt Oyster House,2025-10-07,2,4,Portion size was perfect.
+Triangle BBQ Co.,2025-10-08,3,5,Packaging sustainable and neat.
+UrbanEats,2025-10-07,4,3,Received wrong item.
+Eastside Deli,2025-10-12,1,1,Received wrong item.
+Capital City Tacos,2025-10-12,1,1,Food arrived cold and was late.
+Capital City Tacos,2025-10-09,1,4,Food arrived cold and was late.
+Southside Pizza Lab,2025-10-11,3,2,Portion size was perfect.
+Village Noodle Bar,2025-10-06,3,1,Portion size was perfect.
+Southside Pizza Lab,2025-10-11,1,4,Received wrong item.
+Hillside Kitchen,2025-10-08,4,1,Received wrong item.
+Eastside Deli,2025-10-06,2,4,Excellent packaging and timely delivery.
+UrbanEats,2025-10-07,2,5,Received wrong item.
+Eastside Deli,2025-10-09,1,3,Excellent packaging and timely delivery.
+Roosevelt Oyster House,2025-10-12,2,4,Excellent packaging and timely delivery.
+Roosevelt Oyster House,2025-10-07,1,1,Excellent packaging and timely delivery.
+Village Noodle Bar,2025-10-08,3,2,Too much salt but tasted good.
+Southside Pizza Lab,2025-10-12,2,1,Packaging sustainable and neat.
+Eastside Deli,2025-10-10,5,2,Too much salt but tasted good.
+Hillside Kitchen,2025-10-08,2,4,Packaging sustainable and neat.
+Capital City Tacos,2025-10-11,2,1,Excellent packaging and timely delivery.
+Oak Street Bistro,2025-10-07,5,4,Portion size was perfect.
+Village Noodle Bar,2025-10-09,2,2,Portion size was perfect.
+Oak Street Bistro,2025-10-11,2,5,Packaging sustainable and neat.
+UrbanEats,2025-10-10,3,1,Received wrong item.
+Hillside Kitchen,2025-10-08,5,5,Packaging sustainable and neat.
+Roosevelt Oyster House,2025-10-07,3,1,Food arrived cold and was late.
+Roosevelt Oyster House,2025-10-09,1,2,Too much salt but tasted good.
+UrbanEats,2025-10-11,1,5,Excellent packaging and timely delivery.
+Village Noodle Bar,2025-10-08,2,4,Packaging sustainable and neat.
+Village Noodle Bar,2025-10-09,5,2,Too much salt but tasted good.
+Oak Street Bistro,2025-10-12,1,5,Excellent packaging and timely delivery.
+Triangle BBQ Co.,2025-10-06,2,1,Excellent packaging and timely delivery.
+Roosevelt Oyster House,2025-10-12,5,3,Received wrong item.
+GreenBite Cafe,2025-10-11,4,4,Received wrong item.
+Oak Street Bistro,2025-10-09,5,5,Packaging sustainable and neat.
+Triangle BBQ Co.,2025-10-07,1,3,Excellent packaging and timely delivery.
+Hillside Kitchen,2025-10-10,2,5,Portion size was perfect.
+UrbanEats,2025-10-09,1,3,Received wrong item.
+Hillside Kitchen,2025-10-09,1,2,Excellent packaging and timely delivery.
+Oak Street Bistro,2025-10-09,4,5,Packaging sustainable and neat.
+Triangle BBQ Co.,2025-10-06,2,1,Excellent packaging and timely delivery.
+Southside Pizza Lab,2025-10-11,1,2,Too much salt but tasted good.
+GreenBite Cafe,2025-10-08,5,3,Food arrived cold and was late.
+Southside Pizza Lab,2025-10-08,3,1,Excellent packaging and timely delivery.
+Roosevelt Oyster House,2025-10-08,3,5,Excellent packaging and timely delivery.
+UrbanEats,2025-10-08,1,4,Too much salt but tasted good.
+Village Noodle Bar,2025-10-10,1,4,Packaging sustainable and neat.
+Village Noodle Bar,2025-10-07,2,3,Excellent packaging and timely delivery.
+Oak Street Bistro,2025-10-10,2,5,Excellent packaging and timely delivery.
+Eastside Deli,2025-10-06,2,1,Too much salt but tasted good.
+Roosevelt Oyster House,2025-10-08,2,2,Excellent packaging and timely delivery.
+Roosevelt Oyster House,2025-10-10,2,3,Food arrived cold and was late.
+Village Noodle Bar,2025-10-09,3,1,Packaging sustainable and neat.
+Oak Street Bistro,2025-10-08,5,1,Food arrived cold and was late.
+GreenBite Cafe,2025-10-07,1,4,Excellent packaging and timely delivery.
+Triangle BBQ Co.,2025-10-09,3,3,Excellent packaging and timely delivery.
+Capital City Tacos,2025-10-10,1,3,Food arrived cold and was late.
+UrbanEats,2025-10-08,3,5,Food arrived cold and was late.
+Village Noodle Bar,2025-10-09,5,4,Food arrived cold and was late.
+GreenBite Cafe,2025-10-11,2,2,Excellent packaging and timely delivery.
+Eastside Deli,2025-10-09,2,5,Portion size was perfect.
+Eastside Deli,2025-10-11,3,1,Received wrong item.
+Triangle BBQ Co.,2025-10-09,1,2,Packaging sustainable and neat.
+Roosevelt Oyster House,2025-10-07,4,1,Food arrived cold and was late.
+Triangle BBQ Co.,2025-10-11,1,1,Food arrived cold and was late.
+GreenBite Cafe,2025-10-12,4,3,Too much salt but tasted good.
+Oak Street Bistro,2025-10-11,5,1,Packaging sustainable and neat.
+Roosevelt Oyster House,2025-10-07,1,5,Packaging sustainable and neat.
+Roosevelt Oyster House,2025-10-06,2,2,Portion size was perfect.
+Village Noodle Bar,2025-10-08,4,3,Portion size was perfect.
+Triangle BBQ Co.,2025-10-09,2,1,Food arrived cold and was late.
+UrbanEats,2025-10-07,1,2,Excellent packaging and timely delivery.
+Capital City Tacos,2025-10-07,4,3,Too much salt but tasted good.
+GreenBite Cafe,2025-10-06,3,2,Too much salt but tasted good.
+Capital City Tacos,2025-10-08,3,1,Excellent packaging and timely delivery.
+Triangle BBQ Co.,2025-10-07,5,1,Food arrived cold and was late.
+Village Noodle Bar,2025-10-12,2,1,Received wrong item.
+Village Noodle Bar,2025-10-07,4,5,Excellent packaging and timely delivery.
+Triangle BBQ Co.,2025-10-11,3,2,Excellent packaging and timely delivery.
+Capital City Tacos,2025-10-09,5,5,Food arrived cold and was late.
+Capital City Tacos,2025-10-06,1,2,Excellent packaging and timely delivery.
+Eastside Deli,2025-10-06,2,2,Food arrived cold and was late.
+Roosevelt Oyster House,2025-10-12,3,1,Packaging sustainable and neat.
+Triangle BBQ Co.,2025-10-10,1,1,Excellent packaging and timely delivery.
+Capital City Tacos,2025-10-07,2,1,Portion size was perfect.
+Eastside Deli,2025-10-06,4,1,Food arrived cold and was late.
+Roosevelt Oyster House,2025-10-10,4,4,Excellent packaging and timely delivery.
+Roosevelt Oyster House,2025-10-09,2,3,Food arrived cold and was late.
+Triangle BBQ Co.,2025-10-07,3,4,Food arrived cold and was late.
+UrbanEats,2025-10-06,5,5,Food arrived cold and was late.
+Triangle BBQ Co.,2025-10-11,4,4,Packaging sustainable and neat.
+Eastside Deli,2025-10-09,1,3,Too much salt but tasted good.
+Roosevelt Oyster House,2025-10-07,2,5,Food arrived cold and was late.
+GreenBite Cafe,2025-10-11,1,4,Received wrong item.
+Capital City Tacos,2025-10-08,5,4,Portion size was perfect.
+GreenBite Cafe,2025-10-10,3,4,Portion size was perfect.
+Eastside Deli,2025-10-07,3,5,Food arrived cold and was late.
+Triangle BBQ Co.,2025-10-06,1,4,Packaging sustainable and neat.
+UrbanEats,2025-10-08,2,2,Excellent packaging and timely delivery.
+Hillside Kitchen,2025-10-07,3,5,Received wrong item.
+Hillside Kitchen,2025-10-06,5,4,Portion size was perfect.
+Southside Pizza Lab,2025-10-12,2,2,Packaging sustainable and neat.
+Village Noodle Bar,2025-10-08,5,1,Received wrong item.
+Village Noodle Bar,2025-10-11,5,5,Food arrived cold and was late.
+Hillside Kitchen,2025-10-10,4,5,Portion size was perfect.
+Capital City Tacos,2025-10-07,1,1,Excellent packaging and timely delivery.
+UrbanEats,2025-10-07,2,1,Packaging sustainable and neat.
+Eastside Deli,2025-10-09,3,5,Food arrived cold and was late.
+Southside Pizza Lab,2025-10-12,3,2,Portion size was perfect.
+Eastside Deli,2025-10-06,2,5,Received wrong item.
+Oak Street Bistro,2025-10-07,5,3,Excellent packaging and timely delivery.
+Roosevelt Oyster House,2025-10-08,5,1,Portion size was perfect.
+Village Noodle Bar,2025-10-08,2,2,Received wrong item.
+Capital City Tacos,2025-10-09,3,2,Received wrong item.
+UrbanEats,2025-10-10,3,2,Received wrong item.
+Southside Pizza Lab,2025-10-10,4,3,Received wrong item.
+Triangle BBQ Co.,2025-10-11,2,2,Received wrong item.
+UrbanEats,2025-10-06,4,5,Excellent packaging and timely delivery.
+UrbanEats,2025-10-07,3,5,Food arrived cold and was late.
+UrbanEats,2025-10-11,1,4,Food arrived cold and was late.
+Oak Street Bistro,2025-10-08,2,3,Portion size was perfect.
+Oak Street Bistro,2025-10-07,3,4,Excellent packaging and timely delivery.
+Hillside Kitchen,2025-10-08,2,1,Portion size was perfect.
+Oak Street Bistro,2025-10-08,1,1,Too much salt but tasted good.
+Roosevelt Oyster House,2025-10-09,2,4,Too much salt but tasted good.
+Village Noodle Bar,2025-10-09,5,4,Excellent packaging and timely delivery.
+Capital City Tacos,2025-10-12,5,2,Food arrived cold and was late.
+Oak Street Bistro,2025-10-09,1,3,Excellent packaging and timely delivery.
+Triangle BBQ Co.,2025-10-08,1,1,Portion size was perfect.
+Roosevelt Oyster House,2025-10-07,2,1,Packaging sustainable and neat.
+Village Noodle Bar,2025-10-06,5,5,Too much salt but tasted good.
+Eastside Deli,2025-10-11,4,2,Packaging sustainable and neat.
+Southside Pizza Lab,2025-10-09,1,1,Portion size was perfect.
+Hillside Kitchen,2025-10-07,4,5,Received wrong item.
+GreenBite Cafe,2025-10-11,3,3,Portion size was perfect.
+Oak Street Bistro,2025-10-07,1,4,Packaging sustainable and neat.
+Capital City Tacos,2025-10-10,2,1,Portion size was perfect.
+Roosevelt Oyster House,2025-10-06,1,3,Received wrong item.
+UrbanEats,2025-10-11,4,2,Excellent packaging and timely delivery.
+Hillside Kitchen,2025-10-06,2,3,Excellent packaging and timely delivery.
+Oak Street Bistro,2025-10-09,3,4,Too much salt but tasted good.
+Triangle BBQ Co.,2025-10-09,1,5,Too much salt but tasted good.
+Village Noodle Bar,2025-10-07,4,3,Food arrived cold and was late.
+Eastside Deli,2025-10-09,3,4,Too much salt but tasted good.
+Hillside Kitchen,2025-10-08,3,5,Excellent packaging and timely delivery.
+Oak Street Bistro,2025-10-07,1,3,Packaging sustainable and neat.
+UrbanEats,2025-10-09,2,5,Excellent packaging and timely delivery.
+Roosevelt Oyster House,2025-10-12,5,4,Packaging sustainable and neat.
+Capital City Tacos,2025-10-11,5,2,Too much salt but tasted good.
+Oak Street Bistro,2025-10-08,4,1,Packaging sustainable and neat.
+GreenBite Cafe,2025-10-10,5,5,Food arrived cold and was late.
+Capital City Tacos,2025-10-06,2,2,Food arrived cold and was late.
+Hillside Kitchen,2025-10-12,2,1,Too much salt but tasted good.
+Roosevelt Oyster House,2025-10-06,2,2,Packaging sustainable and neat.
+Village Noodle Bar,2025-10-08,1,1,Too much salt but tasted good.
+Roosevelt Oyster House,2025-10-10,5,3,Portion size was perfect.
+Capital City Tacos,2025-10-10,1,5,Packaging sustainable and neat.
+Roosevelt Oyster House,2025-10-10,1,4,Food arrived cold and was late.
+UrbanEats,2025-10-07,5,5,Excellent packaging and timely delivery.
+UrbanEats,2025-10-06,1,3,Packaging sustainable and neat.
+Roosevelt Oyster House,2025-10-08,3,4,Received wrong item.
+UrbanEats,2025-10-09,5,4,Excellent packaging and timely delivery.
+Triangle BBQ Co.,2025-10-07,4,2,Packaging sustainable and neat.
+Roosevelt Oyster House,2025-10-10,1,4,Portion size was perfect.
+Hillside Kitchen,2025-10-11,1,4,Portion size was perfect.
+Eastside Deli,2025-10-08,3,3,Portion size was perfect.
+Capital City Tacos,2025-10-08,1,2,Food arrived cold and was late.
+Capital City Tacos,2025-10-08,3,3,Received wrong item.
+UrbanEats,2025-10-09,1,2,Too much salt but tasted good.
+Roosevelt Oyster House,2025-10-07,4,5,Portion size was perfect.
+Eastside Deli,2025-10-12,5,2,Excellent packaging and timely delivery.
+GreenBite Cafe,2025-10-08,4,2,Packaging sustainable and neat.
+Eastside Deli,2025-10-10,2,2,Food arrived cold and was late.
+Eastside Deli,2025-10-12,2,1,Too much salt but tasted good.
+Village Noodle Bar,2025-10-06,2,3,Portion size was perfect.
+Capital City Tacos,2025-10-12,5,4,Received wrong item.
+Eastside Deli,2025-10-06,2,3,Too much salt but tasted good.
+Capital City Tacos,2025-10-10,2,4,Packaging sustainable and neat.
+Village Noodle Bar,2025-10-10,3,2,Portion size was perfect.
+Oak Street Bistro,2025-10-11,3,1,Too much salt but tasted good.
+Southside Pizza Lab,2025-10-06,5,2,Food arrived cold and was late.
+Hillside Kitchen,2025-10-11,2,3,Received wrong item.
+GreenBite Cafe,2025-10-09,1,1,Too much salt but tasted good.
+Southside Pizza Lab,2025-10-07,5,1,Food arrived cold and was late.
+UrbanEats,2025-10-08,3,3,Too much salt but tasted good.
+Village Noodle Bar,2025-10-09,4,3,Food arrived cold and was late.
+Triangle BBQ Co.,2025-10-09,5,5,Too much salt but tasted good.
+Oak Street Bistro,2025-10-10,1,5,Received wrong item.
+Village Noodle Bar,2025-10-12,5,5,Packaging sustainable and neat.
+Triangle BBQ Co.,2025-10-08,1,4,Excellent packaging and timely delivery.
+Triangle BBQ Co.,2025-10-08,3,3,Portion size was perfect.
+Triangle BBQ Co.,2025-10-11,2,2,Packaging sustainable and neat.
+Hillside Kitchen,2025-10-12,1,5,Too much salt but tasted good.
+Village Noodle Bar,2025-10-11,2,1,Received wrong item.
+Triangle BBQ Co.,2025-10-09,3,4,Too much salt but tasted good.
+Eastside Deli,2025-10-09,5,5,Food arrived cold and was late.
+Hillside Kitchen,2025-10-08,5,4,Received wrong item.
+GreenBite Cafe,2025-10-08,3,2,Received wrong item.
+Southside Pizza Lab,2025-10-10,3,1,Too much salt but tasted good.
+Triangle BBQ Co.,2025-10-07,5,2,Received wrong item.
+Oak Street Bistro,2025-10-08,2,3,Food arrived cold and was late.
+Triangle BBQ Co.,2025-10-11,4,3,Portion size was perfect.
+UrbanEats,2025-10-08,3,4,Excellent packaging and timely delivery.
+Eastside Deli,2025-10-09,5,5,Packaging sustainable and neat.
+Capital City Tacos,2025-10-06,2,5,Excellent packaging and timely delivery.
+Roosevelt Oyster House,2025-10-12,5,3,Too much salt but tasted good.
+Southside Pizza Lab,2025-10-06,2,2,Portion size was perfect.
+UrbanEats,2025-10-09,4,2,Portion size was perfect.
+Southside Pizza Lab,2025-10-12,1,4,Portion size was perfect.
+Southside Pizza Lab,2025-10-11,3,1,Excellent packaging and timely delivery.
+Triangle BBQ Co.,2025-10-09,2,2,Packaging sustainable and neat.
+Southside Pizza Lab,2025-10-12,4,1,Food arrived cold and was late.
+Roosevelt Oyster House,2025-10-10,4,4,Too much salt but tasted good.
+Roosevelt Oyster House,2025-10-09,1,1,Packaging sustainable and neat.
+Village Noodle Bar,2025-10-07,1,3,Packaging sustainable and neat.
+Eastside Deli,2025-10-07,1,2,Food arrived cold and was late.
+Village Noodle Bar,2025-10-11,3,2,Excellent packaging and timely delivery.
+GreenBite Cafe,2025-10-09,5,3,Food arrived cold and was late.
+Eastside Deli,2025-10-06,3,3,Too much salt but tasted good.
+GreenBite Cafe,2025-10-11,5,5,Portion size was perfect.
+Southside Pizza Lab,2025-10-09,3,4,Portion size was perfect.
+Hillside Kitchen,2025-10-12,2,4,Excellent packaging and timely delivery.
+Hillside Kitchen,2025-10-07,2,2,Received wrong item.
+UrbanEats,2025-10-06,5,2,Excellent packaging and timely delivery.
+Eastside Deli,2025-10-08,4,3,Packaging sustainable and neat.
