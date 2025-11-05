@@ -20,3 +20,6 @@ __pycache__/
 !data/sample_*.csv
 .env
 *.key
+
+#node_modules
+node_modules/
