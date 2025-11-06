@@ -15,9 +15,11 @@ app.use(express.json());
 
 const homeRoutes = require("./routes/home");
 const cartRoutes = require("./routes/cart");
+const dashboardRoutes = require("./routes/dashboard");
 
 app.use("/", homeRoutes);
 app.use("/", cartRoutes);
+app.use("/", dashboardRoutes);
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;

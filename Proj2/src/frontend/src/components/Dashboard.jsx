@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Cart from './Cart';
 import LeaderboardPanel from './LeaderboardPanel';
 import { ShoppingCart, Heart, Leaf, TrendingUp, Users, Star, Search, MapPin, Clock, Award, Truck, Package, Menu, X, ChevronRight, Zap } from 'lucide-react';
@@ -19,217 +19,52 @@ const Dashboard = () => {
 
   const [favorites, setFavorites] = useState(new Set([1, 3]));
 
-  const restaurants = [
-
-    {
-
-      id: 1,
-
-      name: "Eastside Deli",
-
-      cuisine: "Deli",
-
-      location: "Raleigh, Zone-1",
-
-      rating: 4.7,
-
-      reviews: 234,
-
-      sustainabilityScore: 92,
-
-      avgDeliveryTime: 18.5,
-
-      onTimeRate: 94.3,
-
-      avgDistance: 4.2,
-
-      efficiencyScore: 88.5,
-
-      weeklyWasteLbs: 12.3,
-
-      wasteReduction: "+23%",
-
-      carbonSaved: 5.6,
-
-      rescueMeals: [
-
-        { id: 101, name: "Chicken Salad Sandwich", originalPrice: 10.99, rescuePrice: 6.99, quantity: 3, expiresIn: "2 hours" },
-
-        { id: 102, name: "Veggie Grain Bowl", originalPrice: 12.99, rescuePrice: 7.99, quantity: 2, expiresIn: "1 hour" }
-
-      ]
-
-    },
-
-    {
-
-      id: 2,
-
-      name: "Oak Street Bistro",
-
-      cuisine: "Southern",
-
-      location: "Raleigh, Zone-2",
-
-      rating: 4.9,
-
-      reviews: 456,
-
-      sustainabilityScore: 88,
-
-      avgDeliveryTime: 22.1,
-
-      onTimeRate: 91.8,
-
-      avgDistance: 5.8,
-
-      efficiencyScore: 82.3,
-
-      weeklyWasteLbs: 18.7,
-
-      wasteReduction: "+15%",
-
-      carbonSaved: 8.2,
-
-      rescueMeals: [
-
-        { id: 201, name: "Biscuits & Gravy", originalPrice: 9.99, rescuePrice: 5.99, quantity: 4, expiresIn: "3 hours" }
-
-      ]
-
-    },
-
-    {
-
-      id: 3,
-
-      name: "GreenBite Cafe",
-
-      cuisine: "Indian",
-
-      location: "Raleigh, Zone-3",
-
-      rating: 4.8,
-
-      reviews: 312,
-
-      sustainabilityScore: 96,
-
-      avgDeliveryTime: 16.3,
-
-      onTimeRate: 97.2,
-
-      avgDistance: 3.5,
-
-      efficiencyScore: 94.7,
-
-      weeklyWasteLbs: 8.2,
-
-      wasteReduction: "+34%",
-
-      carbonSaved: 12.4,
-
-      rescueMeals: [
-
-        { id: 301, name: "Veggie Thali", originalPrice: 13.99, rescuePrice: 8.99, quantity: 5, expiresIn: "2 hours" },
-
-        { id: 302, name: "Paneer Tikka Bowl", originalPrice: 14.99, rescuePrice: 9.99, quantity: 2, expiresIn: "1.5 hours" }
-
-      ]
-
-    },
-
-    {
-
-      id: 4,
-
-      name: "Triangle BBQ Co.",
-
-      cuisine: "BBQ",
-
-      location: "Raleigh, Zone-4",
-
-      rating: 4.6,
-
-      reviews: 198,
-
-      sustainabilityScore: 75,
-
-      avgDeliveryTime: 25.8,
-
-      onTimeRate: 88.5,
-
-      avgDistance: 6.2,
-
-      efficiencyScore: 76.2,
-
-      weeklyWasteLbs: 28.4,
-
-      wasteReduction: "+8%",
-
-      carbonSaved: 3.2,
-
-      rescueMeals: []
-
-    },
-
-    {
-
-      id: 5,
-
-      name: "Village Noodle Bar",
-
-      cuisine: "Asian",
-
-      location: "Raleigh, Zone-5",
-
-      rating: 4.7,
-
-      reviews: 267,
-
-      sustainabilityScore: 84,
-
-      avgDeliveryTime: 19.7,
-
-      onTimeRate: 92.6,
-
-      avgDistance: 4.8,
-
-      efficiencyScore: 85.9,
-
-      weeklyWasteLbs: 14.6,
-
-      wasteReduction: "+19%",
-
-      carbonSaved: 6.8,
-
-      rescueMeals: [
-
-        { id: 501, name: "Pad Thai", originalPrice: 11.99, rescuePrice: 6.99, quantity: 3, expiresIn: "2.5 hours" }
-
-      ]
-
-    }
-
-  ];
-
-  const userImpact = {
-
-    mealsOrdered: 47,
-
-    moneySaved: 156.80,
-
-    foodWastePrevented: 23.4,
-
-    carbonReduced: 18.7,
-
-    localRestaurantsSupported: 8,
-
-    impactLevel: "Sustainability Champion"
-
-  };
-
-  const cuisineTypes = ['all', 'Deli', 'Southern', 'Italian', 'BBQ', 'Asian', 'Mexican', 'Indian'];
+  // State for API data
+  const [restaurants, setRestaurants] = useState([]);
+  const [userImpact, setUserImpact] = useState({
+    mealsOrdered: 0,
+    moneySaved: 0,
+    foodWastePrevented: 0,
+    carbonReduced: 0,
+    localRestaurantsSupported: 0,
+    impactLevel: "New Rescuer"
+  });
+  const [communityStats, setCommunityStats] = useState({
+    activeUsers: 0,
+    mealsRescued: 0,
+    wastePreventedTons: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch data from APIs
+  useEffect(() => {
+    // Fetch restaurants with meals
+    fetch("http://localhost:5000/dashboard/restaurants-with-meals")
+      .then((res) => res.json())
+      .then((data) => {
+        setRestaurants(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching restaurants:", err);
+        setLoading(false);
+      });
+
+    // Fetch user impact
+    fetch("http://localhost:5000/dashboard/user-impact")
+      .then((res) => res.json())
+      .then((data) => setUserImpact(data))
+      .catch((err) => console.error("Error fetching user impact:", err));
+
+    // Fetch community stats
+    fetch("http://localhost:5000/dashboard/community-stats")
+      .then((res) => res.json())
+      .then((data) => setCommunityStats(data))
+      .catch((err) => console.error("Error fetching community stats:", err));
+  }, []);
+
+  // Get unique cuisine types from restaurants
+  const cuisineTypes = ['all', ...new Set(restaurants.map(r => r.cuisine).filter(Boolean))];
 
   const filteredRestaurants = restaurants.filter(r => {
 
@@ -264,6 +99,17 @@ const Dashboard = () => {
     setFavorites(newFavorites);
 
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading restaurants...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
 
@@ -761,7 +607,7 @@ const Dashboard = () => {
 
               <p className="text-gray-600 mb-2">Meals Rescued</p>
 
-              <p className="text-4xl font-bold text-green-600">{userImpact.mealsOrdered}</p>
+              <p className="text-4xl font-bold text-green-600">{userImpact.mealsOrdered || 0}</p>
 
             </div>
 
@@ -771,7 +617,7 @@ const Dashboard = () => {
 
               <p className="text-gray-600 mb-2">Waste Prevented</p>
 
-              <p className="text-4xl font-bold text-blue-600">{userImpact.foodWastePrevented} lbs</p>
+              <p className="text-4xl font-bold text-blue-600">{userImpact.foodWastePrevented || 0} lbs</p>
 
             </div>
 
@@ -781,7 +627,7 @@ const Dashboard = () => {
 
               <p className="text-gray-600 mb-2">Carbon Reduced</p>
 
-              <p className="text-4xl font-bold text-purple-600">{userImpact.carbonReduced} kg</p>
+              <p className="text-4xl font-bold text-purple-600">{userImpact.carbonReduced || 0} kg</p>
 
             </div>
 
@@ -791,7 +637,7 @@ const Dashboard = () => {
 
               <p className="text-gray-600 mb-2">Money Saved</p>
 
-              <p className="text-4xl font-bold text-orange-600">${userImpact.moneySaved}</p>
+              <p className="text-4xl font-bold text-orange-600">${userImpact.moneySaved || 0}</p>
 
             </div>
 
@@ -799,9 +645,9 @@ const Dashboard = () => {
 
           <div className="bg-white rounded-xl shadow-lg p-8 mt-8">
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Impact Level: {userImpact.impactLevel}</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Impact Level: {userImpact.impactLevel || "New Rescuer"}</h2>
 
-            <p className="text-gray-600">You've supported {userImpact.localRestaurantsSupported} local restaurants in reducing food waste!</p>
+            <p className="text-gray-600">You've supported {userImpact.localRestaurantsSupported || 0} local restaurants in reducing food waste!</p>
 
           </div>
 
@@ -836,7 +682,7 @@ const Dashboard = () => {
 
               <div className="text-center">
 
-                <p className="text-5xl font-bold text-green-600 mb-2">1,247</p>
+                <p className="text-5xl font-bold text-green-600 mb-2">{Number(communityStats.activeUsers || 0).toLocaleString()}</p>
 
                 <p className="text-gray-600">Active Users</p>
 
@@ -844,7 +690,7 @@ const Dashboard = () => {
 
               <div className="text-center">
 
-                <p className="text-5xl font-bold text-blue-600 mb-2">8,934</p>
+                <p className="text-5xl font-bold text-blue-600 mb-2">{Number(communityStats.mealsRescued || 0).toLocaleString()}</p>
 
                 <p className="text-gray-600">Meals Rescued</p>
 
@@ -852,7 +698,7 @@ const Dashboard = () => {
 
               <div className="text-center">
 
-                <p className="text-5xl font-bold text-purple-600 mb-2">4.2 tons</p>
+                <p className="text-5xl font-bold text-purple-600 mb-2">{communityStats.wastePreventedTons || 0} tons</p>
 
                 <p className="text-gray-600">Food Waste Prevented</p>
 
