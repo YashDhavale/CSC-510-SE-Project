@@ -16,7 +16,6 @@ __pycache__/
 .idea/
 
 # Data & secrets
-*.json
 !data/sample_*.csv
 .env
 *.key
