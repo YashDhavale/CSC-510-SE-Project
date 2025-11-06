@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Cart from './Cart';
+import LeaderboardPanel from './LeaderboardPanel';
 import { ShoppingCart, Heart, Leaf, TrendingUp, Users, Star, Search, MapPin, Clock, Award, Truck, Package, Menu, X, ChevronRight, Zap } from 'lucide-react';
 
 const Dashboard = () => {
@@ -314,6 +315,17 @@ const Dashboard = () => {
 
                 <span>My Impact</span>
 
+              </button>
+
+              <button
+                onClick={() => setCurrentView('leaderboard')}
+                className={`inline-flex items-center space-x-1 px-3 py-2 rounded-lg transition ${currentView === 'leaderboard' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+              >
+                {/* tiny bar-chart icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M8 21V10M12 21V3M16 21v-6" />
+                </svg>
+                <span>Leaderboard</span>
               </button>
 
               <button onClick={() => setCurrentView('community')} className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition ${currentView === 'community' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
@@ -795,6 +807,13 @@ const Dashboard = () => {
 
         </div>
 
+      )}
+
+      {currentView === 'leaderboard' && (
+        <div className="bg-white rounded-xl shadow p-6">
+          <h3 className="text-2xl font-bold text-gray-800 mb-4">Top Restaurants</h3>
+          <LeaderboardPanel />
+        </div>
       )}
 
       {currentView === 'community' && (
