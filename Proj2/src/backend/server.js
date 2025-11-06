@@ -15,6 +15,9 @@ let users = require(usersFile);
 app.use(cors());
 app.use(express.json());
 
+const homeRoutes = require("./routes/home");
+app.use("/", homeRoutes);
+
 // LOGIN endpoint
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
