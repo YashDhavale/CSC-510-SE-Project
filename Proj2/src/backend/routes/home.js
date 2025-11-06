@@ -1,21 +1,66 @@
 const express = require("express");
-const router = express.Router();
 const path = require("path");
 const fs = require("fs");
 const csv = require("csv-parser");
 
-const csvFilePath = path.join(__dirname, "../../../data/Restaurant_Metadata.csv");
+const router = express.Router();
 
-// GET all restaurants
+const dataPath = path.join(__dirname, "../../../data");
+const restaurantFile = path.join(dataPath, "restaurant_metadata.csv");
+const wasteFile = path.join(dataPath, "Raleigh_Food_Waste__1-week_sample_.csv");
+
 router.get("/restaurants", (req, res) => {
   const results = [];
-  fs.createReadStream(csvFilePath)
+  fs.createReadStream(restaurantFile)
     .pipe(csv())
-    .on("data", (data) => results.push(data))
-    .on("end", () => res.json(results))
+    .on("data", (row) => results.push(row))
+    .on("end", () => {
+      res.json(results);
+    })
     .on("error", (err) => {
-      console.error("Error reading CSV:", err);
+      console.error("❌ Error reading restaurant CSV:", err);
       res.status(500).json({ error: "Failed to load restaurant data" });
+    });
+});
+
+const usersFile = path.join(__dirname, "../secrets/users.js");
+
+router.get("/impact", (req, res) => {
+  let totalMeals = 0;
+  let totalWaste = 0;
+
+  fs.createReadStream(wasteFile)
+    .pipe(csv())
+    .on("data", (row) => {
+      const servings = parseFloat(row.servings) || 0;
+      const quantity = parseFloat(row.quantity_lb) || 0;
+
+      totalMeals += servings;
+      totalWaste += quantity;
+    })
+    .on("end", () => {
+      let activeUsers = 0;
+
+      fs.createReadStream(usersFile)
+        .pipe(csv())
+        .on("data", () => {
+          activeUsers += 1; // count each user row
+        })
+        .on("end", () => {
+          res.json({
+            mealsRescued: totalMeals.toFixed(0),
+            wastePreventedTons: (totalWaste / 2000).toFixed(1),
+            communityImpact: activeUsers,
+          });
+        })
+        .on("error", (err) => {
+          console.error("❌ Error reading users CSV:", err);
+          res.status(500).json({ error: "Failed to load user data" });
+        });
+    })
+    .on("error", (err) => {
+      console.error("❌ Error reading waste CSV:", err);
+      res.status(500).json({ error: "Failed to load impact data" });
     });
 });
 

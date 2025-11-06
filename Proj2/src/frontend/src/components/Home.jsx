@@ -3,12 +3,20 @@ import { Leaf, TrendingUp, Users, Store, ArrowRight } from 'lucide-react';
 
 export default function Home({ onNavigate }) {
   const [restaurants, setRestaurants] = useState([]);
+  const [impact, setImpact] = useState({ mealsRescued: 0, wastePrevented: '', activeUsers: 0 });
 
   useEffect(() => {
+    // Fetch restaurants
     fetch("http://localhost:5000/restaurants")
       .then((res) => res.json())
       .then((data) => setRestaurants(data))
       .catch((err) => console.error("Error fetching restaurants:", err));
+
+    // Fetch impact stats
+    fetch("http://localhost:5000/impact")
+      .then((res) => res.json())
+      .then((data) => setImpact(data))
+      .catch((err) => console.error("Error fetching impact stats:", err));
   }, []);
 
   return (
@@ -27,19 +35,16 @@ export default function Home({ onNavigate }) {
         {/* Features */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           <Feature
-            color="green"
             icon={<Leaf className="w-8 h-8 text-green-600" />}
             title="Save the Planet"
             desc="Reduce food waste and carbon emissions with every meal you rescue"
           />
           <Feature
-            color="blue"
             icon={<TrendingUp className="w-8 h-8 text-blue-600" />}
             title="Save Money"
             desc="Get delicious meals at up to 40% off regular prices"
           />
           <Feature
-            color="purple"
             icon={<Users className="w-8 h-8 text-purple-600" />}
             title="Support Local"
             desc="Help local restaurants reduce waste and thrive in your community"
@@ -66,9 +71,9 @@ export default function Home({ onNavigate }) {
         <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl p-12 text-center">
           <h3 className="text-3xl font-bold mb-4">Community Impact</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <Impact value="8,934" label="Meals Rescued" />
-            <Impact value="4.2 tons" label="Waste Prevented" />
-            <Impact value="1,247" label="Active Users" />
+            <Impact value={Number(impact.mealsRescued || 0).toLocaleString()} label="Meals Rescued" />
+            <Impact value={`${impact.wastePreventedTons || 0} tons`} label="Waste Prevented" />
+            <Impact value={Number(impact.communityImpact || 0).toLocaleString()} label="Active Users" />
           </div>
           <button
             onClick={() => onNavigate('login')}
