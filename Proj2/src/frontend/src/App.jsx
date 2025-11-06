@@ -19,7 +19,8 @@ function App() {
 
   return (
     <div>
-      <Navbar onNavigate={setPage} loggedIn={loggedIn} />
+      
+      {page !== 'dashboard' && <Navbar onNavigate={setPage} loggedIn={loggedIn} />}
       {page === 'home' && <Home onNavigate={setPage} />}
       {page === 'login' && <LoginChoice onLoginSelect={setPage} />}
       {page === 'customer' && (<CustomerLogin 
