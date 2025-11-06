@@ -14,7 +14,10 @@ app.use(cors());
 app.use(express.json());
 
 const homeRoutes = require("./routes/home");
+const cartRoutes = require("./routes/cart");
+
 app.use("/", homeRoutes);
+app.use("/", cartRoutes);
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;

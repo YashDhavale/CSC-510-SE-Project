@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import Cart from './Cart';
 import { ShoppingCart, Heart, Leaf, TrendingUp, Users, Star, Search, MapPin, Clock, Award, Truck, Package, Menu, X, ChevronRight, Zap } from 'lucide-react';
 
 const Dashboard = () => {
@@ -328,7 +328,10 @@ const Dashboard = () => {
 
             <div className="flex items-center space-x-4">
 
-              <button className="relative">
+              <button 
+                onClick={() => setCurrentView('cart')}
+                className="relative hover:opacity-80 transition"
+              >
 
                 <ShoppingCart className="w-6 h-6" />
 
@@ -842,6 +845,19 @@ const Dashboard = () => {
 
         </div>
 
+      )}
+
+      {currentView === 'cart' && (
+        <Cart 
+          cart={cart} 
+          setCart={setCart}
+          onBack={() => setCurrentView('browse')}
+          restaurants={restaurants}
+          onOrderPlaced={(result) => {
+            // Optionally handle order placement result
+            console.log('Order placed:', result);
+          }}
+        />
       )}
 
     </div>
