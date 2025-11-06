@@ -190,5 +190,49 @@
       "Village Noodle Bar": 30,
       "Oak Street Bistro": 10
     }
+  },
+  {
+    "id": "ORD-1762416023650",
+    "timestamp": "2025-11-06T08:00:23.650Z",
+    "items": [
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": "Veggie Ramen",
+        "price": 7.49,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": "7.49",
+      "totalSavings": "5.00",
+      "total": "7.49",
+      "rescueMealCount": 1
+    },
+    "pointsEarned": {
+      "Village Noodle Bar": 10
+    }
+  },
+  {
+    "id": "ORD-1762416036146",
+    "timestamp": "2025-11-06T08:00:36.146Z",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": "Chicken Salad Sandwich",
+        "price": 6.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": "6.99",
+      "totalSavings": "4.00",
+      "total": "6.99",
+      "rescueMealCount": 1
+    },
+    "pointsEarned": {
+      "Eastside Deli": 10
+    }
   }
 ]
