@@ -13,6 +13,7 @@ import sys
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
@@ -24,6 +25,8 @@ from analysis.correlate_efficiency_waste import (
 )
 
 app = Flask(__name__)
+from leaderboard_api import leaderboard_bp
+app.register_blueprint(leaderboard_bp)
 CORS(app)  # Enable CORS for frontend access
 
 

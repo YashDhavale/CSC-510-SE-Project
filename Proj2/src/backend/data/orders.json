@@ -131,5 +131,64 @@
     "pointsEarned": {
       "Village Noodle Bar": 10
     }
+  },
+  {
+    "id": "ORD-1762401874758",
+    "timestamp": "2025-11-06T04:04:34.758Z",
+    "items": [
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": "Veggie Thali",
+        "price": 8.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": "Pad Thai",
+        "price": 6.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": "Pad Thai",
+        "price": 6.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": "Pad Thai",
+        "price": 6.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": "Paneer Tikka Bowl",
+        "price": 9.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "Oak Street Bistro",
+        "meal": "Biscuits & Gravy",
+        "price": 5.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": "45.94",
+      "totalSavings": "29.00",
+      "total": "45.94",
+      "rescueMealCount": 6
+    },
+    "pointsEarned": {
+      "GreenBite Cafe": 20,
+      "Village Noodle Bar": 30,
+      "Oak Street Bistro": 10
+    }
   }
 ]
