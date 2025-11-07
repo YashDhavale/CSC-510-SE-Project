@@ -1,0 +1,15 @@
+# .eslintrc.json
+{
+  "extends": ["eslint:recommended", "plugin:react/recommended"],
+  "rules": {
+    "semi": ["error", "always"],
+    "quotes": ["error", "double"]
+  }
+}
+
+# .prettierrc
+{
+  "singleQuote": true,
+  "semi": false,
+  "printWidth": 80
+}
