@@ -1,0 +1,95 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [ main, master, proj2 ]
+  pull_request:
+    branches: [ main, master, proj2 ]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        test-suite: [python, frontend, backend]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      if: matrix.test-suite == 'python'
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    
+    - name: Install Python dependencies
+      if: matrix.test-suite == 'python'
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov coverage
+    
+    - name: Run Python tests with coverage
+      if: matrix.test-suite == 'python'
+      working-directory: Proj2
+      run: |
+        pytest --cov=src --cov-report=xml --cov-report=term
+    
+    - name: Upload Python coverage to Codecov
+      if: matrix.test-suite == 'python'
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./Proj2/coverage.xml
+        flags: python
+        name: python-coverage
+        fail_ci_if_error: false
+    
+    - name: Set up Node.js
+      if: matrix.test-suite == 'frontend' || matrix.test-suite == 'backend'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install frontend dependencies
+      if: matrix.test-suite == 'frontend'
+      working-directory: Proj2/src/frontend
+      run: npm ci
+    
+    - name: Run frontend tests with coverage
+      if: matrix.test-suite == 'frontend'
+      working-directory: Proj2/src/frontend
+      run: npm run test:coverage
+      env:
+        CI: true
+    
+    - name: Upload frontend coverage to Codecov
+      if: matrix.test-suite == 'frontend'
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./Proj2/src/frontend/coverage/lcov.info
+        flags: frontend
+        name: frontend-coverage
+        fail_ci_if_error: false
+    
+    - name: Install backend dependencies
+      if: matrix.test-suite == 'backend'
+      working-directory: Proj2/src/backend
+      run: npm ci
+    
+    - name: Run backend tests with coverage
+      if: matrix.test-suite == 'backend'
+      working-directory: Proj2
+      run: |
+        cd src/backend
+        npx jest --config=../../jest.config.js --coverage --coverageReporters=text --coverageReporters=lcov --coverageReporters=json
+    
+    - name: Upload backend coverage to Codecov
+      if: matrix.test-suite == 'backend'
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./Proj2/coverage/lcov.info
+        flags: backend
+        name: backend-coverage
+        fail_ci_if_error: false
+

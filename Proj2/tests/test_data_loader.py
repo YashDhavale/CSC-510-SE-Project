@@ -212,3 +212,5 @@ class TestIntegrateAll:
         result = integrate_all()
         assert result['waste_per_serving_lb'].fillna(0).iloc[0] == 0
 
+
+

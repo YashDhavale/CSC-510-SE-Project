@@ -1,0 +1,33 @@
+codecov:
+  require_ci_to_pass: false
+
+coverage:
+  status:
+    project:
+      default:
+        target: 70%
+        threshold: 1%
+    patch:
+      default:
+        target: 70%
+        threshold: 1%
+
+comment:
+  layout: "reach,diff,flags,tree,reach"
+  behavior: default
+  require_changes: false
+
+flags:
+  python:
+    paths:
+      - Proj2/src/
+    carryforward: true
+  frontend:
+    paths:
+      - Proj2/src/frontend/src/
+    carryforward: true
+  backend:
+    paths:
+      - Proj2/src/backend/
+    carryforward: true
+

@@ -10,6 +10,7 @@ module.exports = {
     'src/backend/**/*.js',
     '!src/backend/**/*.test.js'
   ],
+  coverageReporters: ['text', 'lcov', 'json', 'html'],
   moduleDirectories: ['node_modules', 'src/backend/node_modules'],
   roots: ['<rootDir>'],
   moduleNameMapper: {
