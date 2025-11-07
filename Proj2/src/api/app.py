@@ -25,7 +25,7 @@ from analysis.correlate_efficiency_waste import (
 )
 
 app = Flask(__name__)
-from leaderboard_api import leaderboard_bp
+from api.leaderboard_api import leaderboard_bp
 app.register_blueprint(leaderboard_bp)
 CORS(app)  # Enable CORS for frontend access
 

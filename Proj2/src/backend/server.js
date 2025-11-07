@@ -13,14 +13,8 @@ let users = require(usersFile);
 app.use(cors());
 app.use(express.json());
 
-const homeRoutes = require("./routes/home");
-const cartRoutes = require("./routes/cart");
-const dashboardRoutes = require("./routes/dashboard");
-
-app.use("/", homeRoutes);
-app.use("/", cartRoutes);
-app.use("/", dashboardRoutes);
-
+// Define login and register routes BEFORE mounting other routes
+// This ensures they are matched first and not intercepted by other route handlers
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const user = users.find((u) => u.email === email && u.password === password);
@@ -56,6 +50,15 @@ app.post("/register", (req, res) => {
   }
 });
 
+// Mount other routes after login/register routes
+const homeRoutes = require("./routes/home");
+const cartRoutes = require("./routes/cart");
+const dashboardRoutes = require("./routes/dashboard");
+
+app.use("/", homeRoutes);
+app.use("/", cartRoutes);
+app.use("/", dashboardRoutes);
+
 // ------------------------------
 // 🔹 Root Route
 // ------------------------------
@@ -63,6 +66,11 @@ app.get("/", (req, res) => {
   res.send("Backend is running successfully!");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Only start the server if this file is run directly (not in tests)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

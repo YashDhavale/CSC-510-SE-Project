@@ -7,12 +7,21 @@ const express = require('express');
 const fs = require('fs');
 
 // Mock fs and csv reading
-const mockFs = {
-  existsSync: jest.fn(),
-  createReadStream: jest.fn()
-};
+jest.mock('fs', () => {
+  const actualFs = jest.requireActual('fs');
+  return {
+    ...actualFs,
+    existsSync: jest.fn(),
+    createReadStream: jest.fn(),
+    readFileSync: jest.fn()
+  };
+});
 
-jest.mock('fs', () => mockFs);
+jest.mock('csv-parser', () => {
+  return jest.fn(() => ({
+    on: jest.fn()
+  }));
+});
 
 const dashboardRoutes = require('../../src/backend/routes/dashboard');
 
@@ -25,7 +34,7 @@ describe('Dashboard Routes Tests', () => {
     app.use('/', dashboardRoutes);
     
     jest.clearAllMocks();
-    mockFs.existsSync.mockReturnValue(true);
+    fs.existsSync.mockReturnValue(true);
   });
 
   describe('GET /dashboard/restaurants', () => {
@@ -89,8 +98,8 @@ describe('Dashboard Routes Tests', () => {
     });
 
     test('handles missing files gracefully', async () => {
-      mockFs.existsSync.mockReturnValue(false);
-      mockFs.createReadStream.mockReturnValue({
+      fs.existsSync.mockReturnValue(false);
+      fs.createReadStream.mockReturnValue({
         pipe: jest.fn().mockReturnValue({
           on: jest.fn((event, callback) => {
             if (event === 'end') {
@@ -106,7 +115,7 @@ describe('Dashboard Routes Tests', () => {
     });
 
     test('handles file read error', async () => {
-      mockFs.createReadStream.mockReturnValue({
+      fs.createReadStream.mockReturnValue({
         pipe: jest.fn().mockReturnValue({
           on: jest.fn((event, callback) => {
             if (event === 'error') {
@@ -162,7 +171,7 @@ describe('Dashboard Routes Tests', () => {
     });
 
     test('handles file read error', async () => {
-      mockFs.createReadStream.mockReturnValue({
+      fs.createReadStream.mockReturnValue({
         pipe: jest.fn().mockReturnValue({
           on: jest.fn((event, callback) => {
             if (event === 'error') {
@@ -180,8 +189,8 @@ describe('Dashboard Routes Tests', () => {
 
   describe('GET /dashboard/user-impact', () => {
     test('returns 200 status code', async () => {
-      mockFs.existsSync.mockReturnValue(true);
-      mockFs.readFileSync = jest.fn().mockReturnValue('[]');
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync = jest.fn().mockReturnValue('[]');
 
       const response = await request(app).get('/dashboard/user-impact');
       expect(response.status).toBe(200);
@@ -202,8 +211,8 @@ describe('Dashboard Routes Tests', () => {
         }
       ];
 
-      mockFs.existsSync.mockReturnValue(true);
-      mockFs.readFileSync = jest.fn().mockReturnValue(JSON.stringify(ordersData));
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync = jest.fn().mockReturnValue(JSON.stringify(ordersData));
 
       const response = await request(app).get('/dashboard/user-impact');
       expect(response.body.mealsOrdered).toBe(2);
@@ -222,8 +231,8 @@ describe('Dashboard Routes Tests', () => {
         }
       ];
 
-      mockFs.existsSync.mockReturnValue(true);
-      mockFs.readFileSync = jest.fn().mockReturnValue(JSON.stringify(ordersData));
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync = jest.fn().mockReturnValue(JSON.stringify(ordersData));
 
       const response = await request(app).get('/dashboard/user-impact');
       expect(response.body.impactLevel).toBe('Sustainability Champion');
@@ -240,6 +249,13 @@ describe('Dashboard Routes Tests', () => {
       ];
 
       setupMockCSVReadMultiple([mockWasteData, mockDeliveryData]);
+      // Mock users file - return false so it uses delivery logs estimate
+      fs.existsSync.mockImplementation((filePath) => {
+        if (filePath && filePath.includes('users')) {
+          return false;
+        }
+        return true;
+      });
 
       const response = await request(app).get('/dashboard/community-stats');
       expect(response.status).toBe(200);
@@ -255,6 +271,13 @@ describe('Dashboard Routes Tests', () => {
       ];
 
       setupMockCSVReadMultiple([mockWasteData, mockDeliveryData]);
+      // Mock users file - return false so it uses delivery logs estimate
+      fs.existsSync.mockImplementation((filePath) => {
+        if (filePath && filePath.includes('users')) {
+          return false;
+        }
+        return true;
+      });
 
       const response = await request(app).get('/dashboard/community-stats');
       expect(response.body.mealsRescued).toBeDefined();
@@ -264,38 +287,44 @@ describe('Dashboard Routes Tests', () => {
 });
 
 // Helper function to setup mock CSV reading
+// For routes that read multiple files, this will return the same data for all files
 function setupMockCSVRead(mockData) {
-  mockFs.createReadStream.mockReturnValue({
-    pipe: jest.fn().mockReturnValue({
+  let callCount = 0;
+  fs.createReadStream.mockImplementation(() => {
+    const mockStream = {
       on: jest.fn((event, callback) => {
         if (event === 'data') {
-          mockData.forEach(item => callback(item));
+          mockData.forEach(item => setTimeout(() => callback(item), 0));
         } else if (event === 'end') {
-          setTimeout(() => callback(), 0);
+          setTimeout(() => callback(), 20);
         }
-        return { on: jest.fn() };
+        return mockStream;
       })
-    })
+    };
+    return {
+      pipe: jest.fn(() => mockStream)
+    };
   });
 }
 
 // Helper function to setup multiple CSV reads
 function setupMockCSVReadMultiple(mockDataArrays) {
   let callIndex = 0;
-  mockFs.createReadStream.mockImplementation(() => {
+  fs.createReadStream.mockImplementation(() => {
     const data = callIndex < mockDataArrays.length ? mockDataArrays[callIndex] : [];
     callIndex++;
-    return {
-      pipe: jest.fn().mockReturnValue({
-        on: jest.fn((event, callback) => {
-          if (event === 'data') {
-            data.forEach(item => callback(item));
-          } else if (event === 'end') {
-            setTimeout(() => callback(), 0);
-          }
-          return { on: jest.fn() };
-        })
+    const mockStream = {
+      on: jest.fn((event, callback) => {
+        if (event === 'data') {
+          data.forEach(item => setTimeout(() => callback(item), 0));
+        } else if (event === 'end') {
+          setTimeout(() => callback(), 20);
+        }
+        return mockStream;
       })
+    };
+    return {
+      pipe: jest.fn(() => mockStream)
     };
   });
 }

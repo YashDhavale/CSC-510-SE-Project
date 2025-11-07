@@ -4,20 +4,32 @@
  */
 const request = require('supertest');
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
-const csv = require('csv-parser');
 
-// Mock fs and csv-parser
-jest.mock('fs');
-jest.mock('csv-parser');
+// Mock fs and csv-parser BEFORE requiring routes
+jest.mock('fs', () => {
+  const actualFs = jest.requireActual('fs');
+  return {
+    ...actualFs,
+    createReadStream: jest.fn()
+  };
+});
+
+jest.mock('csv-parser', () => {
+  return jest.fn(() => ({
+    on: jest.fn()
+  }));
+});
 
 const homeRoutes = require('../../src/backend/routes/home');
+const fs = require('fs');
+const csv = require('csv-parser');
 
 describe('Home Routes Tests', () => {
   let app;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     app = express();
     app.use(express.json());
     app.use('/', homeRoutes);
@@ -30,19 +42,19 @@ describe('Home Routes Tests', () => {
         { restaurant: 'Restaurant2', cuisine: 'Mexican' }
       ];
 
-      fs.createReadStream = jest.fn().mockReturnValue({
-        pipe: jest.fn().mockReturnValue({
-          on: jest.fn((event, callback) => {
-            if (event === 'data') {
-              mockData.forEach(item => callback(item));
-            } else if (event === 'end') {
-              setTimeout(() => callback(), 0);
-            }
-            return {
-              on: jest.fn()
-            };
-          })
+      const mockStream = {
+        on: jest.fn((event, callback) => {
+          if (event === 'data') {
+            mockData.forEach(item => setTimeout(() => callback(item), 0));
+          } else if (event === 'end') {
+            setTimeout(() => callback(), 10);
+          }
+          return mockStream;
         })
+      };
+
+      fs.createReadStream.mockReturnValue({
+        pipe: jest.fn(() => mockStream)
       });
 
       const response = await request(app).get('/restaurants');
@@ -54,19 +66,19 @@ describe('Home Routes Tests', () => {
         { restaurant: 'Restaurant1', cuisine: 'Italian' }
       ];
 
-      fs.createReadStream = jest.fn().mockReturnValue({
-        pipe: jest.fn().mockReturnValue({
-          on: jest.fn((event, callback) => {
-            if (event === 'data') {
-              mockData.forEach(item => callback(item));
-            } else if (event === 'end') {
-              setTimeout(() => callback(), 0);
-            }
-            return {
-              on: jest.fn()
-            };
-          })
+      const mockStream = {
+        on: jest.fn((event, callback) => {
+          if (event === 'data') {
+            mockData.forEach(item => setTimeout(() => callback(item), 0));
+          } else if (event === 'end') {
+            setTimeout(() => callback(), 10);
+          }
+          return mockStream;
         })
+      };
+
+      fs.createReadStream.mockReturnValue({
+        pipe: jest.fn(() => mockStream)
       });
 
       const response = await request(app).get('/restaurants');
@@ -74,17 +86,17 @@ describe('Home Routes Tests', () => {
     });
 
     test('handles file read error gracefully', async () => {
-      fs.createReadStream = jest.fn().mockReturnValue({
-        pipe: jest.fn().mockReturnValue({
-          on: jest.fn((event, callback) => {
-            if (event === 'error') {
-              setTimeout(() => callback(new Error('File not found')), 0);
-            }
-            return {
-              on: jest.fn()
-            };
-          })
+      const mockStream = {
+        on: jest.fn((event, callback) => {
+          if (event === 'error') {
+            setTimeout(() => callback(new Error('File not found')), 10);
+          }
+          return mockStream;
         })
+      };
+
+      fs.createReadStream.mockReturnValue({
+        pipe: jest.fn(() => mockStream)
       });
 
       const response = await request(app).get('/restaurants');
@@ -99,30 +111,28 @@ describe('Home Routes Tests', () => {
         { servings: '10', quantity_lb: '5.0' },
         { servings: '20', quantity_lb: '10.0' }
       ];
+      const mockUserData = [{ name: 'User1' }];
 
-      let callCount = 0;
-      fs.createReadStream = jest.fn().mockReturnValue({
-        pipe: jest.fn().mockReturnValue({
+      let streamCallCount = 0;
+      fs.createReadStream.mockImplementation((filePath) => {
+        streamCallCount++;
+        const isWasteFile = filePath.includes('Raleigh_Food_Waste') || filePath.includes('waste');
+        const mockData = isWasteFile ? mockWasteData : mockUserData;
+        
+        const mockStream = {
           on: jest.fn((event, callback) => {
             if (event === 'data') {
-              mockWasteData.forEach(item => callback(item));
+              mockData.forEach(item => setTimeout(() => callback(item), 0));
             } else if (event === 'end') {
-              callCount++;
-              if (callCount === 1) {
-                // First stream (waste data) ends
-                setTimeout(() => callback(), 0);
-              } else {
-                // Second stream (users) ends
-                setTimeout(() => callback(), 0);
-              }
-            } else if (event === 'error') {
-              // Handle errors
+              setTimeout(() => callback(), 20);
             }
-            return {
-              on: jest.fn()
-            };
+            return mockStream;
           })
-        })
+        };
+
+        return {
+          pipe: jest.fn(() => mockStream)
+        };
       });
 
       const response = await request(app).get('/impact');
@@ -134,22 +144,26 @@ describe('Home Routes Tests', () => {
         { servings: '10', quantity_lb: '5.0' },
         { servings: '20', quantity_lb: '10.0' }
       ];
+      const mockUserData = [{ name: 'User1' }];
 
-      let callCount = 0;
-      fs.createReadStream = jest.fn().mockReturnValue({
-        pipe: jest.fn().mockReturnValue({
+      fs.createReadStream.mockImplementation((filePath) => {
+        const isWasteFile = filePath.includes('Raleigh_Food_Waste') || filePath.includes('waste');
+        const mockData = isWasteFile ? mockWasteData : mockUserData;
+        
+        const mockStream = {
           on: jest.fn((event, callback) => {
             if (event === 'data') {
-              mockWasteData.forEach(item => callback(item));
+              mockData.forEach(item => setTimeout(() => callback(item), 0));
             } else if (event === 'end') {
-              callCount++;
-              setTimeout(() => callback(), 0);
+              setTimeout(() => callback(), 20);
             }
-            return {
-              on: jest.fn()
-            };
+            return mockStream;
           })
-        })
+        };
+
+        return {
+          pipe: jest.fn(() => mockStream)
+        };
       });
 
       const response = await request(app).get('/impact');
@@ -160,22 +174,26 @@ describe('Home Routes Tests', () => {
       const mockWasteData = [
         { servings: '10', quantity_lb: '2000.0' }  // 1 ton
       ];
+      const mockUserData = [{ name: 'User1' }];
 
-      let callCount = 0;
-      fs.createReadStream = jest.fn().mockReturnValue({
-        pipe: jest.fn().mockReturnValue({
+      fs.createReadStream.mockImplementation((filePath) => {
+        const isWasteFile = filePath.includes('Raleigh_Food_Waste') || filePath.includes('waste');
+        const mockData = isWasteFile ? mockWasteData : mockUserData;
+        
+        const mockStream = {
           on: jest.fn((event, callback) => {
             if (event === 'data') {
-              mockWasteData.forEach(item => callback(item));
+              mockData.forEach(item => setTimeout(() => callback(item), 0));
             } else if (event === 'end') {
-              callCount++;
-              setTimeout(() => callback(), 0);
+              setTimeout(() => callback(), 20);
             }
-            return {
-              on: jest.fn()
-            };
+            return mockStream;
           })
-        })
+        };
+
+        return {
+          pipe: jest.fn(() => mockStream)
+        };
       });
 
       const response = await request(app).get('/impact');
@@ -186,22 +204,26 @@ describe('Home Routes Tests', () => {
       const mockWasteData = [
         { servings: '10', quantity_lb: '5.0' }
       ];
+      const mockUserData = [{ name: 'User1' }, { name: 'User2' }];
 
-      let callCount = 0;
-      fs.createReadStream = jest.fn().mockReturnValue({
-        pipe: jest.fn().mockReturnValue({
+      fs.createReadStream.mockImplementation((filePath) => {
+        const isWasteFile = filePath.includes('Raleigh_Food_Waste') || filePath.includes('waste');
+        const mockData = isWasteFile ? mockWasteData : mockUserData;
+        
+        const mockStream = {
           on: jest.fn((event, callback) => {
             if (event === 'data') {
-              mockWasteData.forEach(item => callback(item));
+              mockData.forEach(item => setTimeout(() => callback(item), 0));
             } else if (event === 'end') {
-              callCount++;
-              setTimeout(() => callback(), 0);
+              setTimeout(() => callback(), 20);
             }
-            return {
-              on: jest.fn()
-            };
+            return mockStream;
           })
-        })
+        };
+
+        return {
+          pipe: jest.fn(() => mockStream)
+        };
       });
 
       const response = await request(app).get('/impact');
@@ -212,22 +234,26 @@ describe('Home Routes Tests', () => {
       const mockWasteData = [
         { servings: 'invalid', quantity_lb: 'not_a_number' }
       ];
+      const mockUserData = [{ name: 'User1' }];
 
-      let callCount = 0;
-      fs.createReadStream = jest.fn().mockReturnValue({
-        pipe: jest.fn().mockReturnValue({
+      fs.createReadStream.mockImplementation((filePath) => {
+        const isWasteFile = filePath.includes('Raleigh_Food_Waste') || filePath.includes('waste');
+        const mockData = isWasteFile ? mockWasteData : mockUserData;
+        
+        const mockStream = {
           on: jest.fn((event, callback) => {
             if (event === 'data') {
-              mockWasteData.forEach(item => callback(item));
+              mockData.forEach(item => setTimeout(() => callback(item), 0));
             } else if (event === 'end') {
-              callCount++;
-              setTimeout(() => callback(), 0);
+              setTimeout(() => callback(), 20);
             }
-            return {
-              on: jest.fn()
-            };
+            return mockStream;
           })
-        })
+        };
+
+        return {
+          pipe: jest.fn(() => mockStream)
+        };
       });
 
       const response = await request(app).get('/impact');
@@ -236,17 +262,17 @@ describe('Home Routes Tests', () => {
     });
 
     test('handles file read error for waste file', async () => {
-      fs.createReadStream = jest.fn().mockReturnValue({
-        pipe: jest.fn().mockReturnValue({
-          on: jest.fn((event, callback) => {
-            if (event === 'error') {
-              setTimeout(() => callback(new Error('File not found')), 0);
-            }
-            return {
-              on: jest.fn()
-            };
-          })
+      const mockStream = {
+        on: jest.fn((event, callback) => {
+          if (event === 'error') {
+            setTimeout(() => callback(new Error('File not found')), 10);
+          }
+          return mockStream;
         })
+      };
+
+      fs.createReadStream.mockReturnValue({
+        pipe: jest.fn(() => mockStream)
       });
 
       const response = await request(app).get('/impact');
@@ -258,36 +284,35 @@ describe('Home Routes Tests', () => {
         { servings: '10', quantity_lb: '5.0' }
       ];
 
-      let callCount = 0;
-      fs.createReadStream = jest.fn().mockImplementation((filePath) => {
-        if (filePath.includes('users')) {
-          return {
-            pipe: jest.fn().mockReturnValue({
-              on: jest.fn((event, callback) => {
-                if (event === 'error') {
-                  setTimeout(() => callback(new Error('File not found')), 0);
-                }
-                return {
-                  on: jest.fn()
-                };
-              })
+      fs.createReadStream.mockImplementation((filePath) => {
+        const isWasteFile = filePath.includes('Raleigh_Food_Waste') || filePath.includes('waste');
+        
+        if (isWasteFile) {
+          const mockStream = {
+            on: jest.fn((event, callback) => {
+              if (event === 'data') {
+                mockWasteData.forEach(item => setTimeout(() => callback(item), 0));
+              } else if (event === 'end') {
+                setTimeout(() => callback(), 20);
+              }
+              return mockStream;
             })
           };
-        } else {
           return {
-            pipe: jest.fn().mockReturnValue({
-              on: jest.fn((event, callback) => {
-                if (event === 'data') {
-                  mockWasteData.forEach(item => callback(item));
-                } else if (event === 'end') {
-                  callCount++;
-                  setTimeout(() => callback(), 0);
-                }
-                return {
-                  on: jest.fn()
-                };
-              })
+            pipe: jest.fn(() => mockStream)
+          };
+        } else {
+          // Users file error
+          const mockStream = {
+            on: jest.fn((event, callback) => {
+              if (event === 'error') {
+                setTimeout(() => callback(new Error('File not found')), 10);
+              }
+              return mockStream;
             })
+          };
+          return {
+            pipe: jest.fn(() => mockStream)
           };
         }
       });

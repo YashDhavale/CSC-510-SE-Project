@@ -8,14 +8,16 @@ const fs = require('fs');
 const path = require('path');
 
 // Mock fs before requiring routes
-const mockFs = {
-  existsSync: jest.fn(),
-  readFileSync: jest.fn(),
-  writeFileSync: jest.fn(),
-  mkdirSync: jest.fn()
-};
-
-jest.mock('fs', () => mockFs);
+jest.mock('fs', () => {
+  const actualFs = jest.requireActual('fs');
+  return {
+    ...actualFs,
+    existsSync: jest.fn(),
+    readFileSync: jest.fn(),
+    writeFileSync: jest.fn(),
+    mkdirSync: jest.fn()
+  };
+});
 
 const cartRoutes = require('../../src/backend/routes/cart');
 
@@ -29,8 +31,16 @@ describe('Cart Routes Tests', () => {
     
     // Reset mocks
     jest.clearAllMocks();
-    mockFs.existsSync.mockReturnValue(true);
-    mockFs.readFileSync.mockReturnValue('{}');
+    fs.existsSync.mockReturnValue(true);
+    // Mock readFileSync to return different values based on file path
+    fs.readFileSync.mockImplementation((filePath) => {
+      if (filePath && filePath.includes('restaurant_points')) {
+        return '{}';
+      } else if (filePath && filePath.includes('orders')) {
+        return '[]';
+      }
+      return '{}';
+    });
   });
 
   describe('POST /api/orders', () => {
@@ -42,7 +52,14 @@ describe('Cart Routes Tests', () => {
         totals: { subtotal: 20.0, total: 22.0 }
       };
 
-      mockFs.readFileSync.mockReturnValue('{}');
+      fs.readFileSync.mockImplementation((filePath) => {
+        if (filePath && filePath.includes('restaurant_points')) {
+          return '{}';
+        } else if (filePath && filePath.includes('orders')) {
+          return '[]';
+        }
+        return '{}';
+      });
 
       const response = await request(app)
         .post('/api/orders')
@@ -83,7 +100,14 @@ describe('Cart Routes Tests', () => {
         totals: { subtotal: 20.0, total: 22.0 }
       };
 
-      mockFs.readFileSync.mockReturnValue('{}');
+      fs.readFileSync.mockImplementation((filePath) => {
+        if (filePath && filePath.includes('restaurant_points')) {
+          return '{}';
+        } else if (filePath && filePath.includes('orders')) {
+          return '[]';
+        }
+        return '{}';
+      });
 
       const response = await request(app)
         .post('/api/orders')
@@ -102,7 +126,7 @@ describe('Cart Routes Tests', () => {
         totals: { subtotal: 10.0, total: 11.0 }
       };
 
-      mockFs.readFileSync.mockReturnValue('[]');
+      fs.readFileSync.mockReturnValue('[]');
 
       const response = await request(app)
         .post('/api/orders')
@@ -121,13 +145,20 @@ describe('Cart Routes Tests', () => {
         totals: { subtotal: 10.0, total: 11.0 }
       };
 
-      mockFs.readFileSync.mockReturnValue('[]');
+      fs.readFileSync.mockImplementation((filePath) => {
+        if (filePath && filePath.includes('restaurant_points')) {
+          return '{}';
+        } else if (filePath && filePath.includes('orders')) {
+          return '[]';
+        }
+        return '[]';
+      });
 
       await request(app)
         .post('/api/orders')
         .send(orderData);
 
-      expect(mockFs.writeFileSync).toHaveBeenCalled();
+      expect(fs.writeFileSync).toHaveBeenCalled();
     });
 
     test('updates restaurant points for rescue meals', async () => {
@@ -145,7 +176,14 @@ describe('Cart Routes Tests', () => {
       };
 
       const existingPoints = { Restaurant1: 50 };
-      mockFs.readFileSync.mockReturnValue(JSON.stringify(existingPoints));
+      fs.readFileSync.mockImplementation((filePath) => {
+        if (filePath && filePath.includes('restaurant_points')) {
+          return JSON.stringify(existingPoints);
+        } else if (filePath && filePath.includes('orders')) {
+          return '[]';
+        }
+        return '{}';
+      });
 
       const response = await request(app)
         .post('/api/orders')
@@ -153,7 +191,7 @@ describe('Cart Routes Tests', () => {
 
       expect(response.status).toBe(200);
       // Points should be updated
-      expect(mockFs.writeFileSync).toHaveBeenCalled();
+      expect(fs.writeFileSync).toHaveBeenCalled();
     });
 
     test('handles multiple restaurants in one order', async () => {
@@ -177,7 +215,14 @@ describe('Cart Routes Tests', () => {
         totals: { subtotal: 30.0, total: 33.0 }
       };
 
-      mockFs.readFileSync.mockReturnValue('{}');
+      fs.readFileSync.mockImplementation((filePath) => {
+        if (filePath && filePath.includes('restaurant_points')) {
+          return '{}';
+        } else if (filePath && filePath.includes('orders')) {
+          return '[]';
+        }
+        return '{}';
+      });
 
       const response = await request(app)
         .post('/api/orders')
@@ -188,7 +233,7 @@ describe('Cart Routes Tests', () => {
     });
 
     test('handles server error gracefully', async () => {
-      mockFs.readFileSync.mockImplementation(() => {
+      fs.readFileSync.mockImplementation(() => {
         throw new Error('File read error');
       });
 
@@ -210,7 +255,7 @@ describe('Cart Routes Tests', () => {
 
   describe('GET /api/restaurant-points', () => {
     test('returns 200 status code', async () => {
-      mockFs.readFileSync.mockReturnValue('{"Restaurant1": 100}');
+      fs.readFileSync.mockReturnValue('{"Restaurant1": 100}');
 
       const response = await request(app).get('/api/restaurant-points');
 
@@ -220,7 +265,7 @@ describe('Cart Routes Tests', () => {
 
     test('returns points data', async () => {
       const pointsData = { Restaurant1: 100, Restaurant2: 50 };
-      mockFs.readFileSync.mockReturnValue(JSON.stringify(pointsData));
+      fs.readFileSync.mockReturnValue(JSON.stringify(pointsData));
 
       const response = await request(app).get('/api/restaurant-points');
 
@@ -228,7 +273,7 @@ describe('Cart Routes Tests', () => {
     });
 
     test('returns empty object when file does not exist', async () => {
-      mockFs.existsSync.mockReturnValue(false);
+      fs.existsSync.mockReturnValue(false);
 
       const response = await request(app).get('/api/restaurant-points');
 
@@ -237,7 +282,7 @@ describe('Cart Routes Tests', () => {
     });
 
     test('handles file read error', async () => {
-      mockFs.readFileSync.mockImplementation(() => {
+      fs.readFileSync.mockImplementation(() => {
         throw new Error('File read error');
       });
 
@@ -249,7 +294,7 @@ describe('Cart Routes Tests', () => {
 
   describe('GET /api/orders', () => {
     test('returns 200 status code', async () => {
-      mockFs.readFileSync.mockReturnValue('[]');
+      fs.readFileSync.mockReturnValue('[]');
 
       const response = await request(app).get('/api/orders');
 
@@ -261,7 +306,7 @@ describe('Cart Routes Tests', () => {
       const ordersData = [
         { id: 'ORD-1', items: [], totals: {} }
       ];
-      mockFs.readFileSync.mockReturnValue(JSON.stringify(ordersData));
+      fs.readFileSync.mockReturnValue(JSON.stringify(ordersData));
 
       const response = await request(app).get('/api/orders');
 
@@ -269,7 +314,7 @@ describe('Cart Routes Tests', () => {
     });
 
     test('returns empty array when file does not exist', async () => {
-      mockFs.existsSync.mockReturnValue(false);
+      fs.existsSync.mockReturnValue(false);
 
       const response = await request(app).get('/api/orders');
 
@@ -278,7 +323,7 @@ describe('Cart Routes Tests', () => {
     });
 
     test('handles file read error', async () => {
-      mockFs.readFileSync.mockImplementation(() => {
+      fs.readFileSync.mockImplementation(() => {
         throw new Error('File read error');
       });
 
