@@ -19,6 +19,10 @@
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![CSV](https://img.shields.io/badge/CSV-000000?style=for-the-badge&logo=files&logoColor=white)
+![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)
+![Linted with Flake8](https://img.shields.io/badge/lint-flake8-blue)
+![Formatted with Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg)
+![ESLint Status](https://img.shields.io/badge/lint-eslint-yellow)
 
 # 🥗 TiffinTrails
 
