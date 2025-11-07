@@ -1,4 +1,4 @@
-TiffinTrails Installation Guide
+# TiffinTrails Installation Guide
 This document explains how to install and run TiffinTrails locally.
 
 ⚙️ Prerequisites
