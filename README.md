@@ -3,8 +3,9 @@
 
 [![Contributors](https://img.shields.io/github/contributors/YashDhavale/CSC-510-SE-Project
 )](https://github.com/YashDhavale/CSC-510-SE-Project/graphs/contributors)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17554204.svg)](https://doi.org/10.5281/zenodo.17554204)
 [![Python Version](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-3100/)
-[![Last Commit](https://img.shields.io/github/last-commit/YashDhavale/CSC-510-SE-Project/proj2)](https://github.com/YashDhavale/CSC-510-SE-Project/commits/proj2)
+[![Last Commit](https://img.shields.io/github/last-commit/YashDhavale/CSC-510-SE-Project/proj2)](https://github.com/YashDhavale/CSC-510-SE-Project/commits/main)
 [![Issues](https://img.shields.io/github/issues/YashDhavale/CSC-510-SE-Project)](https://github.com/YashDhavale/CSC-510-SE-Project/issues)
 ![License](https://img.shields.io/github/license/YashDhavale/CSC-510-SE-Project)
 [![Forks](https://img.shields.io/github/forks/YashDhavale/CSC-510-SE-Project)](https://github.com/YashDhavale/CSC-510-SE-Project/network/members)
