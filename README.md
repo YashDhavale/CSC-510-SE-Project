@@ -23,6 +23,13 @@
 ![Linted with Flake8](https://img.shields.io/badge/lint-flake8-blue)
 ![Formatted with Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg)
 ![ESLint Status](https://img.shields.io/badge/lint-eslint-yellow)
+![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)
+![Linted with Flake8](https://img.shields.io/badge/lint-flake8-blue)
+![Formatted with Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg)
+![ESLint Status](https://img.shields.io/badge/lint-eslint-yellow)
+[![Coverage](https://img.shields.io/codecov/c/github/YashDhavale/CSC-510-SE-Project?logo=codecov)](https://app.codecov.io/gh/YashDhavale/CSC-510-SE-Project)
+![CodeQL](https://img.shields.io/github/actions/workflow/status/YashDhavale/CSC-510-SE-Project/codeql.yml?label=CodeQL%20Analysis&logo=github)
+
 
 # 🥗 TiffinTrails
 
