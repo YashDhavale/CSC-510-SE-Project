@@ -78,35 +78,40 @@ Include analytics charts showing total rescued meals and waste prevented over ti
 
 Introduce leaderboard or rewards system for top contributors.
 
-🧩 Tech Stack
-Layer	Technology
-Frontend	React.js, Tailwind CSS, shadcn/ui
-Backend	Node.js, Express.js
-Database (simulated)	CSV-based persistent data
-Version Control	Git & GitHub
-CI/CD	GitHub Actions
-Icons & UI	Lucide React
-Deployment	Render / Vercel (for frontend), Railway / Render (for backend)
-🧾 Third-party Dependencies
-Package	Version	NPM / Homepage	Type
-express	^4.19.2	express
-	Mandatory
-react	^19.0.0	react
-	Mandatory
-react-dom	^19.0.0	react-dom
-	Mandatory
-tailwindcss	^3.4.10	tailwindcss
-	Optional
-lucide-react	^0.545.0	lucide-react
-	Mandatory
-cors	^2.8.5	cors
-	Mandatory
-csv-parser	^3.0.0	csv-parser
-	Mandatory
-dotenv	^16.4.5	dotenv
-	Optional
-nodemon	^3.1.4	nodemon
-	Dev Dependency
+🧩 Third-Party Dependencies
+
+The following table lists all external dependencies used in TiffinTrails, including version numbers, usage type (mandatory/optional/dev), and license information.
+
+Frontend (React.js)
+
+| Package          | Version | Type      | License | Homepage / Source                                                      |
+| ---------------- | ------- | --------- | ------- | ---------------------------------------------------------------------- |
+| **react**        | 19.0.0  | Mandatory | MIT     | [react.dev](https://react.dev)                                         |
+| **react-dom**    | 19.0.0  | Mandatory | MIT     | [react.dev/reference/react-dom](https://react.dev/reference/react-dom) |
+| **tailwindcss**  | 3.4.10  | Optional  | MIT     | [tailwindcss.com](https://tailwindcss.com)                             |
+| **lucide-react** | 0.545.0 | Mandatory | ISC     | [lucide.dev](https://lucide.dev)                                       |
+| **shadcn/ui**    | latest  | Optional  | MIT     | [ui.shadcn.com](https://ui.shadcn.com)                                 |
+
+Backend (Node.js / Express.js)
+
+| Package        | Version | Type           | License      | Homepage / Source                                                        |
+| -------------- | ------- | -------------- | ------------ | ------------------------------------------------------------------------ |
+| **express**    | 4.19.2  | Mandatory      | MIT          | [expressjs.com](https://expressjs.com)                                   |
+| **cors**       | 2.8.5   | Mandatory      | MIT          | [github.com/expressjs/cors](https://github.com/expressjs/cors)           |
+| **csv-parser** | 3.0.0   | Mandatory      | MIT          | [npmjs.com/package/csv-parser](https://www.npmjs.com/package/csv-parser) |
+| **dotenv**     | 16.4.5  | Optional       | BSD-2-Clause | [npmjs.com/package/dotenv](https://www.npmjs.com/package/dotenv)         |
+| **nodemon**    | 3.1.4   | Dev Dependency | MIT          | [nodemon.io](https://nodemon.io)                                         |
+
+Data Analytics (Python)
+
+| Package           | Version | Type      | License      | Homepage / Source                                                        |
+| ----------------- | ------- | --------- | ------------ | ------------------------------------------------------------------------ |
+| **pandas**        | 2.2.2   | Mandatory | BSD-3-Clause | [pandas.pydata.org](https://pandas.pydata.org)                           |
+| **numpy**         | 1.26.4  | Mandatory | BSD-3-Clause | [numpy.org](https://numpy.org)                                           |
+| **matplotlib**    | 3.9.2   | Optional  | PSF          | [matplotlib.org](https://matplotlib.org)                                 |
+| **openpyxl**      | 3.1.5   | Optional  | MIT          | [openpyxl.readthedocs.io](https://openpyxl.readthedocs.io)               |
+| **python-dotenv** | 1.0.1   | Optional  | BSD-3-Clause | [pypi.org/project/python-dotenv](https://pypi.org/project/python-dotenv) |
+
 🧪 Example Use Cases
 🥡 Customer Use Case
 
