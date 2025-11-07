@@ -1,0 +1,53 @@
+FRONTEND TEST FILES (43 tests):
+- Proj2/src/frontend/src/__tests__/App.test.jsx
+- Proj2/src/frontend/src/__tests__/Home.test.jsx
+- Proj2/src/frontend/src/__tests__/Cart.test.jsx
+- Proj2/src/frontend/src/__tests__/Dashboard.test.jsx
+- Proj2/src/frontend/src/__tests__/Navbar.test.jsx
+- Proj2/src/frontend/src/__tests__/RestaurantCard.test.jsx
+- Proj2/src/frontend/src/__tests__/CustomerLogin.test.jsx
+- Proj2/src/frontend/src/__tests__/ImpactCard.test.jsx
+- Proj2/src/frontend/src/__tests__/LeaderboardPanel.test.jsx
+
+BACKEND TEST FILES (51 tests):
+- Proj2/tests/backend/test_server.js
+- Proj2/tests/backend/test_home_routes.js
+- Proj2/tests/backend/test_cart_routes.js
+- Proj2/tests/backend/test_dashboard_routes.js
+
+PYTHON TEST FILES (104 tests):
+- Proj2/tests/test_api_app.py
+- Proj2/tests/test_leaderboard_api.py
+- Proj2/tests/test_data_loader.py
+- Proj2/tests/test_delivery_metrics.py
+- Proj2/tests/test_efficiency_scoring.py
+- Proj2/tests/test_correlate_efficiency_waste.py
+- Proj2/tests/test_data_generator.py
+- Proj2/tests/integration/test_api_integration.py
+- Proj2/tests/test_rescue_meals_integration.py
+
+CONFIGURATION FILES:
+Frontend:
+- Proj2/src/frontend/package.json
+- Proj2/src/frontend/src/setupTests.js
+
+Backend:
+- Proj2/src/backend/package.json
+- Proj2/jest.config.js
+
+Python:
+- Proj2/requirements.txt
+- Proj2/pytest.ini
+- Proj2/tests/__init__.py
+
+SHARED/CI-CD:
+- .github/workflows/ci.yml
+
+DOCUMENTATION:
+- Proj2/RUN_TESTS.md
+- Proj2/RUN_NODE_TESTS.md
+- Proj2/src/frontend/RUN_FRONTEND_TESTS.md
+- Proj2/tests/README.md
+
+MODIFIED SOURCE FILES:
+- Proj2/src/api/app.py (fixed import)

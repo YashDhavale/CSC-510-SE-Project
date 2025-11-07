@@ -1,0 +1,8 @@
+restaurant,meal_name,original_price,rescue_price,quantity,expires_in
+Eastside Deli,Chicken Salad Sandwich,10.99,6.99,3,2 hours
+Eastside Deli,Veggie Grain Bowl,12.99,7.99,2,1 hour
+Oak Street Bistro,Biscuits & Gravy,9.99,5.99,4,3 hours
+GreenBite Cafe,Veggie Thali,13.99,8.99,5,2 hours
+GreenBite Cafe,Paneer Tikka Bowl,14.99,9.99,2,1.5 hours
+Triangle BBQ Co.,Pulled Pork Sandwich,11.99,6.99,3,2 hours
+Village Noodle Bar,Veggie Ramen,12.49,7.49,4,1 hour

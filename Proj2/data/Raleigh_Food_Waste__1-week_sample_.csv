@@ -1,0 +1,301 @@
+date,day_of_week,time,restaurant,entree,cuisine,location,waste_type,quantity_lb,servings,unit_cost_usd,est_cost_usd,disposal_method,reason,storage_temp_F,safe_temp_range_ok
+2025-10-07,Tuesday,06:24,Eastside Deli,Veggie Grain Bowl,New American,"Raleigh, Zone-4",Spoilage,6.48,13,9.36,60.65,Donation,Batch cooked too much,146.0,False
+2025-10-06,Monday,23:44,UrbanEats,Pad Thai,Deli,"Raleigh, Zone-1",Overproduction,7.24,8,4.19,30.34,Donation,Customer returned,33.4,False
+2025-10-08,Wednesday,06:17,GreenBite Cafe,Pad Thai,New American,"Raleigh, Zone-8",Expired,2.83,6,4.78,13.53,Compost,Shift change discard,134.8,True
+2025-10-10,Friday,19:24,Village Noodle Bar,Veggie Grain Bowl,Italian,"Raleigh, Zone-4",Prep Trim,11.9,18,3.02,35.94,Trash,Low demand,76.7,True
+2025-10-09,Thursday,21:55,UrbanEats,Veggie Grain Bowl,Deli,"Raleigh, Zone-8",Expired,1.65,2,3.25,5.36,Trash,Low demand,101.8,True
+2025-10-10,Friday,02:45,UrbanEats,Eggplant Parmesan,Southern,"Raleigh, Zone-1",Damaged,1.68,4,4.28,7.19,Trash,Low demand,141.2,False
+2025-10-07,Tuesday,03:34,Roosevelt Oyster House,Veggie Grain Bowl,Mexican,"Raleigh, Zone-6",Spoilage,5.21,44,5.7,29.7,Compost,Batch cooked too much,64.7,True
+2025-10-06,Monday,19:29,UrbanEats,Margherita Pizza,Indian,"Raleigh, Zone-4",Spoilage,4.62,11,6.62,30.58,Trash,Batch cooked too much,119.5,True
+2025-10-08,Wednesday,11:58,Village Noodle Bar,Chicken Salad Sandwich,New American,"Raleigh, Zone-1",Prep Trim,1.06,1,6.01,6.37,Compost,Inventory error,148.7,False
+2025-10-12,Sunday,10:52,Village Noodle Bar,Eggplant Parmesan,Mexican,"Raleigh, Zone-7",Damaged,0.54,2,6.59,3.56,Trash,Inventory error,62.1,True
+2025-10-12,Sunday,09:17,GreenBite Cafe,Veggie Grain Bowl,Fusion,"Raleigh, Zone-7",Expired,11.33,24,5.99,67.87,Compost,Inventory error,96.2,True
+2025-10-07,Tuesday,00:49,Eastside Deli,Biscuits & Gravy,Italian,"Raleigh, Zone-3",Damaged,4.34,20,6.22,26.99,Compost,End of service,79.6,True
+2025-10-11,Saturday,07:48,GreenBite Cafe,Veggie Grain Bowl,Indian,"Raleigh, Zone-1",Damaged,1.28,2,9.21,11.79,Donation,Customer returned,127.6,True
+2025-10-09,Thursday,20:53,Oak Street Bistro,Veggie Grain Bowl,Seafood,"Raleigh, Zone-3",Plate Waste,1.75,3,2.03,3.55,Donation,Batch cooked too much,64.2,True
+2025-10-11,Saturday,16:41,Southside Pizza Lab,Veggie Burrito,Southern,"Raleigh, Zone-5",Damaged,1.0,2,7.08,7.08,Compost,Inventory error,78.6,True
+2025-10-07,Tuesday,20:06,GreenBite Cafe,Veggie Burrito,Deli,"Raleigh, Zone-10",Prep Trim,0.99,1,6.89,6.82,Compost,Improper storage,144.2,False
+2025-10-09,Thursday,11:58,Hillside Kitchen,Chicken Salad Sandwich,New American,"Raleigh, Zone-10",Overproduction,3.93,13,2.86,11.24,Trash,Shift change discard,39.0,False
+2025-10-12,Sunday,01:27,Southside Pizza Lab,Margherita Pizza,Mexican,"Raleigh, Zone-9",Spoilage,8.11,31,4.65,37.71,Donation,End of service,155.4,False
+2025-10-12,Sunday,03:15,Hillside Kitchen,Veggie Grain Bowl,Seafood,"Raleigh, Zone-6",Plate Waste,5.04,46,11.0,55.44,Trash,Low demand,62.2,True
+2025-10-06,Monday,17:29,Village Noodle Bar,Chicken Salad Sandwich,Fusion,"Raleigh, Zone-9",Spoilage,2.64,4,7.88,20.8,Compost,Low demand,122.0,True
+2025-10-06,Monday,16:04,Hillside Kitchen,Biscuits & Gravy,Deli,"Raleigh, Zone-6",Overproduction,7.69,14,7.14,54.91,Trash,Batch cooked too much,93.1,True
+2025-10-12,Sunday,03:14,Southside Pizza Lab,Seared Salmon,Fusion,"Raleigh, Zone-8",Spoilage,3.42,7,9.85,33.69,Trash,Inventory error,42.3,True
+2025-10-10,Friday,21:42,Village Noodle Bar,Pad Thai,Seafood,"Raleigh, Zone-8",Damaged,3.39,9,2.54,8.61,Donation,Batch cooked too much,42.8,True
+2025-10-10,Friday,13:56,Village Noodle Bar,Biscuits & Gravy,New American,"Raleigh, Zone-4",Spoilage,1.7,2,7.36,12.51,Compost,End of service,53.9,True
+2025-10-11,Saturday,06:19,Hillside Kitchen,Biscuits & Gravy,Mexican,"Raleigh, Zone-9",Overproduction,5.72,38,2.51,14.36,Donation,Shift change discard,31.9,False
+2025-10-07,Tuesday,01:28,Hillside Kitchen,Margherita Pizza,Seafood,"Raleigh, Zone-8",Plate Waste,5.62,13,4.14,23.27,Trash,Low demand,51.4,True
+2025-10-06,Monday,00:35,Roosevelt Oyster House,Veggie Grain Bowl,Mexican,"Raleigh, Zone-5",Plate Waste,0.62,1,8.97,5.56,Donation,Shift change discard,102.2,True
+2025-10-11,Saturday,12:53,Southside Pizza Lab,Eggplant Parmesan,BBQ,"Raleigh, Zone-4",Overproduction,9.15,13,7.79,71.28,Donation,Low demand,127.2,True
+2025-10-06,Monday,15:36,Eastside Deli,Seared Salmon,Mexican,"Raleigh, Zone-9",Expired,0.2,1,3.57,0.71,Donation,Low demand,140.7,False
+2025-10-06,Monday,18:42,UrbanEats,Biscuits & Gravy,New American,"Raleigh, Zone-7",Overproduction,5.66,8,11.42,64.64,Donation,Inventory error,105.3,True
+2025-10-06,Monday,10:51,UrbanEats,Biscuits & Gravy,Seafood,"Raleigh, Zone-10",Expired,1.6,3,7.23,11.57,Trash,Inventory error,117.1,True
+2025-10-09,Thursday,13:47,Hillside Kitchen,Veggie Grain Bowl,Seafood,"Raleigh, Zone-3",Damaged,1.53,5,8.46,12.94,Trash,Improper storage,150.8,False
+2025-10-06,Monday,19:48,Eastside Deli,Fish & Chips,Fusion,"Raleigh, Zone-10",Overproduction,8.06,10,2.73,22.0,Compost,Customer returned,64.5,True
+2025-10-09,Thursday,23:18,Oak Street Bistro,Eggplant Parmesan,Asian,"Raleigh, Zone-5",Spoilage,3.64,5,6.38,23.22,Donation,Batch cooked too much,69.3,True
+2025-10-12,Sunday,00:26,Eastside Deli,Veggie Burrito,BBQ,"Raleigh, Zone-2",Spoilage,5.81,15,4.64,26.96,Compost,Batch cooked too much,101.9,True
+2025-10-09,Thursday,02:22,Triangle BBQ Co.,Seared Salmon,New American,"Raleigh, Zone-6",Spoilage,5.81,7,8.87,51.53,Trash,Customer returned,93.5,True
+2025-10-06,Monday,13:52,Oak Street Bistro,Pad Thai,BBQ,"Raleigh, Zone-1",Overproduction,3.82,4,5.34,20.4,Compost,Batch cooked too much,157.4,False
+2025-10-07,Tuesday,20:07,Capital City Tacos,Veggie Burrito,Seafood,"Raleigh, Zone-9",Overproduction,9.1,13,3.12,28.39,Donation,Inventory error,100.9,True
+2025-10-10,Friday,04:49,UrbanEats,Veggie Burrito,Italian,"Raleigh, Zone-7",Spoilage,4.44,10,2.42,10.74,Trash,Shift change discard,156.4,False
+2025-10-06,Monday,10:53,Village Noodle Bar,Eggplant Parmesan,New American,"Raleigh, Zone-2",Prep Trim,4.46,43,9.8,43.71,Trash,Customer returned,127.4,True
+2025-10-08,Wednesday,16:38,Southside Pizza Lab,Margherita Pizza,Seafood,"Raleigh, Zone-1",Spoilage,2.9,5,9.37,27.17,Trash,Shift change discard,151.0,False
+2025-10-08,Wednesday,19:45,Triangle BBQ Co.,Margherita Pizza,Southern,"Raleigh, Zone-7",Overproduction,11.39,28,10.59,120.62,Compost,Inventory error,136.2,True
+2025-10-11,Saturday,05:41,Village Noodle Bar,Veggie Grain Bowl,New American,"Raleigh, Zone-4",Overproduction,0.04,1,8.6,0.34,Trash,Improper storage,66.2,True
+2025-10-06,Monday,18:57,Triangle BBQ Co.,Smoked Turkey,Indian,"Raleigh, Zone-7",Damaged,8.58,15,11.81,101.33,Donation,Improper storage,152.1,False
+2025-10-07,Tuesday,07:29,Triangle BBQ Co.,Margherita Pizza,Fusion,"Raleigh, Zone-5",Overproduction,1.35,2,3.08,4.16,Trash,Improper storage,124.7,True
+2025-10-09,Thursday,13:39,Roosevelt Oyster House,Seared Salmon,Indian,"Raleigh, Zone-2",Plate Waste,4.49,6,11.0,49.39,Compost,Improper storage,35.8,False
+2025-10-10,Friday,23:04,Eastside Deli,Veggie Burrito,Indian,"Raleigh, Zone-4",Prep Trim,0.49,1,6.31,3.09,Donation,Improper storage,111.0,True
+2025-10-07,Tuesday,10:01,Triangle BBQ Co.,Veggie Burrito,BBQ,"Raleigh, Zone-7",Prep Trim,2.04,9,6.02,12.28,Trash,Customer returned,46.5,True
+2025-10-10,Friday,18:48,Roosevelt Oyster House,Margherita Pizza,Fusion,"Raleigh, Zone-10",Prep Trim,5.48,9,6.06,33.21,Compost,Improper storage,67.3,True
+2025-10-10,Friday,21:23,UrbanEats,Seared Salmon,Asian,"Raleigh, Zone-8",Plate Waste,4.03,8,6.42,25.87,Compost,Customer returned,91.5,True
+2025-10-07,Tuesday,22:20,Oak Street Bistro,Veggie Grain Bowl,Indian,"Raleigh, Zone-10",Prep Trim,3.08,7,2.93,9.02,Compost,Batch cooked too much,70.4,True
+2025-10-08,Wednesday,06:22,Southside Pizza Lab,Chicken Salad Sandwich,Deli,"Raleigh, Zone-4",Plate Waste,2.29,6,8.11,18.57,Compost,End of service,83.9,True
+2025-10-12,Sunday,13:11,Hillside Kitchen,Pad Thai,Mexican,"Raleigh, Zone-7",Spoilage,3.19,5,3.48,11.1,Donation,Low demand,146.0,False
+2025-10-07,Tuesday,05:06,Roosevelt Oyster House,Eggplant Parmesan,Italian,"Raleigh, Zone-9",Plate Waste,13.43,25,2.5,33.58,Compost,Shift change discard,45.8,True
+2025-10-07,Tuesday,12:24,Capital City Tacos,Veggie Burrito,Indian,"Raleigh, Zone-10",Prep Trim,5.29,10,11.5,60.84,Trash,Customer returned,136.0,True
+2025-10-11,Saturday,17:50,Roosevelt Oyster House,Veggie Burrito,Mexican,"Raleigh, Zone-3",Damaged,5.59,11,10.61,59.31,Trash,Improper storage,127.7,True
+2025-10-09,Thursday,03:43,GreenBite Cafe,Fish & Chips,New American,"Raleigh, Zone-5",Plate Waste,4.3,4,2.77,11.91,Trash,Inventory error,65.3,True
+2025-10-09,Thursday,15:18,GreenBite Cafe,Biscuits & Gravy,Italian,"Raleigh, Zone-3",Spoilage,3.04,5,5.83,17.72,Compost,Batch cooked too much,57.8,True
+2025-10-10,Friday,17:17,Roosevelt Oyster House,Smoked Turkey,Indian,"Raleigh, Zone-8",Plate Waste,3.83,14,2.62,10.03,Trash,End of service,147.6,False
+2025-10-12,Sunday,15:29,Eastside Deli,Seared Salmon,Seafood,"Raleigh, Zone-8",Overproduction,9.71,14,11.43,110.99,Trash,Shift change discard,80.7,True
+2025-10-10,Friday,18:25,GreenBite Cafe,Veggie Burrito,Fusion,"Raleigh, Zone-4",Plate Waste,7.96,25,4.19,33.35,Trash,End of service,33.8,False
+2025-10-09,Thursday,19:47,Roosevelt Oyster House,Margherita Pizza,Mexican,"Raleigh, Zone-3",Expired,11.01,50,7.34,80.81,Trash,Customer returned,103.4,True
+2025-10-06,Monday,07:24,Oak Street Bistro,Pad Thai,Italian,"Raleigh, Zone-8",Spoilage,6.93,7,2.5,17.32,Trash,Improper storage,57.5,True
+2025-10-09,Thursday,17:15,Village Noodle Bar,Pad Thai,BBQ,"Raleigh, Zone-7",Prep Trim,0.95,2,10.35,9.83,Trash,Low demand,127.4,True
+2025-10-06,Monday,14:13,Village Noodle Bar,Eggplant Parmesan,Southern,"Raleigh, Zone-1",Overproduction,4.5,11,11.5,51.75,Compost,Shift change discard,32.6,False
+2025-10-07,Tuesday,17:36,Hillside Kitchen,Margherita Pizza,Mexican,"Raleigh, Zone-2",Expired,3.75,7,11.48,43.05,Trash,Batch cooked too much,63.3,True
+2025-10-10,Friday,04:43,Southside Pizza Lab,Seared Salmon,Fusion,"Raleigh, Zone-2",Spoilage,1.31,2,11.65,15.26,Compost,Customer returned,33.3,False
+2025-10-09,Thursday,13:11,UrbanEats,Pad Thai,Seafood,"Raleigh, Zone-4",Overproduction,0.6,1,7.92,4.75,Donation,Inventory error,43.2,True
+2025-10-09,Thursday,10:21,UrbanEats,Biscuits & Gravy,Fusion,"Raleigh, Zone-1",Prep Trim,0.08,1,7.33,0.59,Donation,Improper storage,39.0,False
+2025-10-09,Thursday,21:10,Eastside Deli,Pad Thai,Mexican,"Raleigh, Zone-2",Plate Waste,8.07,31,11.61,93.69,Donation,Shift change discard,89.8,True
+2025-10-07,Tuesday,17:46,Roosevelt Oyster House,Margherita Pizza,Indian,"Raleigh, Zone-5",Expired,5.14,6,10.08,51.81,Donation,Shift change discard,92.9,True
+2025-10-10,Friday,22:56,UrbanEats,Veggie Grain Bowl,Asian,"Raleigh, Zone-4",Overproduction,4.04,7,4.79,19.35,Trash,Inventory error,127.6,True
+2025-10-12,Sunday,11:36,UrbanEats,Pad Thai,Asian,"Raleigh, Zone-1",Plate Waste,5.3,8,10.51,55.7,Compost,End of service,57.6,True
+2025-10-08,Wednesday,22:32,Village Noodle Bar,Veggie Grain Bowl,Fusion,"Raleigh, Zone-5",Expired,2.18,9,2.1,4.58,Compost,Low demand,61.4,True
+2025-10-10,Friday,14:58,Capital City Tacos,Veggie Burrito,New American,"Raleigh, Zone-8",Damaged,6.61,11,9.12,60.28,Trash,Shift change discard,32.2,False
+2025-10-09,Thursday,08:20,Hillside Kitchen,Pad Thai,New American,"Raleigh, Zone-5",Damaged,5.25,9,7.82,41.05,Trash,Customer returned,99.0,True
+2025-10-10,Friday,20:11,GreenBite Cafe,Smoked Turkey,Asian,"Raleigh, Zone-8",Prep Trim,0.6,1,5.07,3.04,Compost,Low demand,123.8,True
+2025-10-09,Thursday,14:09,Oak Street Bistro,Veggie Burrito,Italian,"Raleigh, Zone-4",Spoilage,5.47,15,9.39,51.36,Trash,Batch cooked too much,106.6,True
+2025-10-11,Saturday,23:15,UrbanEats,Veggie Grain Bowl,Southern,"Raleigh, Zone-4",Prep Trim,13.33,22,4.27,56.92,Compost,Improper storage,31.8,False
+2025-10-12,Sunday,01:51,Southside Pizza Lab,Veggie Grain Bowl,Deli,"Raleigh, Zone-1",Expired,1.96,3,4.92,9.64,Compost,Batch cooked too much,142.9,False
+2025-10-11,Saturday,14:02,Oak Street Bistro,Chicken Salad Sandwich,Fusion,"Raleigh, Zone-5",Plate Waste,0.87,1,6.79,5.91,Trash,Inventory error,155.5,False
+2025-10-08,Wednesday,20:56,Capital City Tacos,Biscuits & Gravy,Southern,"Raleigh, Zone-7",Plate Waste,9.79,29,2.74,26.82,Donation,Batch cooked too much,37.0,False
+2025-10-07,Tuesday,16:44,UrbanEats,Veggie Grain Bowl,Southern,"Raleigh, Zone-4",Overproduction,8.82,15,7.58,66.86,Trash,Customer returned,107.5,True
+2025-10-08,Wednesday,13:37,GreenBite Cafe,Pad Thai,Mexican,"Raleigh, Zone-8",Prep Trim,8.11,9,10.6,85.97,Trash,Improper storage,103.9,True
+2025-10-06,Monday,16:26,UrbanEats,Biscuits & Gravy,New American,"Raleigh, Zone-4",Prep Trim,2.77,7,8.6,23.82,Compost,Inventory error,52.6,True
+2025-10-06,Monday,20:29,Southside Pizza Lab,Chicken Salad Sandwich,Seafood,"Raleigh, Zone-8",Damaged,0.45,1,7.94,3.57,Trash,Low demand,60.1,True
+2025-10-09,Thursday,05:12,Capital City Tacos,Biscuits & Gravy,New American,"Raleigh, Zone-5",Damaged,3.61,6,7.9,28.52,Compost,End of service,44.9,True
+2025-10-08,Wednesday,13:23,Southside Pizza Lab,Veggie Grain Bowl,Italian,"Raleigh, Zone-2",Overproduction,5.38,8,3.66,19.69,Trash,Customer returned,127.4,True
+2025-10-12,Sunday,11:25,Triangle BBQ Co.,Fish & Chips,Southern,"Raleigh, Zone-8",Damaged,4.07,5,5.04,20.51,Trash,Improper storage,95.1,True
+2025-10-11,Saturday,14:50,Capital City Tacos,Biscuits & Gravy,Fusion,"Raleigh, Zone-1",Plate Waste,2.68,2,9.35,25.06,Donation,Improper storage,33.4,False
+2025-10-08,Wednesday,14:30,UrbanEats,Seared Salmon,Deli,"Raleigh, Zone-5",Expired,7.13,21,2.4,17.11,Compost,End of service,97.5,True
+2025-10-11,Saturday,00:45,Triangle BBQ Co.,Margherita Pizza,Fusion,"Raleigh, Zone-7",Damaged,1.35,2,10.14,13.69,Compost,End of service,75.2,True
+2025-10-09,Thursday,19:00,Village Noodle Bar,Biscuits & Gravy,Italian,"Raleigh, Zone-6",Plate Waste,2.88,4,8.94,25.75,Trash,Batch cooked too much,152.9,False
+2025-10-12,Sunday,06:12,Eastside Deli,Fish & Chips,Southern,"Raleigh, Zone-6",Prep Trim,6.37,13,5.23,33.32,Trash,Shift change discard,96.9,True
+2025-10-06,Monday,00:18,GreenBite Cafe,Fish & Chips,Seafood,"Raleigh, Zone-1",Spoilage,0.23,1,7.18,1.65,Donation,Shift change discard,94.8,True
+2025-10-11,Saturday,00:42,Eastside Deli,Eggplant Parmesan,BBQ,"Raleigh, Zone-9",Spoilage,1.77,2,11.28,19.97,Trash,Batch cooked too much,93.0,True
+2025-10-06,Monday,07:52,UrbanEats,Eggplant Parmesan,Italian,"Raleigh, Zone-5",Expired,5.07,20,2.14,10.85,Trash,Low demand,59.2,True
+2025-10-07,Tuesday,06:58,Capital City Tacos,Biscuits & Gravy,Italian,"Raleigh, Zone-8",Damaged,4.87,8,4.92,23.96,Donation,Improper storage,84.0,True
+2025-10-11,Saturday,11:45,Capital City Tacos,Eggplant Parmesan,Mexican,"Raleigh, Zone-9",Spoilage,0.42,1,5.84,2.45,Donation,Customer returned,127.0,True
+2025-10-07,Tuesday,13:16,Oak Street Bistro,Veggie Grain Bowl,Seafood,"Raleigh, Zone-6",Expired,4.29,15,4.67,20.03,Compost,Improper storage,124.4,True
+2025-10-12,Sunday,16:16,UrbanEats,Fish & Chips,Italian,"Raleigh, Zone-8",Expired,5.79,9,6.84,39.6,Trash,Customer returned,129.2,True
+2025-10-10,Friday,07:00,Capital City Tacos,Smoked Turkey,New American,"Raleigh, Zone-4",Expired,9.42,13,5.83,54.92,Trash,Low demand,71.4,True
+2025-10-11,Saturday,09:09,Roosevelt Oyster House,Pad Thai,Italian,"Raleigh, Zone-8",Overproduction,2.89,9,3.26,9.42,Donation,Improper storage,143.1,False
+2025-10-11,Saturday,00:13,Oak Street Bistro,Veggie Burrito,Mexican,"Raleigh, Zone-1",Damaged,6.58,10,3.44,22.64,Donation,Inventory error,39.7,False
+2025-10-09,Thursday,00:22,Village Noodle Bar,Seared Salmon,Seafood,"Raleigh, Zone-2",Prep Trim,6.58,5,10.52,69.22,Donation,End of service,154.0,False
+2025-10-11,Saturday,13:14,GreenBite Cafe,Chicken Salad Sandwich,Fusion,"Raleigh, Zone-2",Spoilage,6.85,9,8.31,56.92,Trash,Inventory error,127.1,True
+2025-10-10,Friday,22:30,Oak Street Bistro,Biscuits & Gravy,Mexican,"Raleigh, Zone-3",Damaged,8.77,13,4.99,43.76,Compost,Low demand,72.2,True
+2025-10-06,Monday,15:19,Triangle BBQ Co.,Smoked Turkey,Asian,"Raleigh, Zone-7",Spoilage,2.42,3,4.44,10.74,Trash,Customer returned,118.6,True
+2025-10-08,Wednesday,01:10,Southside Pizza Lab,Margherita Pizza,Southern,"Raleigh, Zone-10",Plate Waste,0.14,1,8.2,1.15,Compost,End of service,148.7,False
+2025-10-07,Tuesday,15:04,Hillside Kitchen,Fish & Chips,BBQ,"Raleigh, Zone-8",Prep Trim,1.57,3,8.67,13.61,Trash,Improper storage,118.1,True
+2025-10-07,Tuesday,19:08,Oak Street Bistro,Fish & Chips,Asian,"Raleigh, Zone-10",Prep Trim,15.57,123,8.39,130.63,Trash,Batch cooked too much,62.5,True
+2025-10-09,Thursday,10:29,Hillside Kitchen,Pad Thai,Mexican,"Raleigh, Zone-2",Spoilage,7.43,41,5.81,43.17,Trash,Customer returned,68.5,True
+2025-10-09,Thursday,08:37,Eastside Deli,Pad Thai,BBQ,"Raleigh, Zone-1",Expired,1.64,2,10.65,17.47,Donation,Low demand,148.4,False
+2025-10-11,Saturday,15:38,Triangle BBQ Co.,Eggplant Parmesan,Fusion,"Raleigh, Zone-6",Spoilage,4.32,15,8.37,36.16,Donation,Improper storage,118.1,True
+2025-10-07,Tuesday,13:20,Oak Street Bistro,Chicken Salad Sandwich,BBQ,"Raleigh, Zone-8",Overproduction,0.42,1,7.8,3.28,Donation,Inventory error,41.7,True
+2025-10-09,Thursday,08:35,Village Noodle Bar,Pad Thai,Italian,"Raleigh, Zone-4",Spoilage,0.35,1,9.87,3.45,Trash,Customer returned,95.2,True
+2025-10-09,Thursday,02:25,Southside Pizza Lab,Veggie Grain Bowl,Mexican,"Raleigh, Zone-5",Damaged,4.23,11,10.7,45.26,Compost,End of service,155.2,False
+2025-10-07,Tuesday,14:26,Hillside Kitchen,Pad Thai,Indian,"Raleigh, Zone-6",Overproduction,14.72,23,9.91,145.88,Compost,Improper storage,99.8,True
+2025-10-11,Saturday,04:11,Village Noodle Bar,Veggie Grain Bowl,Fusion,"Raleigh, Zone-7",Damaged,6.13,11,11.4,69.88,Compost,Batch cooked too much,60.4,True
+2025-10-06,Monday,06:50,UrbanEats,Veggie Burrito,Asian,"Raleigh, Zone-10",Spoilage,0.69,1,8.48,5.85,Donation,Shift change discard,90.4,True
+2025-10-09,Thursday,10:31,Roosevelt Oyster House,Biscuits & Gravy,Italian,"Raleigh, Zone-1",Overproduction,0.04,1,5.04,0.2,Trash,Low demand,42.6,True
+2025-10-12,Sunday,02:47,Southside Pizza Lab,Pad Thai,Mexican,"Raleigh, Zone-6",Damaged,6.52,9,11.49,74.91,Donation,Customer returned,84.5,True
+2025-10-07,Tuesday,18:11,Roosevelt Oyster House,Biscuits & Gravy,Mexican,"Raleigh, Zone-10",Plate Waste,2.0,4,11.39,22.78,Trash,Low demand,119.7,True
+2025-10-08,Wednesday,11:19,Capital City Tacos,Fish & Chips,New American,"Raleigh, Zone-6",Overproduction,1.63,4,11.81,19.25,Trash,Customer returned,147.2,False
+2025-10-10,Friday,01:56,Eastside Deli,Pad Thai,BBQ,"Raleigh, Zone-4",Overproduction,12.83,22,11.49,147.42,Trash,Low demand,116.2,True
+2025-10-12,Sunday,19:03,Eastside Deli,Chicken Salad Sandwich,Asian,"Raleigh, Zone-4",Spoilage,2.3,3,9.87,22.7,Compost,Low demand,137.9,True
+2025-10-12,Sunday,07:20,Hillside Kitchen,Seared Salmon,New American,"Raleigh, Zone-4",Prep Trim,14.61,20,9.74,142.3,Donation,Low demand,66.0,True
+2025-10-07,Tuesday,15:30,Southside Pizza Lab,Veggie Burrito,BBQ,"Raleigh, Zone-3",Overproduction,3.6,8,8.61,31.0,Compost,Inventory error,31.9,False
+2025-10-08,Wednesday,16:58,UrbanEats,Smoked Turkey,Deli,"Raleigh, Zone-3",Prep Trim,10.33,28,2.52,26.03,Donation,End of service,98.4,True
+2025-10-06,Monday,17:21,Capital City Tacos,Fish & Chips,Asian,"Raleigh, Zone-9",Expired,6.22,9,3.09,19.22,Donation,Inventory error,152.9,False
+2025-10-06,Monday,11:50,GreenBite Cafe,Veggie Grain Bowl,Mexican,"Raleigh, Zone-1",Overproduction,0.63,1,11.99,7.55,Trash,End of service,119.2,True
+2025-10-11,Saturday,13:52,Capital City Tacos,Biscuits & Gravy,Southern,"Raleigh, Zone-6",Expired,12.21,41,3.48,42.49,Compost,Improper storage,111.2,True
+2025-10-12,Sunday,15:50,GreenBite Cafe,Smoked Turkey,Seafood,"Raleigh, Zone-10",Expired,2.74,10,4.95,13.56,Donation,Customer returned,85.9,True
+2025-10-07,Tuesday,07:14,GreenBite Cafe,Eggplant Parmesan,Seafood,"Raleigh, Zone-8",Spoilage,12.16,56,6.14,74.66,Trash,End of service,84.1,True
+2025-10-07,Tuesday,01:57,Village Noodle Bar,Pad Thai,Asian,"Raleigh, Zone-5",Prep Trim,1.8,3,11.54,20.77,Donation,End of service,38.7,False
+2025-10-06,Monday,23:18,Oak Street Bistro,Pad Thai,Southern,"Raleigh, Zone-6",Spoilage,11.21,52,7.56,84.75,Donation,Customer returned,103.0,True
+2025-10-07,Tuesday,09:22,Roosevelt Oyster House,Smoked Turkey,Seafood,"Raleigh, Zone-1",Prep Trim,9.82,19,8.0,78.56,Trash,Low demand,105.1,True
+2025-10-08,Wednesday,10:05,Southside Pizza Lab,Fish & Chips,New American,"Raleigh, Zone-2",Prep Trim,0.91,1,10.45,9.51,Trash,Low demand,129.1,True
+2025-10-12,Sunday,12:46,Hillside Kitchen,Pad Thai,Indian,"Raleigh, Zone-10",Expired,5.0,13,8.75,43.75,Donation,Low demand,109.2,True
+2025-10-09,Thursday,01:01,Eastside Deli,Margherita Pizza,BBQ,"Raleigh, Zone-5",Prep Trim,4.35,10,5.51,23.97,Compost,Shift change discard,48.6,True
+2025-10-10,Friday,13:26,Oak Street Bistro,Margherita Pizza,Deli,"Raleigh, Zone-2",Damaged,4.57,7,7.3,33.36,Trash,End of service,89.0,True
+2025-10-07,Tuesday,18:58,Village Noodle Bar,Veggie Grain Bowl,Asian,"Raleigh, Zone-10",Expired,11.93,47,2.85,34.0,Compost,Inventory error,50.5,True
+2025-10-06,Monday,13:35,Oak Street Bistro,Veggie Grain Bowl,Mexican,"Raleigh, Zone-7",Plate Waste,14.67,133,8.07,118.39,Trash,Improper storage,58.0,True
+2025-10-11,Saturday,19:54,Oak Street Bistro,Smoked Turkey,Seafood,"Raleigh, Zone-2",Prep Trim,3.24,5,8.78,28.45,Donation,End of service,98.5,True
+2025-10-09,Thursday,12:13,Eastside Deli,Eggplant Parmesan,Seafood,"Raleigh, Zone-10",Overproduction,5.4,14,2.08,11.23,Trash,Inventory error,129.8,True
+2025-10-08,Wednesday,21:46,Triangle BBQ Co.,Smoked Turkey,Southern,"Raleigh, Zone-1",Plate Waste,2.96,7,9.47,28.03,Compost,Inventory error,79.4,True
+2025-10-08,Wednesday,14:50,GreenBite Cafe,Veggie Burrito,Asian,"Raleigh, Zone-2",Plate Waste,1.05,1,10.62,11.15,Compost,End of service,32.4,False
+2025-10-06,Monday,21:15,Village Noodle Bar,Seared Salmon,Seafood,"Raleigh, Zone-10",Plate Waste,5.79,16,9.09,52.63,Trash,Improper storage,45.0,True
+2025-10-06,Monday,05:41,Village Noodle Bar,Margherita Pizza,Fusion,"Raleigh, Zone-8",Damaged,8.5,15,11.2,95.2,Compost,End of service,139.8,True
+2025-10-08,Wednesday,18:26,Roosevelt Oyster House,Seared Salmon,Seafood,"Raleigh, Zone-9",Overproduction,8.06,12,5.96,48.04,Trash,Batch cooked too much,74.1,True
+2025-10-09,Thursday,18:56,Southside Pizza Lab,Biscuits & Gravy,Indian,"Raleigh, Zone-2",Expired,0.14,1,7.1,0.99,Trash,Improper storage,124.6,True
+2025-10-07,Tuesday,16:19,Hillside Kitchen,Biscuits & Gravy,Italian,"Raleigh, Zone-5",Spoilage,7.74,12,3.73,28.87,Compost,Shift change discard,128.7,True
+2025-10-06,Monday,20:34,Southside Pizza Lab,Fish & Chips,Mexican,"Raleigh, Zone-10",Expired,3.9,7,6.49,25.31,Donation,Batch cooked too much,112.6,True
+2025-10-09,Thursday,16:15,Village Noodle Bar,Margherita Pizza,Mexican,"Raleigh, Zone-2",Plate Waste,10.39,27,6.42,66.7,Trash,Shift change discard,65.7,True
+2025-10-06,Monday,15:20,Village Noodle Bar,Veggie Burrito,Southern,"Raleigh, Zone-5",Plate Waste,6.74,14,6.52,43.94,Compost,Improper storage,138.1,True
+2025-10-06,Monday,20:57,Oak Street Bistro,Seared Salmon,Fusion,"Raleigh, Zone-9",Plate Waste,2.91,4,6.63,19.29,Donation,Shift change discard,126.1,True
+2025-10-06,Monday,11:12,Capital City Tacos,Seared Salmon,New American,"Raleigh, Zone-6",Expired,8.13,12,6.76,54.96,Compost,Low demand,88.6,True
+2025-10-09,Thursday,21:46,Oak Street Bistro,Veggie Burrito,Italian,"Raleigh, Zone-1",Spoilage,10.53,20,9.08,95.61,Trash,Customer returned,98.0,True
+2025-10-07,Tuesday,19:20,Village Noodle Bar,Smoked Turkey,BBQ,"Raleigh, Zone-7",Plate Waste,7.41,16,9.74,72.17,Donation,Customer returned,36.8,False
+2025-10-09,Thursday,19:22,Oak Street Bistro,Smoked Turkey,Southern,"Raleigh, Zone-9",Damaged,5.62,11,5.87,32.99,Trash,Batch cooked too much,140.7,False
+2025-10-12,Sunday,20:34,Southside Pizza Lab,Smoked Turkey,Southern,"Raleigh, Zone-10",Damaged,4.48,7,3.41,15.28,Trash,Improper storage,155.8,False
+2025-10-10,Friday,11:01,Southside Pizza Lab,Seared Salmon,Southern,"Raleigh, Zone-5",Expired,0.09,1,5.77,0.52,Trash,Shift change discard,46.6,True
+2025-10-11,Saturday,23:44,Oak Street Bistro,Pad Thai,Indian,"Raleigh, Zone-6",Overproduction,1.03,4,5.63,5.8,Compost,Inventory error,74.4,True
+2025-10-11,Saturday,12:47,Hillside Kitchen,Eggplant Parmesan,Italian,"Raleigh, Zone-3",Overproduction,9.79,14,4.96,48.56,Compost,Customer returned,130.2,True
+2025-10-11,Saturday,23:46,Eastside Deli,Smoked Turkey,Fusion,"Raleigh, Zone-3",Expired,7.12,11,5.77,41.08,Compost,Inventory error,138.1,True
+2025-10-07,Tuesday,21:12,Capital City Tacos,Chicken Salad Sandwich,Seafood,"Raleigh, Zone-6",Damaged,3.94,12,9.2,36.25,Trash,Customer returned,67.0,True
+2025-10-11,Saturday,02:35,Hillside Kitchen,Veggie Burrito,New American,"Raleigh, Zone-5",Plate Waste,4.38,12,11.04,48.36,Compost,Improper storage,118.2,True
+2025-10-12,Sunday,11:45,Capital City Tacos,Fish & Chips,BBQ,"Raleigh, Zone-7",Expired,8.88,18,7.27,64.56,Compost,Shift change discard,56.0,True
+2025-10-12,Sunday,21:06,Southside Pizza Lab,Veggie Grain Bowl,Deli,"Raleigh, Zone-8",Prep Trim,0.13,1,7.55,0.98,Compost,Batch cooked too much,140.0,False
+2025-10-07,Tuesday,10:02,Triangle BBQ Co.,Biscuits & Gravy,Italian,"Raleigh, Zone-5",Plate Waste,6.06,15,11.05,66.96,Compost,Shift change discard,86.9,True
+2025-10-08,Wednesday,12:37,Capital City Tacos,Smoked Turkey,Deli,"Raleigh, Zone-7",Overproduction,0.11,1,5.96,0.66,Trash,Inventory error,80.2,True
+2025-10-06,Monday,22:17,Village Noodle Bar,Eggplant Parmesan,Deli,"Raleigh, Zone-6",Overproduction,5.22,13,10.39,54.24,Donation,Improper storage,132.9,True
+2025-10-07,Tuesday,13:34,Eastside Deli,Veggie Grain Bowl,Mexican,"Raleigh, Zone-3",Damaged,1.64,3,6.69,10.97,Donation,Low demand,147.8,False
+2025-10-06,Monday,05:11,Triangle BBQ Co.,Eggplant Parmesan,Italian,"Raleigh, Zone-9",Damaged,3.24,14,8.09,26.21,Trash,Low demand,130.9,True
+2025-10-08,Wednesday,16:53,Triangle BBQ Co.,Biscuits & Gravy,Deli,"Raleigh, Zone-4",Plate Waste,0.41,1,8.39,3.44,Donation,End of service,38.2,False
+2025-10-11,Saturday,16:29,UrbanEats,Veggie Burrito,Deli,"Raleigh, Zone-9",Expired,5.55,6,4.42,24.53,Compost,Improper storage,85.8,True
+2025-10-12,Sunday,23:53,Village Noodle Bar,Eggplant Parmesan,Fusion,"Raleigh, Zone-7",Spoilage,8.29,17,8.64,71.63,Compost,Customer returned,156.7,False
+2025-10-06,Monday,18:28,GreenBite Cafe,Veggie Burrito,Indian,"Raleigh, Zone-9",Expired,3.9,13,2.2,8.58,Trash,Low demand,112.6,True
+2025-10-10,Friday,05:56,Triangle BBQ Co.,Chicken Salad Sandwich,Asian,"Raleigh, Zone-2",Prep Trim,3.91,8,4.41,17.24,Donation,Batch cooked too much,43.5,True
+2025-10-12,Sunday,14:53,Village Noodle Bar,Margherita Pizza,Deli,"Raleigh, Zone-6",Expired,5.61,16,5.39,30.24,Donation,Inventory error,137.9,True
+2025-10-11,Saturday,06:52,Capital City Tacos,Margherita Pizza,Italian,"Raleigh, Zone-2",Damaged,6.6,8,9.76,64.42,Trash,Low demand,68.1,True
+2025-10-06,Monday,11:57,Hillside Kitchen,Chicken Salad Sandwich,Asian,"Raleigh, Zone-5",Expired,3.46,5,5.98,20.69,Donation,End of service,62.9,True
+2025-10-08,Wednesday,04:11,Triangle BBQ Co.,Smoked Turkey,Deli,"Raleigh, Zone-6",Prep Trim,7.45,17,3.24,24.14,Trash,End of service,145.6,False
+2025-10-11,Saturday,00:04,Roosevelt Oyster House,Smoked Turkey,Italian,"Raleigh, Zone-8",Damaged,5.12,10,6.98,35.74,Donation,Improper storage,134.1,True
+2025-10-10,Friday,19:55,Oak Street Bistro,Pad Thai,Fusion,"Raleigh, Zone-3",Expired,4.49,12,4.94,22.18,Compost,Low demand,72.6,True
+2025-10-09,Thursday,08:43,Triangle BBQ Co.,Fish & Chips,Fusion,"Raleigh, Zone-7",Spoilage,4.12,6,8.9,36.67,Trash,End of service,35.5,False
+2025-10-10,Friday,00:16,UrbanEats,Pad Thai,BBQ,"Raleigh, Zone-1",Overproduction,11.26,16,8.71,98.07,Trash,Improper storage,96.7,True
+2025-10-07,Tuesday,19:41,Eastside Deli,Margherita Pizza,Fusion,"Raleigh, Zone-8",Overproduction,14.77,42,3.26,48.15,Compost,Shift change discard,113.9,True
+2025-10-10,Friday,02:53,Roosevelt Oyster House,Seared Salmon,Deli,"Raleigh, Zone-10",Spoilage,8.36,15,8.79,73.48,Trash,Improper storage,87.7,True
+2025-10-06,Monday,20:59,UrbanEats,Margherita Pizza,Indian,"Raleigh, Zone-6",Plate Waste,14.95,44,5.14,76.84,Trash,Inventory error,154.9,False
+2025-10-06,Monday,07:04,Southside Pizza Lab,Fish & Chips,Indian,"Raleigh, Zone-7",Expired,0.2,1,3.18,0.64,Trash,Batch cooked too much,88.0,True
+2025-10-12,Sunday,23:04,Triangle BBQ Co.,Fish & Chips,New American,"Raleigh, Zone-2",Spoilage,6.62,16,10.53,69.71,Trash,Inventory error,146.8,False
+2025-10-11,Saturday,01:32,Oak Street Bistro,Smoked Turkey,Asian,"Raleigh, Zone-2",Expired,0.2,1,7.42,1.48,Trash,Shift change discard,50.5,True
+2025-10-07,Tuesday,23:32,Village Noodle Bar,Veggie Burrito,New American,"Raleigh, Zone-2",Spoilage,5.71,6,9.92,56.64,Compost,Shift change discard,94.2,True
+2025-10-10,Friday,02:32,GreenBite Cafe,Seared Salmon,Asian,"Raleigh, Zone-8",Expired,8.75,22,3.3,28.88,Compost,Low demand,70.2,True
+2025-10-11,Saturday,10:42,GreenBite Cafe,Pad Thai,Seafood,"Raleigh, Zone-10",Overproduction,0.49,1,3.25,1.59,Trash,Batch cooked too much,39.6,False
+2025-10-11,Saturday,07:12,GreenBite Cafe,Smoked Turkey,Italian,"Raleigh, Zone-9",Damaged,2.6,3,7.88,20.49,Compost,End of service,95.4,True
+2025-10-06,Monday,15:07,Oak Street Bistro,Veggie Burrito,Italian,"Raleigh, Zone-5",Spoilage,9.9,24,3.62,35.84,Donation,Inventory error,75.0,True
+2025-10-11,Saturday,21:41,Triangle BBQ Co.,Biscuits & Gravy,BBQ,"Raleigh, Zone-4",Damaged,4.57,5,11.56,52.83,Trash,Inventory error,111.3,True
+2025-10-12,Sunday,23:46,GreenBite Cafe,Biscuits & Gravy,Indian,"Raleigh, Zone-3",Expired,3.43,4,11.42,39.17,Compost,Inventory error,115.6,True
+2025-10-12,Sunday,21:14,Village Noodle Bar,Seared Salmon,Deli,"Raleigh, Zone-1",Overproduction,3.97,10,2.45,9.73,Donation,Shift change discard,105.0,True
+2025-10-08,Wednesday,09:33,UrbanEats,Pad Thai,Fusion,"Raleigh, Zone-1",Plate Waste,4.03,7,10.89,43.89,Donation,Improper storage,113.4,True
+2025-10-09,Thursday,10:29,Capital City Tacos,Eggplant Parmesan,Seafood,"Raleigh, Zone-5",Plate Waste,1.75,2,2.73,4.78,Compost,Inventory error,87.1,True
+2025-10-11,Saturday,12:13,Capital City Tacos,Eggplant Parmesan,Asian,"Raleigh, Zone-10",Spoilage,1.34,2,5.13,6.87,Donation,Improper storage,125.4,True
+2025-10-09,Thursday,22:18,Roosevelt Oyster House,Margherita Pizza,Asian,"Raleigh, Zone-9",Expired,4.6,7,3.06,14.08,Compost,End of service,45.9,True
+2025-10-11,Saturday,02:46,Hillside Kitchen,Margherita Pizza,Southern,"Raleigh, Zone-1",Prep Trim,7.56,27,11.45,86.56,Donation,End of service,62.3,True
+2025-10-07,Tuesday,19:36,Village Noodle Bar,Seared Salmon,Asian,"Raleigh, Zone-4",Spoilage,3.67,4,6.98,25.62,Donation,End of service,94.8,True
+2025-10-09,Thursday,12:15,Capital City Tacos,Chicken Salad Sandwich,Southern,"Raleigh, Zone-7",Expired,5.66,16,6.57,37.19,Compost,Inventory error,105.8,True
+2025-10-06,Monday,13:17,Eastside Deli,Veggie Grain Bowl,Mexican,"Raleigh, Zone-10",Damaged,11.76,22,8.73,102.66,Trash,Customer returned,31.1,False
+2025-10-07,Tuesday,05:21,Roosevelt Oyster House,Margherita Pizza,BBQ,"Raleigh, Zone-6",Plate Waste,9.9,19,5.66,56.03,Trash,Low demand,104.1,True
+2025-10-08,Wednesday,05:09,Village Noodle Bar,Veggie Burrito,BBQ,"Raleigh, Zone-2",Plate Waste,14.3,16,7.04,100.67,Donation,Improper storage,137.3,True
+2025-10-12,Sunday,22:51,Oak Street Bistro,Margherita Pizza,Southern,"Raleigh, Zone-7",Prep Trim,2.76,3,9.95,27.46,Trash,Customer returned,152.1,False
+2025-10-07,Tuesday,15:23,Hillside Kitchen,Seared Salmon,Indian,"Raleigh, Zone-7",Expired,7.23,9,2.4,17.35,Compost,Inventory error,122.8,True
+2025-10-11,Saturday,09:21,GreenBite Cafe,Fish & Chips,Italian,"Raleigh, Zone-10",Expired,0.82,1,3.4,2.79,Donation,Improper storage,51.1,True
+2025-10-09,Thursday,09:42,UrbanEats,Smoked Turkey,Indian,"Raleigh, Zone-9",Expired,9.29,62,6.9,64.1,Donation,Improper storage,91.7,True
+2025-10-06,Monday,04:32,Village Noodle Bar,Smoked Turkey,Southern,"Raleigh, Zone-7",Expired,1.92,19,5.08,9.75,Donation,Shift change discard,119.4,True
+2025-10-06,Monday,07:16,UrbanEats,Fish & Chips,BBQ,"Raleigh, Zone-10",Expired,2.65,4,4.28,11.34,Compost,Customer returned,92.5,True
+2025-10-11,Saturday,23:09,UrbanEats,Pad Thai,Italian,"Raleigh, Zone-4",Overproduction,11.51,22,7.73,88.97,Donation,Low demand,54.8,True
+2025-10-11,Saturday,00:25,Village Noodle Bar,Pad Thai,Italian,"Raleigh, Zone-7",Damaged,12.14,54,4.04,49.05,Donation,Shift change discard,109.5,True
+2025-10-11,Saturday,08:46,Eastside Deli,Margherita Pizza,Indian,"Raleigh, Zone-4",Expired,4.52,9,5.25,23.73,Donation,End of service,98.3,True
+2025-10-09,Thursday,13:40,Southside Pizza Lab,Fish & Chips,Indian,"Raleigh, Zone-6",Expired,5.92,11,5.54,32.8,Donation,Batch cooked too much,113.6,True
+2025-10-09,Thursday,00:11,UrbanEats,Fish & Chips,New American,"Raleigh, Zone-4",Prep Trim,6.34,13,7.58,48.06,Compost,Improper storage,130.3,True
+2025-10-08,Wednesday,08:36,Capital City Tacos,Smoked Turkey,Mexican,"Raleigh, Zone-6",Expired,2.52,3,11.34,28.58,Donation,Improper storage,67.4,True
+2025-10-12,Sunday,12:35,GreenBite Cafe,Pad Thai,Seafood,"Raleigh, Zone-6",Spoilage,5.83,18,4.9,28.57,Trash,Batch cooked too much,40.3,True
+2025-10-11,Saturday,00:47,Triangle BBQ Co.,Fish & Chips,New American,"Raleigh, Zone-4",Expired,1.43,4,4.71,6.74,Donation,Batch cooked too much,65.3,True
+2025-10-07,Tuesday,05:49,UrbanEats,Seared Salmon,New American,"Raleigh, Zone-4",Overproduction,3.69,5,8.7,32.1,Donation,Inventory error,112.9,True
+2025-10-06,Monday,14:20,Oak Street Bistro,Pad Thai,Asian,"Raleigh, Zone-8",Overproduction,0.93,1,8.81,8.19,Compost,Low demand,155.4,False
+2025-10-07,Tuesday,19:07,Roosevelt Oyster House,Fish & Chips,Mexican,"Raleigh, Zone-4",Prep Trim,1.35,3,5.21,7.03,Donation,Low demand,148.0,False
+2025-10-07,Tuesday,00:25,UrbanEats,Eggplant Parmesan,Indian,"Raleigh, Zone-1",Spoilage,3.46,11,6.18,21.38,Compost,Low demand,159.6,False
+2025-10-10,Friday,12:24,Capital City Tacos,Margherita Pizza,BBQ,"Raleigh, Zone-1",Overproduction,1.23,4,4.98,6.13,Donation,Low demand,150.7,False
+2025-10-09,Thursday,19:29,Triangle BBQ Co.,Fish & Chips,Indian,"Raleigh, Zone-9",Plate Waste,13.82,27,10.89,150.5,Compost,Shift change discard,95.5,True
+2025-10-09,Thursday,02:30,Hillside Kitchen,Biscuits & Gravy,Asian,"Raleigh, Zone-3",Damaged,0.5,1,6.59,3.29,Trash,Batch cooked too much,54.2,True
+2025-10-09,Thursday,20:03,Triangle BBQ Co.,Seared Salmon,New American,"Raleigh, Zone-3",Expired,3.44,7,10.56,36.33,Trash,Shift change discard,85.6,True
+2025-10-09,Thursday,17:32,Oak Street Bistro,Pad Thai,Southern,"Raleigh, Zone-3",Spoilage,7.07,10,6.77,47.86,Compost,Low demand,63.9,True
+2025-10-08,Wednesday,16:18,Capital City Tacos,Veggie Grain Bowl,Asian,"Raleigh, Zone-5",Expired,1.35,3,9.23,12.46,Compost,Improper storage,115.0,True
+2025-10-08,Wednesday,16:31,Eastside Deli,Biscuits & Gravy,Mexican,"Raleigh, Zone-5",Spoilage,2.62,26,6.05,15.85,Donation,Batch cooked too much,130.1,True
+2025-10-07,Tuesday,08:03,Triangle BBQ Co.,Smoked Turkey,Fusion,"Raleigh, Zone-4",Spoilage,3.58,4,11.57,41.42,Trash,Inventory error,89.1,True
+2025-10-12,Sunday,21:24,Village Noodle Bar,Pad Thai,Indian,"Raleigh, Zone-8",Expired,12.22,27,10.02,122.44,Compost,Shift change discard,62.2,True
+2025-10-12,Sunday,18:41,Oak Street Bistro,Veggie Burrito,Mexican,"Raleigh, Zone-9",Damaged,6.88,12,5.62,38.67,Donation,Low demand,38.0,False
+2025-10-12,Sunday,05:32,GreenBite Cafe,Eggplant Parmesan,Fusion,"Raleigh, Zone-9",Spoilage,19.39,26,3.65,70.77,Donation,End of service,45.1,True
+2025-10-08,Wednesday,08:05,UrbanEats,Fish & Chips,Southern,"Raleigh, Zone-9",Plate Waste,3.36,10,10.09,33.9,Trash,Inventory error,96.7,True
+2025-10-11,Saturday,04:44,UrbanEats,Chicken Salad Sandwich,Indian,"Raleigh, Zone-8",Damaged,4.03,7,10.07,40.58,Donation,Low demand,81.5,True
+2025-10-06,Monday,00:49,Hillside Kitchen,Seared Salmon,Southern,"Raleigh, Zone-1",Plate Waste,0.22,1,5.45,1.2,Compost,Customer returned,159.2,False
+2025-10-06,Monday,18:50,Capital City Tacos,Chicken Salad Sandwich,BBQ,"Raleigh, Zone-7",Spoilage,0.77,2,9.69,7.46,Donation,Batch cooked too much,114.0,True
+2025-10-10,Friday,18:47,Village Noodle Bar,Pad Thai,Mexican,"Raleigh, Zone-7",Plate Waste,12.44,18,2.8,34.83,Donation,Shift change discard,100.1,True
+2025-10-09,Thursday,22:57,Oak Street Bistro,Margherita Pizza,Indian,"Raleigh, Zone-7",Expired,3.96,4,3.27,12.95,Compost,Shift change discard,30.5,False
+2025-10-06,Monday,06:12,Triangle BBQ Co.,Fish & Chips,Indian,"Raleigh, Zone-7",Expired,4.39,13,5.79,25.42,Compost,Inventory error,89.9,True
+2025-10-07,Tuesday,18:21,Triangle BBQ Co.,Eggplant Parmesan,Southern,"Raleigh, Zone-1",Damaged,11.62,19,6.19,71.93,Compost,Inventory error,56.8,True
+2025-10-07,Tuesday,03:33,UrbanEats,Chicken Salad Sandwich,Mexican,"Raleigh, Zone-10",Damaged,1.19,2,9.03,10.75,Compost,Inventory error,126.3,True
+2025-10-10,Friday,13:50,Capital City Tacos,Eggplant Parmesan,Indian,"Raleigh, Zone-4",Overproduction,0.38,1,3.4,1.29,Trash,Inventory error,136.1,True
+2025-10-12,Sunday,13:18,Village Noodle Bar,Seared Salmon,Fusion,"Raleigh, Zone-6",Spoilage,8.63,9,5.02,43.32,Compost,Batch cooked too much,97.8,True
+2025-10-10,Friday,16:55,Triangle BBQ Co.,Veggie Grain Bowl,Deli,"Raleigh, Zone-9",Expired,2.99,4,10.8,32.29,Compost,Batch cooked too much,118.2,True
+2025-10-12,Sunday,07:47,Capital City Tacos,Chicken Salad Sandwich,Asian,"Raleigh, Zone-7",Expired,0.75,1,5.19,3.89,Trash,End of service,49.4,True
+2025-10-10,Friday,06:47,Southside Pizza Lab,Veggie Burrito,Mexican,"Raleigh, Zone-4",Spoilage,1.04,3,5.01,5.21,Donation,Inventory error,134.8,True
+2025-10-06,Monday,15:44,GreenBite Cafe,Pad Thai,Seafood,"Raleigh, Zone-9",Expired,4.24,12,3.34,14.16,Compost,Improper storage,56.4,True
+2025-10-06,Monday,21:35,Capital City Tacos,Smoked Turkey,Southern,"Raleigh, Zone-9",Damaged,5.35,10,10.29,55.05,Compost,Improper storage,79.0,True
+2025-10-12,Sunday,21:11,UrbanEats,Chicken Salad Sandwich,Southern,"Raleigh, Zone-4",Expired,2.81,8,9.24,25.96,Donation,Inventory error,92.3,True
+2025-10-09,Thursday,18:55,Triangle BBQ Co.,Chicken Salad Sandwich,New American,"Raleigh, Zone-4",Damaged,1.12,1,3.17,3.55,Trash,Inventory error,120.4,True
+2025-10-08,Wednesday,07:50,Roosevelt Oyster House,Eggplant Parmesan,Indian,"Raleigh, Zone-6",Prep Trim,6.5,21,5.81,37.77,Donation,Batch cooked too much,76.7,True
+2025-10-08,Wednesday,23:25,Village Noodle Bar,Veggie Burrito,Mexican,"Raleigh, Zone-8",Overproduction,4.5,6,10.03,45.13,Donation,End of service,129.0,True
+2025-10-09,Thursday,15:26,Hillside Kitchen,Smoked Turkey,Asian,"Raleigh, Zone-7",Overproduction,4.35,7,7.63,33.19,Compost,Batch cooked too much,49.0,True
+2025-10-08,Wednesday,23:12,GreenBite Cafe,Seared Salmon,Fusion,"Raleigh, Zone-7",Prep Trim,0.69,1,3.52,2.43,Trash,Inventory error,79.4,True
+2025-10-08,Wednesday,19:06,Capital City Tacos,Veggie Burrito,Asian,"Raleigh, Zone-5",Plate Waste,0.18,1,11.67,2.1,Donation,Batch cooked too much,93.8,True
+2025-10-07,Tuesday,21:56,Village Noodle Bar,Margherita Pizza,Italian,"Raleigh, Zone-9",Plate Waste,4.14,8,3.84,15.9,Donation,Batch cooked too much,154.4,False
+2025-10-11,Saturday,23:04,Eastside Deli,Biscuits & Gravy,Deli,"Raleigh, Zone-1",Plate Waste,5.3,16,3.37,17.86,Donation,Inventory error,38.8,False
+2025-10-07,Tuesday,17:14,Eastside Deli,Eggplant Parmesan,Indian,"Raleigh, Zone-8",Prep Trim,7.19,42,2.6,18.69,Donation,Batch cooked too much,151.4,False
+2025-10-11,Saturday,11:56,Capital City Tacos,Chicken Salad Sandwich,Deli,"Raleigh, Zone-9",Expired,3.67,14,6.11,22.42,Compost,Customer returned,123.9,True
+2025-10-12,Sunday,02:17,Triangle BBQ Co.,Chicken Salad Sandwich,Indian,"Raleigh, Zone-7",Spoilage,0.74,1,3.07,2.27,Compost,Customer returned,49.4,True
+2025-10-08,Wednesday,04:24,UrbanEats,Veggie Burrito,BBQ,"Raleigh, Zone-6",Prep Trim,0.3,1,9.95,2.98,Compost,Improper storage,154.7,False
+2025-10-11,Saturday,05:20,UrbanEats,Eggplant Parmesan,New American,"Raleigh, Zone-5",Damaged,9.03,23,10.28,92.83,Compost,Batch cooked too much,158.9,False
+2025-10-06,Monday,08:39,Oak Street Bistro,Pad Thai,Seafood,"Raleigh, Zone-7",Expired,8.18,29,6.76,55.3,Donation,Low demand,121.4,True
+2025-10-06,Monday,22:34,Capital City Tacos,Pad Thai,Asian,"Raleigh, Zone-10",Overproduction,6.65,8,10.95,72.82,Compost,Inventory error,57.5,True
+2025-10-12,Sunday,10:46,Capital City Tacos,Veggie Grain Bowl,Deli,"Raleigh, Zone-2",Damaged,8.36,24,11.26,94.13,Donation,Customer returned,115.6,True
+2025-10-08,Wednesday,00:58,Village Noodle Bar,Chicken Salad Sandwich,New American,"Raleigh, Zone-10",Spoilage,6.89,14,9.52,65.59,Donation,Shift change discard,81.8,True
+2025-10-06,Monday,21:00,Triangle BBQ Co.,Margherita Pizza,Fusion,"Raleigh, Zone-4",Expired,5.86,15,10.35,60.65,Trash,Batch cooked too much,146.5,False
+2025-10-09,Thursday,18:35,Roosevelt Oyster House,Margherita Pizza,Southern,"Raleigh, Zone-9",Damaged,4.43,9,11.74,52.01,Compost,Low demand,86.8,True
+2025-10-06,Monday,20:45,Village Noodle Bar,Seared Salmon,Fusion,"Raleigh, Zone-10",Plate Waste,9.84,17,11.69,115.03,Trash,Low demand,112.4,True
+2025-10-11,Saturday,03:01,Capital City Tacos,Eggplant Parmesan,Asian,"Raleigh, Zone-9",Plate Waste,5.69,13,6.32,35.96,Donation,Customer returned,115.9,True
+2025-10-06,Monday,23:24,UrbanEats,Veggie Grain Bowl,New American,"Raleigh, Zone-2",Overproduction,1.56,3,4.68,7.3,Trash,Batch cooked too much,131.9,True
+2025-10-07,Tuesday,18:07,Roosevelt Oyster House,Smoked Turkey,Asian,"Raleigh, Zone-2",Overproduction,5.97,14,2.05,12.24,Trash,End of service,76.8,True
+2025-10-09,Thursday,01:39,Oak Street Bistro,Margherita Pizza,Southern,"Raleigh, Zone-3",Plate Waste,5.45,5,6.49,35.37,Donation,Customer returned,83.0,True
+2025-10-06,Monday,07:10,Oak Street Bistro,Smoked Turkey,Indian,"Raleigh, Zone-2",Expired,8.36,19,7.98,66.71,Trash,Shift change discard,80.1,True
+2025-10-09,Thursday,07:41,Roosevelt Oyster House,Pad Thai,Southern,"Raleigh, Zone-9",Spoilage,10.01,23,7.72,77.28,Compost,Batch cooked too much,79.5,True
+2025-10-07,Tuesday,13:54,Triangle BBQ Co.,Veggie Grain Bowl,BBQ,"Raleigh, Zone-8",Spoilage,6.19,20,2.63,16.28,Trash,Improper storage,84.7,True
+2025-10-11,Saturday,12:13,Oak Street Bistro,Smoked Turkey,BBQ,"Raleigh, Zone-4",Damaged,5.35,12,8.25,44.14,Donation,Customer returned,55.4,True
+2025-10-07,Tuesday,05:12,Southside Pizza Lab,Veggie Grain Bowl,Deli,"Raleigh, Zone-7",Prep Trim,4.09,4,10.42,42.62,Trash,Shift change discard,142.1,False
+2025-10-11,Saturday,00:12,Village Noodle Bar,Pad Thai,Fusion,"Raleigh, Zone-3",Prep Trim,5.63,12,5.21,29.33,Donation,Inventory error,92.3,True
+2025-10-08,Wednesday,00:30,Roosevelt Oyster House,Smoked Turkey,BBQ,"Raleigh, Zone-8",Expired,8.15,81,9.82,80.03,Trash,End of service,66.4,True
+2025-10-10,Friday,11:17,Village Noodle Bar,Biscuits & Gravy,Fusion,"Raleigh, Zone-4",Expired,5.18,7,11.97,62.0,Compost,Batch cooked too much,129.8,True
+2025-10-06,Monday,07:20,Capital City Tacos,Eggplant Parmesan,Mexican,"Raleigh, Zone-5",Damaged,3.39,4,2.69,9.12,Trash,Batch cooked too much,94.9,True
+2025-10-09,Thursday,10:41,Hillside Kitchen,Veggie Grain Bowl,Italian,"Raleigh, Zone-7",Plate Waste,5.69,13,2.74,15.59,Donation,End of service,105.7,True
+2025-10-12,Sunday,01:55,GreenBite Cafe,Pad Thai,Indian,"Raleigh, Zone-1",Prep Trim,7.16,7,9.02,64.58,Donation,Customer returned,113.0,True
+2025-10-06,Monday,23:12,Oak Street Bistro,Eggplant Parmesan,Asian,"Raleigh, Zone-3",Damaged,4.91,8,8.13,39.92,Donation,Batch cooked too much,118.1,True
+2025-10-10,Friday,13:07,Village Noodle Bar,Pad Thai,Southern,"Raleigh, Zone-1",Overproduction,1.7,5,4.59,7.8,Donation,Batch cooked too much,97.4,True
+2025-10-12,Sunday,14:31,UrbanEats,Eggplant Parmesan,Mexican,"Raleigh, Zone-6",Plate Waste,8.15,24,6.63,54.03,Donation,Customer returned,119.8,True
+2025-10-07,Tuesday,17:09,Village Noodle Bar,Chicken Salad Sandwich,Mexican,"Raleigh, Zone-2",Prep Trim,4.36,10,6.16,26.86,Compost,Low demand,138.1,True
+2025-10-07,Tuesday,14:41,Village Noodle Bar,Veggie Grain Bowl,Asian,"Raleigh, Zone-8",Spoilage,6.39,11,7.21,46.07,Trash,End of service,42.7,True
+2025-10-11,Saturday,03:32,Village Noodle Bar,Biscuits & Gravy,BBQ,"Raleigh, Zone-1",Damaged,9.19,23,3.15,28.95,Trash,Batch cooked too much,44.2,True
+2025-10-07,Tuesday,20:52,Hillside Kitchen,Veggie Burrito,Italian,"Raleigh, Zone-9",Spoilage,2.65,8,5.31,14.07,Trash,End of service,60.1,True
+2025-10-10,Friday,14:36,Southside Pizza Lab,Margherita Pizza,Seafood,"Raleigh, Zone-7",Overproduction,1.78,3,9.37,16.68,Compost,End of service,107.0,True

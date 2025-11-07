@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite
+.venv/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VSCode
+.vscode/
+.idea/
+
+# Data & secrets
+!data/sample_*.csv
+.env
+*.key
+
+#node_modules
+node_modules/

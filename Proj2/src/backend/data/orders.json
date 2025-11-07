@@ -1,0 +1,238 @@
+[
+  {
+    "id": "ORD-1762393406088",
+    "timestamp": "2025-11-06T01:43:26.088Z",
+    "items": [
+      {
+        "restaurant": "Oak Street Bistro",
+        "meal": "Biscuits & Gravy",
+        "price": 5.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": "5.99",
+      "totalSavings": "4.00",
+      "total": "5.99",
+      "rescueMealCount": 1
+    },
+    "pointsEarned": {
+      "Oak Street Bistro": 10
+    }
+  },
+  {
+    "id": "ORD-1762393509873",
+    "timestamp": "2025-11-06T01:45:09.873Z",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": "Veggie Grain Bowl",
+        "price": 7.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "Oak Street Bistro",
+        "meal": "Biscuits & Gravy",
+        "price": 5.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": "13.98",
+      "totalSavings": "9.00",
+      "total": "13.98",
+      "rescueMealCount": 2
+    },
+    "pointsEarned": {
+      "Eastside Deli": 10,
+      "Oak Street Bistro": 10
+    }
+  },
+  {
+    "id": "ORD-1762394008229",
+    "timestamp": "2025-11-06T01:53:28.229Z",
+    "items": [
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": "Veggie Thali",
+        "price": 8.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": "Paneer Tikka Bowl",
+        "price": 9.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": "18.98",
+      "totalSavings": "10.00",
+      "total": "18.98",
+      "rescueMealCount": 2
+    },
+    "pointsEarned": {
+      "GreenBite Cafe": 20
+    }
+  },
+  {
+    "id": "ORD-1762394664143",
+    "timestamp": "2025-11-06T02:04:24.143Z",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": "Chicken Salad Sandwich",
+        "price": 6.99,
+        "quantity": 2,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": "Veggie Thali",
+        "price": 8.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": "22.97",
+      "totalSavings": "13.00",
+      "total": "22.97",
+      "rescueMealCount": 3
+    },
+    "pointsEarned": {
+      "Eastside Deli": 20,
+      "GreenBite Cafe": 10
+    }
+  },
+  {
+    "id": "ORD-1762394861436",
+    "timestamp": "2025-11-06T02:07:41.436Z",
+    "items": [
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": "Pad Thai",
+        "price": 6.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": "6.99",
+      "totalSavings": "5.00",
+      "total": "6.99",
+      "rescueMealCount": 1
+    },
+    "pointsEarned": {
+      "Village Noodle Bar": 10
+    }
+  },
+  {
+    "id": "ORD-1762401874758",
+    "timestamp": "2025-11-06T04:04:34.758Z",
+    "items": [
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": "Veggie Thali",
+        "price": 8.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": "Pad Thai",
+        "price": 6.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": "Pad Thai",
+        "price": 6.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": "Pad Thai",
+        "price": 6.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": "Paneer Tikka Bowl",
+        "price": 9.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "Oak Street Bistro",
+        "meal": "Biscuits & Gravy",
+        "price": 5.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": "45.94",
+      "totalSavings": "29.00",
+      "total": "45.94",
+      "rescueMealCount": 6
+    },
+    "pointsEarned": {
+      "GreenBite Cafe": 20,
+      "Village Noodle Bar": 30,
+      "Oak Street Bistro": 10
+    }
+  },
+  {
+    "id": "ORD-1762416023650",
+    "timestamp": "2025-11-06T08:00:23.650Z",
+    "items": [
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": "Veggie Ramen",
+        "price": 7.49,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": "7.49",
+      "totalSavings": "5.00",
+      "total": "7.49",
+      "rescueMealCount": 1
+    },
+    "pointsEarned": {
+      "Village Noodle Bar": 10
+    }
+  },
+  {
+    "id": "ORD-1762416036146",
+    "timestamp": "2025-11-06T08:00:36.146Z",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": "Chicken Salad Sandwich",
+        "price": 6.99,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": "6.99",
+      "totalSavings": "4.00",
+      "total": "6.99",
+      "rescueMealCount": 1
+    },
+    "pointsEarned": {
+      "Eastside Deli": 10
+    }
+  }
+]
