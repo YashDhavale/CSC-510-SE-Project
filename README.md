@@ -121,3 +121,9 @@ A restaurant uploads surplus meals at the end of the day, converting potential w
 # 🌍 Community Impact Use Case
 
 The system aggregates all users’ orders to display total meals rescued and tons of waste prevented on the homepage.
+
+
+
+https://github.com/user-attachments/assets/e4082c16-8b36-4a5a-87f7-9edef1afe0e1
+
+
