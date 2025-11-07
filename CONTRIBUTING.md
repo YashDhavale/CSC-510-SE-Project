@@ -2,7 +2,7 @@
 
 Hi there! 👋 We're thrilled that you'd like to contribute to **TiffinTrails** — your help makes this project stronger and more impactful for the community!
 
-Please note that this project is released with a [Contributor Code of Conduct](Code_of_conduct.md).  
+Please note that this project is released with a [Contributor Code of Conduct](Code_of_Conduct.md).  
 By participating, you agree to uphold its terms.
 ---
 
