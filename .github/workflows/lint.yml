@@ -1,0 +1,38 @@
+name: Lint & Format Check
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Python linters
+        run: |
+          pip install black flake8
+
+      - name: Check Python formatting
+        run: black --check .
+
+      - name: Run Flake8
+        run: flake8 .
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install JS linters
+        run: |
+          npm install eslint prettier --save-dev
+
+      - name: Run ESLint
+        run: npx eslint .
+
+      - name: Check Prettier formatting
+        run: npx prettier --check .
