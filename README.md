@@ -9,7 +9,6 @@
 ![License](https://img.shields.io/github/license/YashDhavale/CSC-510-SE-Project)
 [![Forks](https://img.shields.io/github/forks/YashDhavale/CSC-510-SE-Project)](https://github.com/YashDhavale/CSC-510-SE-Project/network/members)
 [![Discussions](https://img.shields.io/github/discussions/YashDhavale/CSC-510-SE-Project)](https://github.com/YashDhavale/CSC-510-SE-Project/discussions)
-[![Code Coverage](https://img.shields.io/codecov/c/github/YashDhavale/CSC-510-SE-Project)](https://app.codecov.io/gh/YashDhavale/CSC-510-SE-Project)
 [![Open PRs](https://img.shields.io/github/issues-pr/YashDhavale/CSC-510-SE-Project)](https://github.com/YashDhavale/CSC-510-SE-Project/pulls)
 ![License](https://img.shields.io/github/license/YashDhavale/CSC-510-SE-Project)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](https://github.com/YashDhavale/CSC-510-SE-Project/blob/proj2/Code_of_Conduct.md)
