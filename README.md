@@ -15,6 +15,10 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](https://github.com/YashDhavale/CSC-510-SE-Project/blob/proj2/Code_of_Conduct.md)
 [![Contributing](https://img.shields.io/badge/Welcome-😊-blue?style=for-the-badge)](https://github.com/YashDhavale/CSC-510-SE-Project/blob/proj2/CONTRIBUTING.md)
 [![Install](https://img.shields.io/badge/Guide-grey?style=flat-square&logo=openbook)](https://github.com/YashDhavale/CSC-510-SE-Project/blob/proj2/INSTALL.md)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![CSV](https://img.shields.io/badge/CSV-000000?style=for-the-badge&logo=files&logoColor=white)
 
 # 🥗 TiffinTrails
 
