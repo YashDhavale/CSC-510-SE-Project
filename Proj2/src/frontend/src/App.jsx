@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
+import Footer from './components/Footer';
 import LoginChoice from './components/LoginChoice';
 import CustomerLogin from './components/CustomerLogin';
 import Dashboard from './components/Dashboard';
@@ -27,6 +28,7 @@ function App() {
         onLogin={handleLogin} 
         onBack={() => setPage('login')} />)}
       {page === 'dashboard' && loggedIn && <Dashboard user={user} />}
+      <Footer />
     </div>
   );
 }
