@@ -16,69 +16,66 @@
 [![Contributing](https://img.shields.io/badge/Welcome-😊-blue?style=for-the-badge)](https://github.com/YashDhavale/CSC-510-SE-Project/blob/proj2/CONTRIBUTING.md)
 [![Install](https://img.shields.io/badge/Guide-grey?style=flat-square&logo=openbook)](https://github.com/YashDhavale/CSC-510-SE-Project/blob/proj2/INSTALL.md)
 
-🥗 TiffinTrails
+# 🥗 TiffinTrails
 
 Rescuing Surplus Food, Empowering Communities
 
 TiffinTrails connects local restaurants with eco-conscious customers to rescue surplus meals that would otherwise go to waste. Our platform enables users to order these discounted “rescue meals,” reducing food waste, carbon emissions, and hunger — all while supporting local businesses.
 
-🚀 Our Mission
+# 🚀 Our Mission
 
 Every year, millions of tons of food go uneaten while countless people face food insecurity. Restaurants often discard perfectly edible meals due to overproduction or changing demand. TiffinTrails bridges this gap — giving unsold meals a second chance and making sustainability accessible to everyone.
 
 We envision a world where no good food goes to waste and every meal contributes to a healthier planet 🌍.
 
-🧠 How It Works
+# 🧠 How It Works
 
-Discover Local Restaurants – Browse partner restaurants offering surplus meals near you.
+1. Discover Local Restaurants – Browse partner restaurants offering surplus meals near you.
+2. Order Rescue Meals – Choose discounted, ready-to-eat surplus meals.
+3. Track Your Impact – See how much waste you’ve helped prevent and meals you’ve rescued.
+4. Support Local Businesses – Every rescue helps small restaurants thrive sustainably.
 
-Order Rescue Meals – Choose discounted, ready-to-eat surplus meals.
+# 💡 Impact
 
-Track Your Impact – See how much waste you’ve helped prevent and meals you’ve rescued.
+1. Customers: Access affordable meals while reducing your carbon footprint.
+2. Restaurants: Monetize surplus food instead of wasting it.
+3. Communities: Strengthen local connections and fight food insecurity.
+4. Planet: Lower food waste and greenhouse gas emissions.
 
-Support Local Businesses – Every rescue helps small restaurants thrive sustainably.
-
-💡 Impact
-
-Customers: Access affordable meals while reducing your carbon footprint.
-Restaurants: Monetize surplus food instead of wasting it.
-Communities: Strengthen local connections and fight food insecurity.
-Planet: Lower food waste and greenhouse gas emissions.
-
-🎯 Target Users
+# 🎯 Target Users
 
 TiffinTrails is designed for:
 
-🌱 Eco-conscious consumers who want to make sustainable meal choices.
+1. 🌱 Eco-conscious consumers who want to make sustainable meal choices.
 
-🍴 Restaurants aiming to minimize food waste and improve profitability.
+2. 🍴 Restaurants aiming to minimize food waste and improve profitability.
 
-🏙️ Local communities that value circular, sustainable ecosystems.
+3. 🏙️ Local communities that value circular, sustainable ecosystems.
 
-🤝 NGOs & food recovery organizations supporting social impact initiatives.
+4. 🤝 NGOs & food recovery organizations supporting social impact initiatives.
 
-🗓️ Development Roadmap
+# 🗓️ Development Roadmap
 October – Release 1: MVP
 
-Build authentication flow (Signup, Login, Logout).
+1. Build authentication flow (Signup, Login, Logout).
 
-Develop the Home page with live statistics from food waste data (meals rescued, waste prevented, active users).
+2. Develop the Home page with live statistics from food waste data (meals rescued, waste prevented, active users).
 
-Build backend APIs to fetch restaurant listings and calculate impact metrics.
+3. Build backend APIs to fetch restaurant listings and calculate impact metrics.
 
-Integrate a simple ordering flow using CSV data simulation.
+4. Integrate a simple ordering flow using CSV data simulation.
 
-November – Release 2: Enhanced Features
+5. November – Release 2: Enhanced Features
 
-Implement dynamic dashboard with real-time updates when users order meals.
+6. Implement dynamic dashboard with real-time updates when users order meals.
 
-Add filtering, sorting, and restaurant categorization (by cuisine/type).
+7. Add filtering, sorting, and restaurant categorization (by cuisine/type).
 
-Include analytics charts showing total rescued meals and waste prevented over time.
+8. Include analytics charts showing total rescued meals and waste prevented over time.
 
-Introduce leaderboard or rewards system for top contributors.
+9. Introduce leaderboard or rewards system for top contributors.
 
-🧩 Third-Party Dependencies
+# 🧩 Third-Party Dependencies
 
 The following table lists all external dependencies used in TiffinTrails, including version numbers, usage type (mandatory/optional/dev), and license information.
 
@@ -117,10 +114,10 @@ Data Analytics (Python)
 
 A user orders a “rescue meal” from a nearby restaurant and instantly sees their positive impact — meals saved and waste prevented — updated in real time.
 
-🏪 Restaurant Use Case
+# 🏪 Restaurant Use Case
 
 A restaurant uploads surplus meals at the end of the day, converting potential waste into revenue and goodwill.
 
-🌍 Community Impact Use Case
+# 🌍 Community Impact Use Case
 
 The system aggregates all users’ orders to display total meals rescued and tons of waste prevented on the homepage.
