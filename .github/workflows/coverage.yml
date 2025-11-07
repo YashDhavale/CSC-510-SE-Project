@@ -54,7 +54,7 @@ jobs:
     - name: Install frontend dependencies
       if: matrix.test-suite == 'frontend'
       working-directory: Proj2/src/frontend
-      run: npm ci
+      run: npm install
     
     - name: Run frontend tests with coverage
       if: matrix.test-suite == 'frontend'
@@ -75,7 +75,7 @@ jobs:
     - name: Install backend dependencies
       if: matrix.test-suite == 'backend'
       working-directory: Proj2/src/backend
-      run: npm ci
+      run: npm install
     
     - name: Run backend tests with coverage
       if: matrix.test-suite == 'backend'
