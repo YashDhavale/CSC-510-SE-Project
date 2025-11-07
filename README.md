@@ -14,6 +14,7 @@
 ![License](https://img.shields.io/github/license/YashDhavale/CSC-510-SE-Project)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](https://github.com/YashDhavale/CSC-510-SE-Project/blob/proj2/Code_of_Conduct.md)
 [![Contributing](https://img.shields.io/badge/Welcome-😊-blue?style=for-the-badge)](https://github.com/YashDhavale/CSC-510-SE-Project/blob/proj2/CONTRIBUTING.md)
+[![Install](https://img.shields.io/badge/Guide-grey?style=flat-square&logo=openbook)](https://github.com/YashDhavale/CSC-510-SE-Project/blob/proj2/INSTALL.md)
 
 🥗 TiffinTrails
 
