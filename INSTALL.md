@@ -25,7 +25,7 @@ If both commands return version numbers, Node.js and npm are ready to use.
 # Clone the repository
 ```
 git clone https://github.com/YashDhavale/CSC-510-SE-Project.git
-cd CSC-510-SE-Project
+cd CSC-510-SE-Project/Proj2
 cd src/frontend
 ```
 📦 Install Dependencies
