@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import Navbar from "./Navbar";
 
 function CustomerLogin({ onLogin, onBack }) {
@@ -9,7 +10,9 @@ function CustomerLogin({ onLogin, onBack }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const url = isRegister ? "http://localhost:5000/register" : "http://localhost:5000/login";
+
+    // Use relative paths so CRA dev server proxy can forward to backend (port 5000)
+    const url = isRegister ? "/register" : "/login";
     const bodyData = isRegister ? { name, email, password } : { email, password };
 
     try {
@@ -23,7 +26,8 @@ function CustomerLogin({ onLogin, onBack }) {
       if (data.success) {
         if (isRegister) {
           alert(data.message);
-          setIsRegister(false); // switch to login after successful registration
+          // Switch back to login screen after successful registration
+          setIsRegister(false);
         } else {
           onLogin(data.user);
         }
@@ -100,5 +104,10 @@ function CustomerLogin({ onLogin, onBack }) {
     </div>
   );
 }
+
+CustomerLogin.propTypes = {
+  onLogin: PropTypes.func.isRequired,
+  onBack: PropTypes.func.isRequired,
+};
 
 export default CustomerLogin;
