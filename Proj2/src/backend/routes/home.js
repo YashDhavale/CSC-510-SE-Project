@@ -6,7 +6,7 @@ const csv = require("csv-parser");
 const router = express.Router();
 
 const dataPath = path.join(__dirname, "../../../data");
-const restaurantFile = path.join(dataPath, "restaurant_metadata.csv");
+const restaurantFile = path.join(dataPath, "Restaurant_Metadata.csv");
 const wasteFile = path.join(dataPath, "Raleigh_Food_Waste__1-week_sample_.csv");
 
 router.get("/restaurants", (req, res) => {

@@ -39,7 +39,7 @@ const Dashboard = () => {
   // Fetch data from APIs
   useEffect(() => {
     // Fetch restaurants with meals
-    fetch("http://localhost:5000/dashboard/restaurants-with-meals")
+    fetch("/dashboard/restaurants-with-meals")
       .then((res) => res.json())
       .then((data) => {
         setRestaurants(data);
@@ -51,13 +51,13 @@ const Dashboard = () => {
       });
 
     // Fetch user impact
-    fetch("http://localhost:5000/dashboard/user-impact")
+    fetch("/dashboard/user-impact")
       .then((res) => res.json())
       .then((data) => setUserImpact(data))
       .catch((err) => console.error("Error fetching user impact:", err));
 
     // Fetch community stats
-    fetch("http://localhost:5000/dashboard/community-stats")
+    fetch("/dashboard/community-stats")
       .then((res) => res.json())
       .then((data) => setCommunityStats(data))
       .catch((err) => console.error("Error fetching community stats:", err));

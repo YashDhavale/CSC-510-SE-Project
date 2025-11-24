@@ -26,6 +26,7 @@
   },
   "rules": {
     "semi": ["error", "always"],
-    "quotes": ["error", "double"]
+    "quotes": ["error", "single", { "avoidEscape": true }],
+    "react/prop-types": "off"
   }
 }

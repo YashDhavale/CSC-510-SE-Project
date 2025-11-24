@@ -7,13 +7,13 @@ export default function Home({ onNavigate }) {
 
   useEffect(() => {
     // Fetch restaurants
-    fetch("http://localhost:5000/restaurants")
+    fetch("/restaurants")
       .then((res) => res.json())
       .then((data) => setRestaurants(data))
       .catch((err) => console.error("Error fetching restaurants:", err));
 
     // Fetch impact stats
-    fetch("http://localhost:5000/impact")
+    fetch("/impact")
       .then((res) => res.json())
       .then((data) => setImpact(data))
       .catch((err) => console.error("Error fetching impact stats:", err));
