@@ -3,7 +3,7 @@ import Cart from './Cart';
 import LeaderboardPanel from './LeaderboardPanel';
 import { ShoppingCart, Heart, Leaf, TrendingUp, Users, Star, Search, MapPin, Clock, Award, Truck, Package, Menu, X, ChevronRight, Zap } from 'lucide-react';
 
-const Dashboard = () => {
+const Dashboard = ({onLogout }) => {
 
   const [currentView, setCurrentView] = useState('browse');
 
@@ -19,6 +19,9 @@ const Dashboard = () => {
 
   const [favorites, setFavorites] = useState(new Set([1, 3]));
 
+  const [showCartToast, setShowCartToast] = useState(false);
+
+
   // State for API data
   const [restaurants, setRestaurants] = useState([]);
   const [userImpact, setUserImpact] = useState({
@@ -27,7 +30,7 @@ const Dashboard = () => {
     foodWastePrevented: 0,
     carbonReduced: 0,
     localRestaurantsSupported: 0,
-    impactLevel: "New Rescuer"
+    impactLevel: 'New Rescuer'
   });
   const [communityStats, setCommunityStats] = useState({
     activeUsers: 0,
@@ -39,28 +42,28 @@ const Dashboard = () => {
   // Fetch data from APIs
   useEffect(() => {
     // Fetch restaurants with meals
-    fetch("/dashboard/restaurants-with-meals")
+    fetch('/dashboard/restaurants-with-meals')
       .then((res) => res.json())
       .then((data) => {
         setRestaurants(data);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching restaurants:", err);
+        console.error('Error fetching restaurants:', err);
         setLoading(false);
       });
 
     // Fetch user impact
-    fetch("/dashboard/user-impact")
+    fetch('/dashboard/user-impact')
       .then((res) => res.json())
       .then((data) => setUserImpact(data))
-      .catch((err) => console.error("Error fetching user impact:", err));
+      .catch((err) => console.error('Error fetching user impact:', err));
 
     // Fetch community stats
-    fetch("/dashboard/community-stats")
+    fetch('/dashboard/community-stats')
       .then((res) => res.json())
       .then((data) => setCommunityStats(data))
-      .catch((err) => console.error("Error fetching community stats:", err));
+      .catch((err) => console.error('Error fetching community stats:', err));
   }, []);
 
   // Get unique cuisine types from restaurants
@@ -77,10 +80,15 @@ const Dashboard = () => {
   });
 
   const addToCart = (restaurant, meal) => {
-
     setCart([...cart, { restaurant: restaurant.name, meal, quantity: 1 }]);
 
+    // Show a short in-app toast when item is added to cart
+    setShowCartToast(true);
+    setTimeout(() => {
+      setShowCartToast(false);
+    }, 1000);
   };
+
 
   const toggleFavorite = (restaurantId) => {
 
@@ -186,20 +194,28 @@ const Dashboard = () => {
 
             <div className="flex items-center space-x-4">
 
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="hidden md:inline-flex items-center px-3 py-1 rounded-full border border-white/60 text-sm font-medium hover:bg-white/10"
+                >
+                  Log out
+                </button>
+              )}
+
               <button 
                 onClick={() => setCurrentView('cart')}
                 className="relative hover:opacity-80 transition"
               >
-
                 <ShoppingCart className="w-6 h-6" />
-
                 {cart.length > 0 && (
-
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{cart.length}</span>
-
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {cart.length}
+                  </span>
                 )}
-
               </button>
+
 
               <button className="md:hidden" onClick={() => setShowMobileMenu(!showMobileMenu)}>
 
@@ -595,7 +611,7 @@ const Dashboard = () => {
 
             <h1 className="text-3xl font-bold mb-2">Your Environmental Impact</h1>
 
-            <p className="text-lg">Track the difference you're making!</p>
+            <p className="text-lg">Track the difference you are making!</p>
 
           </div>
 
@@ -645,9 +661,9 @@ const Dashboard = () => {
 
           <div className="bg-white rounded-xl shadow-lg p-8 mt-8">
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Impact Level: {userImpact.impactLevel || "New Rescuer"}</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Impact Level: {userImpact.impactLevel || 'New Rescuer'}</h2>
 
-            <p className="text-gray-600">You've supported {userImpact.localRestaurantsSupported || 0} local restaurants in reducing food waste!</p>
+            <p className="text-gray-600">You have supported {userImpact.localRestaurantsSupported || 0} local restaurants in reducing food waste!</p>
 
           </div>
 
@@ -670,7 +686,7 @@ const Dashboard = () => {
 
             <h1 className="text-3xl font-bold mb-2">Community Impact</h1>
 
-            <p className="text-lg">Together we're making a difference!</p>
+            <p className="text-lg">Together we are making a difference!</p>
 
           </div>
 
@@ -713,8 +729,8 @@ const Dashboard = () => {
       )}
 
       {currentView === 'cart' && (
-        <Cart 
-          cart={cart} 
+        <Cart
+          cart={cart}
           setCart={setCart}
           onBack={() => setCurrentView('browse')}
           restaurants={restaurants}
@@ -725,9 +741,19 @@ const Dashboard = () => {
         />
       )}
 
+      {showCartToast && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2">
+            <ShoppingCart className="w-4 h-4" />
+            <span className="text-sm font-medium">Added to cart</span>
+          </div>
+        </div>
+      )}
+
     </div>
 
   );
+
 
 };
 

@@ -18,16 +18,31 @@ function App() {
     setPage('dashboard');
   };
 
+  const handleLogout = () => {
+    setUser(null);
+    setLoggedIn(false);
+    setPage('home');
+  };
+
   return (
     <div>
-      
-      {page !== 'dashboard' && <Navbar onNavigate={setPage} loggedIn={loggedIn} />}
+      {/* Navbar is shown on all pages except dashboard, to keep their custom header */}
+      {page !== 'dashboard' && (
+        <Navbar onNavigate={setPage} loggedIn={loggedIn} />
+      )}
+
       {page === 'home' && <Home onNavigate={setPage} />}
+
       {page === 'login' && <LoginChoice onLoginSelect={setPage} />}
-      {page === 'customer' && (<CustomerLogin 
-        onLogin={handleLogin} 
-        onBack={() => setPage('login')} />)}
-      {page === 'dashboard' && loggedIn && <Dashboard user={user} />}
+
+      {page === 'customer' && (
+        <CustomerLogin onLogin={handleLogin} onBack={() => setPage('login')} />
+      )}
+
+      {page === 'dashboard' && loggedIn && (
+        <Dashboard user={user} onLogout={handleLogout} />
+      )}
+
       <Footer />
     </div>
   );

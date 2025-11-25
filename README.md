@@ -142,3 +142,84 @@ The system aggregates all users’ orders to display total meals rescued and ton
 https://github.com/user-attachments/assets/e4082c16-8b36-4a5a-87f7-9edef1afe0e1
 
 
+## Running Project 2 in GitHub Codespaces
+
+These steps assume you are working inside a GitHub Codespace created from this repository and that the repo is checked out at the root (e.g., `/workspaces/CSC510_Group8_S1-29-main`).
+
+Project 2 is split into a Node/Express backend and a React frontend. In Codespaces you should run **both** services in separate terminals.
+
+### 1. Backend (Node/Express API)
+
+1. Open a terminal in the Codespace.
+2. Navigate to the backend folder:
+
+   ~~~bash
+   cd Proj2/src/backend
+   ~~~
+
+3. Install dependencies (first time only, or whenever `package.json` changes):
+
+   ~~~bash
+   npm install
+   ~~~
+
+4. Start the backend server:
+
+   ~~~bash
+   npm start
+   ~~~
+
+   By default the API runs on port **5000**.
+
+   The React frontend is configured with a proxy to the backend via:
+
+   ~~~json
+   "proxy": "http://localhost:5000"
+   ~~~
+
+   in `Proj2/src/frontend/package.json`, so you do **not** need to hard-code the backend URL in the frontend code.
+
+### 2. Frontend (React client)
+
+1. Open a **second** terminal in the same Codespace.
+2. Navigate to the frontend folder:
+
+   ~~~bash
+   cd Proj2/src/frontend
+   ~~~
+
+3. Install dependencies (first time only, or whenever `package.json` changes):
+
+   ~~~bash
+   npm install
+   ~~~
+
+4. Start the React development server:
+
+   ~~~bash
+   npm start
+   ~~~
+
+   By default the frontend runs on port **3000**.  
+   In GitHub Codespaces, VS Code / the browser UI will prompt you to open the forwarded port.  
+   Open the port `3000` in your browser to interact with the application.
+
+### 3. Summary
+
+- Backend (API):
+
+  ~~~bash
+  cd Proj2/src/backend
+  npm install
+  npm start
+  ~~~
+
+- Frontend (React):
+
+  ~~~bash
+  cd Proj2/src/frontend
+  npm install
+  npm start
+  ~~~
+
+Both servers must be running for the application to work correctly.
