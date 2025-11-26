@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Cart from './Cart';
 import LeaderboardPanel from './LeaderboardPanel';
+import RestaurantDetail from './RestaurantDetail';
 import {
   ShoppingCart,
   Heart,
@@ -32,8 +33,12 @@ const Dashboard = ({ user, onLogout }) => {
   const [favorites, setFavorites] = useState(new Set());
   const [showCartToast, setShowCartToast] = useState(false);
 
-  // which restaurant's rescue meals are expanded in browse view
-  const [expandedRestaurantId, setExpandedRestaurantId] = useState(null);
+  // which restaurant is opened in detail view
+  const [selectedRestaurantDetail, setSelectedRestaurantDetail] =
+    useState(null);
+
+  // logout confirmation modal
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // State for API data
   const [restaurants, setRestaurants] = useState([]);
@@ -67,9 +72,8 @@ const Dashboard = ({ user, onLogout }) => {
     };
   };
 
-  // Fetch static-ish data (restaurants + community stats)
+  // Fetch restaurants + community stats (with static fallback)
   useEffect(() => {
-    // Fetch restaurants with meals; fallback to static data if empty / error
     fetch('/dashboard/restaurants-with-meals')
       .then((res) => res.json())
       .then((data) => {
@@ -89,14 +93,13 @@ const Dashboard = ({ user, onLogout }) => {
         setLoading(false);
       });
 
-    // Fetch community stats (global, not per user)
     fetch('/dashboard/community-stats')
       .then((res) => res.json())
       .then((data) => setCommunityStats(data))
       .catch((err) => console.error('Error fetching community stats:', err));
   }, []);
 
-  // Fetch user-specific impact + orders based on logged-in user
+  // Fetch user-specific impact + order history
   useEffect(() => {
     if (!user || !user.email) {
       setUserImpact({
@@ -114,7 +117,7 @@ const Dashboard = ({ user, onLogout }) => {
 
     const emailParam = encodeURIComponent(user.email);
 
-    // Fetch impact for this specific user
+    // Impact for this specific user
     fetch(`/dashboard/user-impact?email=${emailParam}`)
       .then((res) => res.json())
       .then((data) => {
@@ -127,7 +130,7 @@ const Dashboard = ({ user, onLogout }) => {
         console.error('Error fetching user impact:', err);
       });
 
-    // Fetch orders and derive this user's order history
+    // Order history – we filter by userEmail on the frontend
     fetch('/api/orders')
       .then((res) => res.json())
       .then((data) => {
@@ -156,7 +159,7 @@ const Dashboard = ({ user, onLogout }) => {
       });
   }, [user]);
 
-  // Get unique cuisine types from restaurants
+  // Cuisine filters
   const cuisineTypes = [
     'all',
     ...new Set(restaurants.map((r) => r.cuisine).filter(Boolean)),
@@ -174,16 +177,19 @@ const Dashboard = ({ user, onLogout }) => {
   });
 
   const addToCart = (restaurant, meal) => {
-    setCart([...cart, { restaurant: restaurant.name, meal, quantity: 1 }]);
+    setCart((prev) => [...prev, { restaurant: restaurant.name, meal, quantity: 1 }]);
 
-    // Show a short in-app toast when item is added to cart
+    // short toast
     setShowCartToast(true);
     setTimeout(() => {
       setShowCartToast(false);
     }, 1000);
   };
 
-  const handleReorder = (order) => {
+  // Account-aware "Rescue Again":
+  // For each restaurant in the past order, we create a new default rescue box
+  // with quantity equal to the total rescued meals from that restaurant.
+  const handleRescueAgain = (order) => {
     if (
       !order ||
       !order.items ||
@@ -193,40 +199,35 @@ const Dashboard = ({ user, onLogout }) => {
       return;
     }
 
-    const rebuiltCart = [];
+    // Group quantities by restaurant name
+    const quantityByRestaurant = new Map();
 
     order.items.forEach((orderItem) => {
-      if (!orderItem || !orderItem.restaurant || !orderItem.meal) {
+      if (!orderItem || !orderItem.restaurant) {
         return;
       }
-
-      const restaurant = restaurants.find(
-        (r) => r.name === orderItem.restaurant
-      );
-      if (!restaurant) {
-        return;
-      }
-
-      const hasMenus =
-        Array.isArray(restaurant.menus) && restaurant.menus.length > 0;
-
-      let meal = null;
-      if (hasMenus) {
-        meal = restaurant.menus.find((m) => m.name === orderItem.meal);
-      }
-      if (!meal) {
-        // if we cannot find exact meal (e.g. from static data), fall back to default box
-        meal = createDefaultMealForRestaurant(restaurant);
-      }
-
+      const restaurantName = orderItem.restaurant;
       const quantity =
         orderItem.quantity && orderItem.quantity > 0
           ? orderItem.quantity
           : 1;
+      const prev = quantityByRestaurant.get(restaurantName) || 0;
+      quantityByRestaurant.set(restaurantName, prev + quantity);
+    });
+
+    const rebuiltCart = [];
+
+    quantityByRestaurant.forEach((qty, restaurantName) => {
+      const restaurant = restaurants.find((r) => r.name === restaurantName);
+      if (!restaurant) {
+        return;
+      }
+
+      const meal = createDefaultMealForRestaurant(restaurant);
       rebuiltCart.push({
         restaurant: restaurant.name,
         meal,
-        quantity,
+        quantity: qty,
       });
     });
 
@@ -250,6 +251,24 @@ const Dashboard = ({ user, onLogout }) => {
     setFavorites(newFavorites);
   };
 
+  const handleNavClick = (view) => {
+    setCurrentView(view);
+    setShowMobileMenu(false);
+    if (view === 'browse') {
+      setSelectedRestaurantDetail(null);
+    }
+  };
+
+  const handleOpenRestaurantDetail = (restaurant) => {
+    setSelectedRestaurantDetail(restaurant);
+    setCurrentView('restaurantDetail');
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutConfirm(false);
+    onLogout();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -264,11 +283,6 @@ const Dashboard = ({ user, onLogout }) => {
       </div>
     );
   }
-
-  const handleNavClick = (view) => {
-    setCurrentView(view);
-    setShowMobileMenu(false);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -291,7 +305,7 @@ const Dashboard = ({ user, onLogout }) => {
             <button
               onClick={() => handleNavClick('browse')}
               className={`text-sm font-medium ${
-                currentView === 'browse'
+                currentView === 'browse' || currentView === 'restaurantDetail'
                   ? 'text-green-600'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
@@ -340,7 +354,7 @@ const Dashboard = ({ user, onLogout }) => {
               )}
             </button>
             <button
-              onClick={onLogout}
+              onClick={() => setShowLogoutConfirm(true)}
               className="text-sm font-medium text-red-500 hover:text-red-600"
             >
               Logout
@@ -383,7 +397,7 @@ const Dashboard = ({ user, onLogout }) => {
                 Leaderboard
               </button>
               <button
-                onClick={() => handleNavClick('cart')}
+                onClick={() => setCurrentView('cart')}
                 className="w-full text-left text-sm py-2 flex items-center"
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
@@ -395,7 +409,10 @@ const Dashboard = ({ user, onLogout }) => {
                 )}
               </button>
               <button
-                onClick={onLogout}
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  setShowLogoutConfirm(true);
+                }}
                 className="w-full text-left text-sm py-2 text-red-500"
               >
                 Logout
@@ -407,284 +424,246 @@ const Dashboard = ({ user, onLogout }) => {
 
       {/* main content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {currentView === 'browse' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* left column: search + restaurant cards */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-xl shadow p-4 flex items-center space-x-3">
-                <div className="bg-green-100 text-green-600 rounded-full p-2">
-                  <Search className="w-5 h-5" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search by restaurant or cuisine..."
-                  className="flex-1 border-none focus:ring-0 text-sm"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+        {(currentView === 'browse' || currentView === 'restaurantDetail') && (
+          <>
+            {currentView === 'browse' && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* left column: search + restaurant cards */}
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="bg-white rounded-xl shadow p-4 flex items-center space-x-3">
+                    <div className="bg-green-100 text-green-600 rounded-full p-2">
+                      <Search className="w-5 h-5" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search by restaurant or cuisine..."
+                      className="flex-1 border-none focus:ring-0 text-sm"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
 
-              <div className="flex flex-wrap items-center space-x-3">
-                <button
-                  onClick={() => setFilterCuisine('all')}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                    filterCuisine === 'all'
-                      ? 'bg-green-600 text-white border-green-600'
-                      : 'bg-white text-gray-600 border-gray-200'
-                  } mb-2`}
-                >
-                  All Cuisines
-                </button>
-                {cuisineTypes
-                  .filter((c) => c !== 'all')
-                  .map((cuisine) => (
+                  <div className="flex flex-wrap items-center space-x-3">
                     <button
-                      key={cuisine}
-                      onClick={() => setFilterCuisine(cuisine)}
+                      onClick={() => setFilterCuisine('all')}
                       className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                        filterCuisine === cuisine
+                        filterCuisine === 'all'
                           ? 'bg-green-600 text-white border-green-600'
                           : 'bg-white text-gray-600 border-gray-200'
                       } mb-2`}
                     >
-                      {cuisine}
+                      All Cuisines
                     </button>
-                  ))}
-              </div>
+                    {cuisineTypes
+                      .filter((c) => c !== 'all')
+                      .map((cuisine) => (
+                        <button
+                          key={cuisine}
+                          onClick={() => setFilterCuisine(cuisine)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                            filterCuisine === cuisine
+                              ? 'bg-green-600 text-white border-green-600'
+                              : 'bg-white text-gray-600 border-gray-200'
+                          } mb-2`}
+                        >
+                          {cuisine}
+                        </button>
+                      ))}
+                  </div>
 
-              <div className="space-y-4">
-                {filteredRestaurants.map((restaurant) => {
-                  const restaurantId =
-                    restaurant.id || restaurant._id || restaurant.name;
-                  const hasMenus =
-                    Array.isArray(restaurant.menus) &&
-                    restaurant.menus.length > 0;
+                  <div className="space-y-4">
+                    {filteredRestaurants.map((restaurant) => {
+                      const restaurantId =
+                        restaurant.id || restaurant._id || restaurant.name;
+                      const hasMenus =
+                        Array.isArray(restaurant.menus) &&
+                        restaurant.menus.length > 0;
+                      const rescueCount = hasMenus
+                        ? restaurant.menus.length
+                        : 0;
 
-                  return (
-                    <div
-                      key={restaurantId}
-                      className="bg-white rounded-xl shadow hover:shadow-md transition p-4 flex"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h2 className="text-lg font-semibold text-gray-800">
-                              {restaurant.name}
-                            </h2>
-                            <p className="text-xs text-gray-500">
-                              {restaurant.cuisine || 'Cuisine not listed'} •{' '}
-                              {restaurant.distance
-                                ? `${restaurant.distance} mi away`
-                                : 'Distance not available'}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => toggleFavorite(restaurantId)}
-                            className="text-gray-400 hover:text-red-500"
-                          >
-                            <Heart
-                              className={`w-5 h-5 ${
-                                favorites.has(restaurantId)
-                                  ? 'fill-red-500 text-red-500'
-                                  : ''
-                              }`}
-                            />
-                          </button>
-                        </div>
-
-                        <div className="mt-3 flex items-center text-xs text-gray-500 space-x-4">
-                          <span className="flex items-center">
-                            <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                            {restaurant.rating || 4.5}
-                          </span>
-                          <span className="flex items-center">
-                            <MapPin className="w-4 h-4 mr-1" />
-                            {restaurant.address || 'Address not available'}
-                          </span>
-                          <span className="flex items-center">
-                            <Clock className="w-4 h-4 mr-1" />
-                            {restaurant.hours || 'Hours not listed'}
-                          </span>
-                        </div>
-
-                        {/* If this restaurant has rescue meals, allow expand to view meals */}
-                        {hasMenus && (
-                          <div className="mt-4">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setExpandedRestaurantId((prev) =>
-                                  prev === restaurantId ? null : restaurantId
-                                )
-                              }
-                              className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border border-green-500 text-green-600 hover:bg-green-50"
-                            >
-                              {expandedRestaurantId === restaurantId
-                                ? 'Hide Rescue Meals'
-                                : 'View Rescue Meals'}
-                            </button>
-
-                            {expandedRestaurantId === restaurantId && (
-                              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {restaurant.menus.map((meal) => (
-                                  <div
-                                    key={meal.id}
-                                    className="border rounded-lg p-3 hover:border-green-500 cursor-pointer"
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div>
-                                        <h3 className="text-sm font-semibold text-gray-800">
-                                          {meal.name}
-                                        </h3>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                          {meal.description ||
-                                            'Chef-selected rescue meal'}
-                                        </p>
-                                        <p className="text-xs text-orange-600 mt-1">
-                                          Pickup:{' '}
-                                          {meal.pickupWindow || 'See details'}
-                                        </p>
-                                      </div>
-                                      <div className="text-right ml-3">
-                                        {meal.originalPrice &&
-                                          meal.rescuePrice && (
-                                            <p className="text-xs text-gray-400 line-through">
-                                              ${meal.originalPrice}
-                                            </p>
-                                          )}
-                                        <p className="text-lg font-bold text-green-600">
-                                          ${meal.rescuePrice ||
-                                            meal.originalPrice}
-                                        </p>
-                                        {meal.originalPrice &&
-                                          meal.rescuePrice && (
-                                            <p className="text-[10px] text-blue-600">
-                                              Save $
-                                              {(
-                                                parseFloat(
-                                                  meal.originalPrice
-                                                ) -
-                                                parseFloat(meal.rescuePrice)
-                                              ).toFixed(2)}
-                                            </p>
-                                          )}
-                                      </div>
-                                    </div>
-                                    <button
-                                      onClick={() => addToCart(restaurant, meal)}
-                                      className="mt-3 w-full inline-flex items-center justify-center px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700"
-                                    >
-                                      <ShoppingCart className="w-3 h-3 mr-1" />
-                                      Add to Cart
-                                    </button>
-                                  </div>
-                                ))}
+                      return (
+                        <div
+                          key={restaurantId}
+                          className="bg-white rounded-xl shadow hover:shadow-md transition p-4 flex"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h2 className="text-lg font-semibold text-gray-800">
+                                  {restaurant.name}
+                                </h2>
+                                <p className="text-xs text-gray-500">
+                                  {restaurant.cuisine || 'Cuisine not listed'} •{' '}
+                                  {restaurant.distance
+                                    ? `${restaurant.distance} mi away`
+                                    : 'Distance not available'}
+                                </p>
                               </div>
-                            )}
-                          </div>
-                        )}
+                              <button
+                                onClick={() => toggleFavorite(restaurantId)}
+                                className="text-gray-400 hover:text-red-500"
+                              >
+                                <Heart
+                                  className={`w-5 h-5 ${
+                                    favorites.has(restaurantId)
+                                      ? 'fill-red-500 text-red-500'
+                                      : ''
+                                  }`}
+                                />
+                              </button>
+                            </div>
 
-                        {/* Fallback: if no menus, allow quick rescue box */}
-                        {!hasMenus && (
-                          <div className="mt-4">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                addToCart(
-                                  restaurant,
-                                  createDefaultMealForRestaurant(restaurant)
-                                )
-                              }
-                              className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-green-600 text-white hover:bg-green-700"
-                            >
-                              <ShoppingCart className="w-3 h-3 mr-1" />
-                              Reserve a Rescue Meal
-                            </button>
+                            <div className="mt-3 flex items-center text-xs text-gray-500 space-x-4">
+                              <span className="flex items-center">
+                                <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                                {restaurant.rating || 4.5}
+                              </span>
+                              <span className="flex items-center">
+                                <MapPin className="w-4 h-4 mr-1" />
+                                {restaurant.address || 'Address not available'}
+                              </span>
+                              <span className="flex items-center">
+                                <Clock className="w-4 h-4 mr-1" />
+                                {restaurant.hours || 'Hours not listed'}
+                              </span>
+                            </div>
+
+                            {/* rescue meals count / message */}
+                            <div className="mt-3 text-xs text-gray-600">
+                              {hasMenus ? (
+                                <span>
+                                  {rescueCount}{' '}
+                                  {rescueCount === 1
+                                    ? 'rescue meal available'
+                                    : 'rescue meals available'}
+                                </span>
+                              ) : (
+                                <span>
+                                  Rescue meals not listed yet – you can still
+                                  reserve a surprise box.
+                                </span>
+                              )}
+                            </div>
+
+                            {/* action button: always go to restaurant detail */}
+                            <div className="mt-4">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleOpenRestaurantDetail(restaurant)
+                                }
+                                className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-green-600 text-white hover:bg-green-700"
+                              >
+                                View Rescue Meals
+                              </button>
+                            </div>
                           </div>
-                        )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* right column: quick stats */}
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl p-5">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold">
+                        Today&apos;s Rescue Snapshot
+                      </h3>
+                      <Zap className="w-5 h-5" />
+                    </div>
+                    <p className="text-sm text-green-100 mb-2">
+                      Raleigh residents are rescuing meals and cutting food
+                      waste.
+                    </p>
+                    <div className="grid grid-cols-3 gap-3 mt-2">
+                      <div>
+                        <p className="text-xs uppercase text-green-100">
+                          Active
+                        </p>
+                        <p className="text-lg font-bold">
+                          {Number(
+                            communityStats.activeUsers || 0
+                          ).toLocaleString()}
+                        </p>
+                        <p className="text-[10px] text-green-100">
+                          neighbors this week
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase text-green-100">
+                          Meals
+                        </p>
+                        <p className="text-lg font-bold">
+                          {Number(
+                            communityStats.mealsRescued || 0
+                          ).toLocaleString()}
+                        </p>
+                        <p className="text-[10px] text-green-100">
+                          rescued from landfill
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase text-green-100">
+                          Waste
+                        </p>
+                        <p className="text-lg font-bold">
+                          {communityStats.wastePreventedTons || 0}
+                        </p>
+                        <p className="text-[10px] text-green-100">
+                          tons prevented
+                        </p>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                  </div>
 
-            {/* right column: quick stats */}
-            <div className="space-y-4">
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-semibold">
-                    Today&apos;s Rescue Snapshot
-                  </h3>
-                  <Zap className="w-5 h-5" />
-                </div>
-                <p className="text-sm text-green-100 mb-2">
-                  Raleigh residents are rescuing meals and cutting food waste.
-                </p>
-                <div className="grid grid-cols-3 gap-3 mt-2">
-                  <div>
-                    <p className="text-xs uppercase text-green-100">Active</p>
-                    <p className="text-lg font-bold">
-                      {Number(communityStats.activeUsers || 0).toLocaleString()}
-                    </p>
-                    <p className="text-[10px] text-green-100">
-                      neighbors this week
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase text-green-100">Meals</p>
-                    <p className="text-lg font-bold">
-                      {Number(communityStats.mealsRescued || 0).toLocaleString()}
-                    </p>
-                    <p className="text-[10px] text-green-100">
-                      rescued from landfill
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase text-green-100">Waste</p>
-                    <p className="text-lg font-bold">
-                      {communityStats.wastePreventedTons || 0}
-                    </p>
-                    <p className="text-[10px] text-green-100">
-                      tons prevented
-                    </p>
+                  <div className="bg-white rounded-xl shadow p-5">
+                    <h3 className="text-sm font-semibold text-gray-800 mb-3">
+                      Your Progress
+                    </h3>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Meals Rescued</span>
+                        <span className="font-semibold text-gray-900">
+                          {userImpact.mealsOrdered || 0}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Money Saved</span>
+                        <span className="font-semibold text-gray-900">
+                          ${userImpact.moneySaved || 0}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">
+                          Food Waste Prevented
+                        </span>
+                        <span className="font-semibold text-gray-900">
+                          {userImpact.foodWastePrevented || 0} lbs
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Carbon Reduced</span>
+                        <span className="font-semibold text-gray-900">
+                          {userImpact.carbonReduced || 0} kg
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
+            )}
 
-              <div className="bg-white rounded-xl shadow p-5">
-                <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                  Your Progress
-                </h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Meals Rescued</span>
-                    <span className="font-semibold text-gray-900">
-                      {userImpact.mealsOrdered || 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Money Saved</span>
-                    <span className="font-semibold text-gray-900">
-                      ${userImpact.moneySaved || 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Food Waste Prevented</span>
-                    <span className="font-semibold text-gray-900">
-                      {userImpact.foodWastePrevented || 0} lbs
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Carbon Reduced</span>
-                    <span className="font-semibold text-gray-900">
-                      {userImpact.carbonReduced || 0} kg
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            {currentView === 'restaurantDetail' && selectedRestaurantDetail && (
+              <RestaurantDetail
+                restaurant={selectedRestaurantDetail}
+                onBack={() => handleNavClick('browse')}
+                onAddToCart={addToCart}
+              />
+            )}
+          </>
         )}
 
         {currentView === 'impact' && (
@@ -730,16 +709,7 @@ const Dashboard = ({ user, onLogout }) => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-8 mt-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                Impact Level: {userImpact.impactLevel || 'New Rescuer'}
-              </h2>
-              <p className="text-gray-600">
-                You have supported {userImpact.localRestaurantsSupported || 0} local
-                restaurants in reducing food waste!
-              </p>
-            </div>
-
+            {/* account-aware recent orders + "Rescue Again" */}
             <div className="bg-white rounded-xl shadow-lg p-8 mt-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">
                 Your Recent Orders
@@ -794,10 +764,10 @@ const Dashboard = ({ user, onLogout }) => {
                         )}
                         <button
                           type="button"
-                          onClick={() => handleReorder(order)}
+                          onClick={() => handleRescueAgain(order)}
                           className="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
                         >
-                          <span className="mr-2">Reorder</span>
+                          <span className="mr-2">Rescue Again</span>
                           <ShoppingCart className="w-4 h-4" />
                         </button>
                       </div>
@@ -861,7 +831,7 @@ const Dashboard = ({ user, onLogout }) => {
             setCart={setCart}
             onBack={() => setCurrentView('browse')}
             onOrderPlaced={(result) => {
-              // Optionally handle order placement result
+              // hook for future analytics if needed
               console.log('Order placed:', result);
             }}
             user={user}
@@ -877,6 +847,37 @@ const Dashboard = ({ user, onLogout }) => {
           </div>
         )}
       </main>
+
+      {/* Logout confirmation modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              Confirm Logout
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to log out? Any items in your cart will not
+              be saved.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmLogout}
+                className="px-4 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600"
+              >
+                Log out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

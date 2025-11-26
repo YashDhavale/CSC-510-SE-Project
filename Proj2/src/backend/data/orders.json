@@ -485,5 +485,28 @@
       "Eastside Deli": 10
     },
     "userEmail": "123@gmail.com"
+  },
+  {
+    "id": "ORD-1764141472413",
+    "timestamp": "2025-11-26T07:17:52.413Z",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": "Rescue Meal Box",
+        "price": 5,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": 5,
+      "totalSavings": 7,
+      "total": 5,
+      "rescueMealCount": 1
+    },
+    "pointsEarned": {
+      "Eastside Deli": 10
+    },
+    "userEmail": "123@gmail.com"
   }
 ]
