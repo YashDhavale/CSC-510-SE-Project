@@ -1,3 +1,4 @@
+// Proj2/src/backend/routes/cart.js
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -10,19 +11,7 @@ const ordersFile = path.join(__dirname, "../data/orders.json");
 // Initialize restaurant points if file doesn't exist
 if (!fs.existsSync(restaurantPointsFile)) {
   fs.mkdirSync(path.dirname(restaurantPointsFile), { recursive: true });
-  const defaultPoints = {
-    "Eastside Deli": 0,
-    "Oak Street Bistro": 0,
-    "GreenBite Cafe": 0,
-    "Triangle BBQ Co.": 0,
-    "Village Noodle Bar": 0,
-    "Southside Pizza Lab": 0,
-    "Hillside Kitchen": 0,
-    "Roosevelt Oyster House": 0,
-    "Capital City Tacos": 0,
-    "UrbanEats": 0
-  };
-  fs.writeFileSync(restaurantPointsFile, JSON.stringify(defaultPoints, null, 2));
+  fs.writeFileSync(restaurantPointsFile, JSON.stringify({}, null, 2));
 }
 
 // Initialize orders file if it doesn't exist
@@ -34,8 +23,8 @@ if (!fs.existsSync(ordersFile)) {
 // Place order endpoint
 router.post("/api/orders", (req, res) => {
   try {
-    const { items, totals } = req.body;
-    
+    const { items, totals, userEmail } = req.body || {};
+
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ success: false, message: "Invalid order data" });
     }
@@ -46,22 +35,20 @@ router.post("/api/orders", (req, res) => {
       restaurantPoints = JSON.parse(fs.readFileSync(restaurantPointsFile, "utf8"));
     }
 
-    // Calculate points for restaurants with rescue meals
-    const pointsEarned = {};
-    items.forEach(item => {
-      if (item.isRescueMeal && item.restaurant) {
-        // Each rescue meal gives 10 points to the restaurant
-        const points = item.quantity * 10;
-        if (!pointsEarned[item.restaurant]) {
-          pointsEarned[item.restaurant] = 0;
-        }
-        pointsEarned[item.restaurant] += points;
-        
-        // Update restaurant points
+    // Calculate points
+    let pointsEarned = {};
+    items.forEach((item) => {
+      if (item.restaurant) {
+        const points = item.isRescueMeal ? 10 : 5;
         if (!restaurantPoints[item.restaurant]) {
           restaurantPoints[item.restaurant] = 0;
         }
         restaurantPoints[item.restaurant] += points;
+
+        if (!pointsEarned[item.restaurant]) {
+          pointsEarned[item.restaurant] = 0;
+        }
+        pointsEarned[item.restaurant] += points;
       }
     });
 
@@ -74,7 +61,9 @@ router.post("/api/orders", (req, res) => {
       timestamp: new Date().toISOString(),
       items: items,
       totals: totals,
-      pointsEarned: pointsEarned
+      pointsEarned: pointsEarned,
+      // Link order to the logged-in user (if provided)
+      userEmail: typeof userEmail === "string" ? userEmail : null,
     };
 
     // Load and save orders
@@ -88,7 +77,7 @@ router.post("/api/orders", (req, res) => {
     res.json({
       success: true,
       order: order,
-      message: "Order placed successfully!"
+      message: "Order placed successfully!",
     });
   } catch (error) {
     console.error("Error placing order:", error);
@@ -127,4 +116,3 @@ router.get("/api/orders", (req, res) => {
 });
 
 module.exports = router;
-
