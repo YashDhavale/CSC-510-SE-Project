@@ -2,21 +2,31 @@
  * Cart component tests
  */
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Cart from '../components/Cart';
 
 describe('Cart', () => {
   const baseItem = {
-    restaurantName: 'GreenBite Cafe',
+    restaurant: 'GreenBite Cafe',
     meal: {
       id: 'meal-1',
       name: 'Rescue Box',
       rescuePrice: 5.0,
       originalPrice: 15.0,
+      description: 'Test rescue meal',
     },
     quantity: 2,
   };
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
 
   test('renders empty cart message when there are no items', () => {
     const onBack = jest.fn();
@@ -62,7 +72,7 @@ describe('Cart', () => {
     expect(setCart).toHaveBeenCalled();
   });
 
-  test('places order and shows thank you screen', async () => {
+  test('places order successfully and shows thank you screen', async () => {
     const mockUser = { email: 'test@example.com', name: 'Test User' };
     const setCart = jest.fn();
 
@@ -104,5 +114,112 @@ describe('Cart', () => {
         screen.getByText('Thank you for rescuing food!')
       ).toBeInTheDocument();
     });
+
+    // bonus: check rescued text uses totals
+    expect(
+      screen.getByText(/You just rescued/i)
+    ).toBeInTheDocument();
+  });
+
+  test('shows alert when backend returns non-ok response', async () => {
+    const alertSpy = jest
+      .spyOn(window, 'alert')
+      .mockImplementation(() => {});
+    const mockUser = { email: 'test@example.com', name: 'Test User' };
+
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+      })
+    );
+
+    render(
+      <Cart
+        cart={[baseItem]}
+        setCart={jest.fn()}
+        onBack={jest.fn()}
+        onOrderPlaced={jest.fn()}
+        user={mockUser}
+      />
+    );
+
+    const placeOrderButton = screen.getByText('Place Order & Rescue Food');
+    fireEvent.click(placeOrderButton);
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Failed to place order. Please try again.'
+      );
+    });
+
+    alertSpy.mockRestore();
+  });
+
+  test('shows alert when backend returns unsuccessful payload', async () => {
+    const alertSpy = jest
+      .spyOn(window, 'alert')
+      .mockImplementation(() => {});
+    const mockUser = { email: 'test@example.com', name: 'Test User' };
+
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            message: 'Order rejected',
+          }),
+      })
+    );
+
+    render(
+      <Cart
+        cart={[baseItem]}
+        setCart={jest.fn()}
+        onBack={jest.fn()}
+        onOrderPlaced={jest.fn()}
+        user={mockUser}
+      />
+    );
+
+    const placeOrderButton = screen.getByText('Place Order & Rescue Food');
+    fireEvent.click(placeOrderButton);
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('Order rejected');
+    });
+
+    alertSpy.mockRestore();
+  });
+
+  test('shows alert when fetch throws error', async () => {
+    const alertSpy = jest
+      .spyOn(window, 'alert')
+      .mockImplementation(() => {});
+    const mockUser = { email: 'test@example.com', name: 'Test User' };
+
+    global.fetch = jest.fn(() =>
+      Promise.reject(new Error('network error'))
+    );
+
+    render(
+      <Cart
+        cart={[baseItem]}
+        setCart={jest.fn()}
+        onBack={jest.fn()}
+        onOrderPlaced={jest.fn()}
+        user={mockUser}
+      />
+    );
+
+    const placeOrderButton = screen.getByText('Place Order & Rescue Food');
+    fireEvent.click(placeOrderButton);
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalled();
+    });
+
+    alertSpy.mockRestore();
   });
 });
