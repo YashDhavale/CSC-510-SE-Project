@@ -1,71 +1,83 @@
 /**
- * Test suite for CustomerLogin component
- * Tests: 5 test cases
+ * CustomerLogin component tests
  */
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CustomerLogin from '../components/CustomerLogin';
 
-// Mock fetch
-global.fetch = jest.fn();
-
-// Mock Navbar
+// Mock Navbar to keep DOM smaller
 jest.mock('../components/Navbar', () => {
   return function MockNavbar() {
-    return <nav data-testid="navbar">Navbar</nav>;
+    return <div data-testid="mock-navbar">Mock Navbar</div>;
   };
 });
 
-describe('CustomerLogin Component', () => {
-  const mockOnLogin = jest.fn();
-  const mockOnBack = jest.fn();
-
-  beforeEach(() => {
-    fetch.mockClear();
-    mockOnLogin.mockClear();
-    mockOnBack.mockClear();
+describe('CustomerLogin', () => {
+  afterEach(() => {
+    jest.resetAllMocks();
   });
 
-  test('renders CustomerLogin component', () => {
-    render(<CustomerLogin onLogin={mockOnLogin} onBack={mockOnBack} />);
+  test('toggles between login and register modes', () => {
+    const onLogin = jest.fn();
+    const onBack = jest.fn();
+
+    render(<CustomerLogin onLogin={onLogin} onBack={onBack} />);
+
+    // Default should be login mode
     expect(screen.getByText('Customer Login')).toBeInTheDocument();
-  });
 
-  test('displays login form fields', () => {
-    render(<CustomerLogin onLogin={mockOnLogin} onBack={mockOnBack} />);
-    expect(screen.getByPlaceholderText('Email')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Password')).toBeInTheDocument();
-  });
+    const toggleButton = screen.getByText('New user? Register here');
+    fireEvent.click(toggleButton);
 
-  test('switches to register mode', () => {
-    render(<CustomerLogin onLogin={mockOnLogin} onBack={mockOnBack} />);
-    const registerLink = screen.getByText('New user? Register here');
-    fireEvent.click(registerLink);
     expect(screen.getByText('Customer Register')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Name')).toBeInTheDocument();
   });
 
-  test('calls onBack when back button is clicked', () => {
-    render(<CustomerLogin onLogin={mockOnLogin} onBack={mockOnBack} />);
-    const backButton = screen.getByText('← Go Back');
-    fireEvent.click(backButton);
-    expect(mockOnBack).toHaveBeenCalled();
-  });
+  test('submits login form and calls onLogin on success', async () => {
+    const onLogin = jest.fn();
+    const onBack = jest.fn();
 
-  test('handles successful login', async () => {
-    fetch.mockResolvedValueOnce({
-      json: async () => ({ success: true, user: { name: 'Test User', email: 'test@example.com' } })
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            user: { name: 'Test User', email: 'test@example.com' },
+          }),
+      })
+    );
+
+    render(<CustomerLogin onLogin={onLogin} onBack={onBack} />);
+
+    fireEvent.change(screen.getByLabelText(/Email/i), {
+      target: { value: 'test@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText(/Password/i), {
+      target: { value: 'password123' },
     });
 
-    render(<CustomerLogin onLogin={mockOnLogin} onBack={mockOnBack} />);
-    fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@example.com' } });
-    fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByText('Login'));
+    const submitButton = screen.getByText('Login');
+    fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('http://localhost:5000/login', expect.any(Object));
+      expect(global.fetch).toHaveBeenCalledWith('/login', expect.any(Object));
+      expect(onLogin).toHaveBeenCalledWith({
+        name: 'Test User',
+        email: 'test@example.com',
+      });
     });
   });
-});
 
+  test('calls onBack when Go Back is clicked', () => {
+    const onLogin = jest.fn();
+    const onBack = jest.fn();
+
+    render(<CustomerLogin onLogin={onLogin} onBack={onBack} />);
+
+    const backButton = screen.getByText('← Go Back');
+    fireEvent.click(backButton);
+
+    expect(onBack).toHaveBeenCalled();
+  });
+});

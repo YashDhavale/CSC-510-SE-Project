@@ -1,92 +1,157 @@
 /**
- * Test suite for Dashboard component
- * Tests: 5 test cases
+ * Dashboard component tests
  */
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Dashboard from '../components/Dashboard';
 
-// Mock fetch
-global.fetch = jest.fn();
-
-// Mock Cart component
+// Mock Cart to simplify DOM; Cart itself has its own tests
 jest.mock('../components/Cart', () => {
-  return function MockCart({ cart, onBack }) {
-    return (
-      <div data-testid="cart">
-        <p>Cart with {cart.length} items</p>
-        <button onClick={onBack}>Back</button>
-      </div>
-    );
+  return function MockCart() {
+    return <div data-testid="mock-cart">Mock Cart</div>;
   };
 });
 
-// Mock LeaderboardPanel
+// Mock LeaderboardPanel to avoid additional fetches here
 jest.mock('../components/LeaderboardPanel', () => {
-  return function MockLeaderboardPanel() {
-    return <div data-testid="leaderboard">Leaderboard</div>;
+  return function MockLeaderboard() {
+    return <div data-testid="mock-leaderboard">Mock Leaderboard</div>;
   };
 });
 
-describe('Dashboard Component', () => {
-  beforeEach(() => {
-    fetch.mockClear();
-    fetch.mockResolvedValue({
-      json: async () => []
-    });
-  });
+describe('Dashboard', () => {
+  const mockUser = { email: 'test@example.com', name: 'Test User' };
 
-  test('renders Dashboard component', async () => {
-    render(<Dashboard />);
-    await waitFor(() => {
-      expect(screen.getByText('Tiffin Trails')).toBeInTheDocument();
-    });
-  });
-
-  test('displays browse view by default', () => {
-    render(<Dashboard />);
-    // Wait for loading to complete
-    waitFor(() => {
-      expect(screen.getByText('Browse')).toBeInTheDocument();
-    });
-  });
-
-  test('switches to cart view when cart button is clicked', async () => {
-    render(<Dashboard />);
-    await waitFor(() => {
-      const cartButtons = screen.getAllByRole('button');
-      const cartButton = cartButtons.find(btn => btn.querySelector('svg[class*="ShoppingCart"]'));
-      if (cartButton) {
-        fireEvent.click(cartButton);
-        expect(screen.getByTestId('cart')).toBeInTheDocument();
+  const createFetchMock = () => {
+    return jest.fn((url) => {
+      if (url === '/dashboard/restaurants-with-meals') {
+        return Promise.resolve({
+          json: () =>
+            Promise.resolve([
+              {
+                id: 1,
+                name: 'GreenBite Cafe',
+                cuisine: 'Vegetarian',
+                distance: 1.2,
+                rating: 4.5,
+                menus: [
+                  {
+                    id: 'meal-1',
+                    name: 'Rescue Box',
+                    rescuePrice: 5.0,
+                    originalPrice: 15.0,
+                    description: 'Surprise vegetarian rescue box',
+                    tags: ['Vegetarian'],
+                  },
+                ],
+              },
+            ]),
+        });
       }
+
+      if (url === '/dashboard/community-stats') {
+        return Promise.resolve({
+          json: () =>
+            Promise.resolve({
+              activeUsers: 120,
+              mealsRescued: 350,
+              wastePreventedTons: 0.4,
+            }),
+        });
+      }
+
+      if (url.startsWith('/dashboard/user-impact')) {
+        return Promise.resolve({
+          json: () =>
+            Promise.resolve({
+              mealsOrdered: 3,
+              moneySaved: 25,
+              foodWastePrevented: 10,
+              carbonReduced: 5,
+              localRestaurantsSupported: 2,
+              impactLevel: 'Food Hero',
+            }),
+        });
+      }
+
+      if (url === '/api/orders') {
+        return Promise.resolve({
+          json: () =>
+            Promise.resolve({
+              success: true,
+              orders: [],
+            }),
+        });
+      }
+
+      return Promise.resolve({
+        json: () => Promise.resolve({}),
+      });
+    });
+  };
+
+  beforeEach(() => {
+    global.fetch = createFetchMock();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  test('renders browse view with restaurants after data load', async () => {
+    render(<Dashboard user={mockUser} onLogout={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('GreenBite Cafe')).toBeInTheDocument();
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith('/dashboard/restaurants-with-meals');
+  });
+
+  test('can switch between Browse, My Impact, and Community views', async () => {
+    render(<Dashboard user={mockUser} onLogout={jest.fn()} />);
+
+    // Wait for initial load so the component is stable
+    await waitFor(() => {
+      expect(screen.getByText('Browse Meals')).toBeInTheDocument();
+    });
+
+    // Switch to My Impact
+    fireEvent.click(screen.getByText('My Impact'));
+    await waitFor(() => {
+      expect(
+        screen.getByText('Your Environmental Impact')
+      ).toBeInTheDocument();
+    });
+
+    // Switch to Community
+    fireEvent.click(screen.getByText('Community'));
+    await waitFor(() => {
+      expect(screen.getByText('Community Impact')).toBeInTheDocument();
     });
   });
 
-  test('fetches restaurants on mount', async () => {
-    const mockRestaurants = [
-      { id: 1, name: 'Restaurant 1', cuisine: 'Italian', rescueMeals: [] }
-    ];
-    fetch
-      .mockResolvedValueOnce({ json: async () => mockRestaurants })
-      .mockResolvedValueOnce({ json: async () => ({}) })
-      .mockResolvedValueOnce({ json: async () => ({}) });
+  test('shows cart view when cart is selected', async () => {
+    render(<Dashboard user={mockUser} onLogout={jest.fn()} />);
 
-    render(<Dashboard />);
-    
+    // Wait for initial data load
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('http://localhost:5000/dashboard/restaurants-with-meals');
+      expect(screen.getByText('Browse Meals')).toBeInTheDocument();
     });
-  });
 
-  test('displays navigation buttons', async () => {
-    render(<Dashboard />);
+    // Open the mobile menu so that the "Cart" text button is rendered
+    const header = screen.getByRole('banner');
+    const headerButtons = within(header).getAllByRole('button');
+    const menuToggle = headerButtons[headerButtons.length - 1];
+    fireEvent.click(menuToggle);
+
+    // Now click the Cart item in the mobile menu
+    const cartButton = await screen.findByText('Cart');
+    fireEvent.click(cartButton);
+
     await waitFor(() => {
-      expect(screen.getByText('Browse')).toBeInTheDocument();
-      expect(screen.getByText('Rescue Meals')).toBeInTheDocument();
-      expect(screen.getByText('My Impact')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-cart')).toBeInTheDocument();
     });
   });
 });
-

@@ -1,27 +1,16 @@
 /**
- * Test suite for ImpactCard component
- * Tests: 3 test cases
+ * ImpactCard component tests
  */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ImpactCard from '../components/ImpactCard';
 
-describe('ImpactCard Component', () => {
-  test('renders ImpactCard with value', () => {
-    render(<ImpactCard label="Test Label" value="100" />);
-    expect(screen.getByText('100')).toBeInTheDocument();
-  });
+describe('ImpactCard', () => {
+  test('renders label and value', () => {
+    render(<ImpactCard label="Meals Rescued" value="120" />);
 
-  test('displays label', () => {
-    render(<ImpactCard label="Test Label" value="100" />);
-    expect(screen.getByText('Test Label')).toBeInTheDocument();
-  });
-
-  test('renders with different values', () => {
-    render(<ImpactCard label="Meals Rescued" value="500" />);
-    expect(screen.getByText('500')).toBeInTheDocument();
     expect(screen.getByText('Meals Rescued')).toBeInTheDocument();
+    expect(screen.getByText('120')).toBeInTheDocument();
   });
 });
-

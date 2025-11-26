@@ -1,26 +1,23 @@
 /**
- * Test suite for RestaurantCard component
- * Tests: 3 test cases
+ * RestaurantCard component tests
  */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import RestaurantCard from '../components/RestaurantCard';
 
-describe('RestaurantCard Component', () => {
-  test('renders RestaurantCard with name', () => {
-    render(<RestaurantCard name="Test Restaurant" cuisine="Italian" rating={4.5} />);
-    expect(screen.getByText('Test Restaurant')).toBeInTheDocument();
-  });
+describe('RestaurantCard', () => {
+  test('renders restaurant information', () => {
+    render(
+      <RestaurantCard
+        name="GreenBite Cafe"
+        cuisine="Vegetarian"
+        rating={4.5}
+      />
+    );
 
-  test('displays cuisine type', () => {
-    render(<RestaurantCard name="Test Restaurant" cuisine="Italian" rating={4.5} />);
-    expect(screen.getByText('Italian')).toBeInTheDocument();
-  });
-
-  test('displays rating', () => {
-    render(<RestaurantCard name="Test Restaurant" cuisine="Italian" rating={4.5} />);
+    expect(screen.getByText('GreenBite Cafe')).toBeInTheDocument();
+    expect(screen.getByText('Vegetarian')).toBeInTheDocument();
     expect(screen.getByText(/4.5/)).toBeInTheDocument();
   });
 });
-
