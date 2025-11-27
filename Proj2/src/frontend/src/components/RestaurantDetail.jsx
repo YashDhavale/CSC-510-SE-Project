@@ -1,4 +1,10 @@
 // Proj2/src/frontend/src/components/RestaurantDetail.jsx
+// Restaurant detail page with simple per-meal inventory guard.
+// - If restaurant.allSoldOut is true, all meals are shown as sold out
+//   and the Add to Cart button is disabled.
+// - If a meal has availableQuantity (or quantity), remaining units
+//   are reduced by what is already in the cart for this restaurant.
+
 import React from 'react';
 import {
   ArrowLeft,
@@ -15,6 +21,9 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
   }
 
   const hasMenus = Array.isArray(restaurant.menus) && restaurant.menus.length > 0;
+
+  // whether browse-level inventory says this restaurant is sold out today
+  const restaurantSoldOut = restaurant.allSoldOut === true;
 
   // Fallback for restaurants without explicit rescue meals
   const createDefaultMealForRestaurant = () => {
@@ -134,6 +143,11 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                   </span>
                 </span>
               </div>
+              {restaurantSoldOut && (
+                <p className="mt-1 text-[11px] text-red-500">
+                  Sold out for today based on current inventory.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -153,12 +167,19 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {restaurant.menus.map((meal) => {
-                const baseAvailable =
+                // baseAvailable is what the UI thinks was left before this session
+                let baseAvailable =
                   typeof meal.availableQuantity === 'number'
                     ? meal.availableQuantity
                     : typeof meal.quantity === 'number'
                     ? meal.quantity
                     : null;
+
+                // If browse-level says "all sold out" but no per-meal quantity,
+                // force this meal to be treated as 0 left.
+                if (restaurantSoldOut && (baseAvailable === null || baseAvailable < 0)) {
+                  baseAvailable = 0;
+                }
 
                 const alreadyInCart =
                   baseAvailable !== null ? getQuantityInCartForMeal(meal) : 0;
@@ -169,7 +190,9 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                     : null;
 
                 const isSoldOut =
-                  meal.isSoldOut || (remaining !== null && remaining === 0);
+                  restaurantSoldOut ||
+                  meal.isSoldOut ||
+                  (remaining !== null && remaining === 0);
 
                 return (
                   <div
@@ -185,8 +208,7 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                           {meal.description || 'Chef-selected rescue meal'}
                         </p>
                         <p className="text-xs text-orange-600 mt-1">
-                          Pickup:{' '}
-                          {meal.pickupWindow || 'See details at pickup'}
+                          Pickup: {meal.pickupWindow || 'See details at pickup'}
                         </p>
                         {meal.expiresIn && (
                           <p className="text-[11px] text-red-500 mt-1">
@@ -198,6 +220,11 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                             {remaining === 0
                               ? 'Sold out for today'
                               : `${remaining} left today`}
+                          </p>
+                        )}
+                        {remaining === null && restaurantSoldOut && (
+                          <p className="text-[11px] text-gray-600 mt-1">
+                            Sold out for today
                           </p>
                         )}
                       </div>

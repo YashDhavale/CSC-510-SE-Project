@@ -554,5 +554,37 @@
       "Eastside Deli": 10
     },
     "userEmail": "123@gmail.com"
+  },
+  {
+    "id": "order_1764214152526",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": {
+          "id": "Eastside Deli-Chicken Salad Sandwich-Pickup within 2 hours",
+          "name": "Chicken Salad Sandwich",
+          "description": "",
+          "originalPrice": 10.99,
+          "rescuePrice": 6.99,
+          "pickupWindow": "Pickup within 2 hours",
+          "expiresIn": "2 hours",
+          "isRescueMeal": true,
+          "availableQuantity": 3,
+          "quantity": 3,
+          "isSoldOut": false
+        },
+        "quantity": 3,
+        "isRescueMeal": true,
+        "price": 6.99,
+        "originalPrice": 10.99
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 3,
+      "subtotal": 20.97,
+      "youSave": 12
+    },
+    "timestamp": "2025-11-27T03:29:12.526Z"
   }
 ]

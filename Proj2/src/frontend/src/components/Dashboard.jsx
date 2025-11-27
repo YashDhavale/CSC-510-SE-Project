@@ -286,7 +286,15 @@ const Dashboard = ({ user, onLogout }) => {
   };
 
   const handleOpenRestaurantDetail = (restaurant) => {
-    setSelectedRestaurantDetail(restaurant);
+    // compute inventory summary again for this restaurant
+    const { allSoldOut } = summarizeRescueInventory(restaurant);
+    
+    const restaurantWithInventory = {
+      ...restaurant,
+      allSoldOut: allSoldOut === true,
+    };
+  
+    setSelectedRestaurantDetail(restaurantWithInventory);
     setCurrentView('restaurantDetail');
   };
 
