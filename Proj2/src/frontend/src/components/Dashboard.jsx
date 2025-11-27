@@ -24,6 +24,32 @@ import {
 // Fallback static data when backend returns empty
 import { restaurants as staticRestaurants } from '../data/staticdata';
 
+// Small helper to summarize rescue inventory for a restaurant
+const summarizeRescueInventory = (restaurant) => {
+  if (!restaurant || !Array.isArray(restaurant.menus)) {
+    return { totalAvailable: null, allSoldOut: false };
+  }
+
+  const totalAvailable = restaurant.menus.reduce((sum, meal) => {
+    const qty =
+      typeof meal.availableQuantity === 'number'
+        ? meal.availableQuantity
+        : typeof meal.quantity === 'number'
+        ? meal.quantity
+        : 0;
+
+    if (!Number.isFinite(qty) || qty <= 0) {
+      return sum;
+    }
+    return sum + qty;
+  }, 0);
+
+  return {
+    totalAvailable,
+    allSoldOut: totalAvailable === 0,
+  };
+};
+
 const Dashboard = ({ user, onLogout }) => {
   const [currentView, setCurrentView] = useState('browse');
   const [cart, setCart] = useState([]);
@@ -478,9 +504,10 @@ const Dashboard = ({ user, onLogout }) => {
                       const hasMenus =
                         Array.isArray(restaurant.menus) &&
                         restaurant.menus.length > 0;
-                      const rescueCount = hasMenus
-                        ? restaurant.menus.length
-                        : 0;
+                      const rescueCount = hasMenus ? restaurant.menus.length : 0;
+
+                      const { totalAvailable, allSoldOut } =
+                        summarizeRescueInventory(restaurant);
 
                       return (
                         <div
@@ -529,20 +556,43 @@ const Dashboard = ({ user, onLogout }) => {
                               </span>
                             </div>
 
-                            {/* rescue meals count / message */}
+                            {/* rescue meals count / message + inventory summary */}
                             <div className="mt-3 text-xs text-gray-600">
                               {hasMenus ? (
-                                <span>
-                                  {rescueCount}{' '}
-                                  {rescueCount === 1
-                                    ? 'rescue meal available'
-                                    : 'rescue meals available'}
-                                </span>
+                                allSoldOut ? (
+                                  <span>
+                                    {rescueCount === 1
+                                      ? 'Rescue meal listed (sold out today)'
+                                      : `${rescueCount} rescue meals listed (sold out today)`}
+                                  </span>
+                                ) : (
+                                  <span>
+                                    {rescueCount}{' '}
+                                    {rescueCount === 1
+                                      ? 'rescue meal available'
+                                      : 'rescue meals available'}
+                                  </span>
+                                )
                               ) : (
                                 <span>
                                   Rescue meals not listed yet – you can still
                                   reserve a surprise box.
                                 </span>
+                              )}
+
+                              {totalAvailable !== null && (
+                                <p
+                                  className={
+                                    'mt-1 ' +
+                                    (allSoldOut
+                                      ? 'text-red-500'
+                                      : 'text-green-700')
+                                  }
+                                >
+                                  {allSoldOut
+                                    ? 'Sold out for today'
+                                    : `${totalAvailable} rescue meals left today`}
+                                </p>
                               )}
                             </div>
 
@@ -659,6 +709,7 @@ const Dashboard = ({ user, onLogout }) => {
             {currentView === 'restaurantDetail' && selectedRestaurantDetail && (
               <RestaurantDetail
                 restaurant={selectedRestaurantDetail}
+                cart={cart}
                 onBack={() => handleNavClick('browse')}
                 onAddToCart={addToCart}
               />

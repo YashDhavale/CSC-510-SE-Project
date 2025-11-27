@@ -508,5 +508,51 @@
       "Eastside Deli": 10
     },
     "userEmail": "123@gmail.com"
+  },
+  {
+    "id": "ORD-1764173255465",
+    "timestamp": "2025-11-26T16:07:35.465Z",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": "Soup & Salad Rescue Box",
+        "price": 6,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": 6,
+      "totalSavings": 10,
+      "total": 6,
+      "rescueMealCount": 1
+    },
+    "pointsEarned": {
+      "Eastside Deli": 10
+    },
+    "userEmail": "123@gmail.com"
+  },
+  {
+    "id": "ORD-1764202949122",
+    "timestamp": "2025-11-27T00:22:29.122Z",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": "Surprise Sandwich Rescue Box",
+        "price": 7,
+        "quantity": 1,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "subtotal": 7,
+      "totalSavings": 11,
+      "total": 7,
+      "rescueMealCount": 1
+    },
+    "pointsEarned": {
+      "Eastside Deli": 10
+    },
+    "userEmail": "123@gmail.com"
   }
 ]

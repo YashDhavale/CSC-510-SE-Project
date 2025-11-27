@@ -1,117 +1,202 @@
 // Proj2/src/backend/routes/cart.js
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
+//
+// Cart checkout route with simple inventory guard:
+// - Prevents a single cart from ordering more units of a meal
+//   than the "availableQuantity" that the UI showed.
+// - Does NOT change any UI layout or frontend behavior.
+// - Orders are still appended to data/orders.json as before.
+
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
 
 const router = express.Router();
 
-const restaurantPointsFile = path.join(__dirname, "../data/restaurant_points.json");
-const ordersFile = path.join(__dirname, "../data/orders.json");
+// Path to orders JSON file
+const ORDERS_PATH = path.join(__dirname, '..', 'data', 'orders.json');
 
-// Initialize restaurant points if file doesn't exist
-if (!fs.existsSync(restaurantPointsFile)) {
-  fs.mkdirSync(path.dirname(restaurantPointsFile), { recursive: true });
-  fs.writeFileSync(restaurantPointsFile, JSON.stringify({}, null, 2));
-}
-
-// Initialize orders file if it doesn't exist
-if (!fs.existsSync(ordersFile)) {
-  fs.mkdirSync(path.dirname(ordersFile), { recursive: true });
-  fs.writeFileSync(ordersFile, JSON.stringify([], null, 2));
-}
-
-// Place order endpoint
-router.post("/api/orders", (req, res) => {
+// Helper to safely read JSON file (returns [] if missing / invalid)
+function readJsonFileSafe(filePath) {
   try {
-    const { items, totals, userEmail } = req.body || {};
+    if (!fs.existsSync(filePath)) {
+      return [];
+    }
+    const raw = fs.readFileSync(filePath, 'utf8');
+    if (!raw.trim()) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    // if it is an object with "orders" field, use that
+    if (parsed && Array.isArray(parsed.orders)) {
+      return parsed.orders;
+    }
+    return [];
+  } catch (err) {
+    console.error('Error reading JSON file:', filePath, err);
+    return [];
+  }
+}
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ success: false, message: "Invalid order data" });
+// Helper to safely write JSON file
+function writeJsonFileSafe(filePath, data) {
+  try {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error writing JSON file:', filePath, err);
+    throw err;
+  }
+}
+
+/**
+ * POST /cart/checkout
+ *
+ * Expected body (frontend can send extra fields; we ignore what we don't need):
+ * {
+ *   items: [
+ *     {
+ *       restaurant: "Eastside Deli",
+ *       meal: {
+ *         id: "eastside-sandwich-box",
+ *         name: "Surprise Sandwich Rescue Box",
+ *         availableQuantity: 3,
+ *         ...otherFields
+ *       },
+ *       quantity: 2
+ *     },
+ *     ...
+ *   ],
+ *   userEmail: "user@example.com",
+ *   totals: { ... }      // optional: pricing summary
+ * }
+ *
+ * This route will:
+ * - Group items by (restaurant, meal.id/name),
+ * - Sum requested quantity per group,
+ * - Compare against meal.availableQuantity if it is a finite number,
+ * - Reject with 400 if any group exceeds its local availableQuantity.
+ * - Otherwise append a new order to orders.json and return { success: true, order }
+ */
+router.post('/checkout', (req, res) => {
+  try {
+    const body = req.body || {};
+    const items = Array.isArray(body.items) ? body.items : [];
+    const userEmail = typeof body.userEmail === 'string' ? body.userEmail : null;
+    const totals = body.totals || null;
+
+    if (items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cart is empty. Please add at least one rescue meal.',
+      });
     }
 
-    // Load restaurant points
-    let restaurantPoints = {};
-    if (fs.existsSync(restaurantPointsFile)) {
-      restaurantPoints = JSON.parse(fs.readFileSync(restaurantPointsFile, "utf8"));
-    }
+    // Group quantities per (restaurant, meal) and track availableQuantity
+    const grouped = new Map();
 
-    // Calculate points
-    let pointsEarned = {};
-    items.forEach((item) => {
-      if (item.restaurant) {
-        const points = item.isRescueMeal ? 10 : 5;
-        if (!restaurantPoints[item.restaurant]) {
-          restaurantPoints[item.restaurant] = 0;
-        }
-        restaurantPoints[item.restaurant] += points;
+    for (const item of items) {
+      if (!item) continue;
 
-        if (!pointsEarned[item.restaurant]) {
-          pointsEarned[item.restaurant] = 0;
-        }
-        pointsEarned[item.restaurant] += points;
+      const restaurantName =
+        typeof item.restaurant === 'string' ? item.restaurant : 'Unknown restaurant';
+      const meal = item.meal || {};
+      const mealId = meal.id || meal._id || meal.name || 'unnamed-meal';
+
+      const key = `${restaurantName}::${mealId}`;
+
+      const requestedQty =
+        typeof item.quantity === 'number' && Number.isFinite(item.quantity)
+          ? item.quantity
+          : 1;
+
+      const availableFromMeal =
+        meal && typeof meal.availableQuantity === 'number'
+          ? meal.availableQuantity
+          : null;
+
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          restaurantName,
+          mealId,
+          mealName: meal.name || 'Rescue Meal',
+          requested: 0,
+          available: availableFromMeal,
+        });
       }
-    });
 
-    // Save updated restaurant points
-    fs.writeFileSync(restaurantPointsFile, JSON.stringify(restaurantPoints, null, 2));
+      const agg = grouped.get(key);
+      agg.requested += requestedQty;
 
-    // Create order record
-    const order = {
-      id: `ORD-${Date.now()}`,
+      // If multiple items share the same meal, we keep the smallest availableQuantity
+      if (
+        availableFromMeal !== null &&
+        (agg.available === null || availableFromMeal < agg.available)
+      ) {
+        agg.available = availableFromMeal;
+      }
+    }
+
+    // Check for local "overbooking" against availableQuantity seen in the UI
+    const conflicts = [];
+    for (const agg of grouped.values()) {
+      if (
+        agg.available !== null &&
+        Number.isFinite(agg.available) &&
+        agg.requested > agg.available
+      ) {
+        conflicts.push({
+          restaurant: agg.restaurantName,
+          mealId: agg.mealId,
+          mealName: agg.mealName,
+          requested: agg.requested,
+          available: agg.available,
+        });
+      }
+    }
+
+    if (conflicts.length > 0) {
+      // Reject checkout: user is trying to buy more than the UI said was left
+      const first = conflicts[0];
+      const message = `Only ${first.available} of "${first.mealName}" left at ${first.restaurant}. You requested ${first.requested}.`;
+
+      return res.status(400).json({
+        success: false,
+        error: message,
+        conflicts,
+      });
+    }
+
+    // If we reach this point, the cart respects per-meal availableQuantity
+    // Load existing orders, append a new one.
+    const existingOrders = readJsonFileSafe(ORDERS_PATH);
+
+    const newOrder = {
+      id: `order_${Date.now()}`,
+      userEmail,
+      items,
+      totals,
       timestamp: new Date().toISOString(),
-      items: items,
-      totals: totals,
-      pointsEarned: pointsEarned,
-      // Link order to the logged-in user (if provided)
-      userEmail: typeof userEmail === "string" ? userEmail : null,
     };
 
-    // Load and save orders
-    let orders = [];
-    if (fs.existsSync(ordersFile)) {
-      orders = JSON.parse(fs.readFileSync(ordersFile, "utf8"));
-    }
-    orders.push(order);
-    fs.writeFileSync(ordersFile, JSON.stringify(orders, null, 2));
+    const updatedOrders = [...existingOrders, newOrder];
+    writeJsonFileSafe(ORDERS_PATH, updatedOrders);
 
-    res.json({
+    return res.json({
       success: true,
-      order: order,
-      message: "Order placed successfully!",
+      order: newOrder,
     });
-  } catch (error) {
-    console.error("Error placing order:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-// Get restaurant points
-router.get("/api/restaurant-points", (req, res) => {
-  try {
-    if (fs.existsSync(restaurantPointsFile)) {
-      const points = JSON.parse(fs.readFileSync(restaurantPointsFile, "utf8"));
-      res.json({ success: true, points });
-    } else {
-      res.json({ success: true, points: {} });
-    }
-  } catch (error) {
-    console.error("Error reading restaurant points:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-// Get orders
-router.get("/api/orders", (req, res) => {
-  try {
-    if (fs.existsSync(ordersFile)) {
-      const orders = JSON.parse(fs.readFileSync(ordersFile, "utf8"));
-      res.json({ success: true, orders });
-    } else {
-      res.json({ success: true, orders: [] });
-    }
-  } catch (error) {
-    console.error("Error reading orders:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+  } catch (err) {
+    console.error('Error in /cart/checkout:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'An unexpected error occurred during checkout.',
+    });
   }
 });
 

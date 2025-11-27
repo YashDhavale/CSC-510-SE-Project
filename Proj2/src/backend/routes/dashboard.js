@@ -34,6 +34,47 @@ router.get("/dashboard/restaurants-with-meals", async (req, res) => {
     const restaurants = await readCsv(restaurantFile);
     const rescueMeals = await readCsv(rescueMealsFile);
 
+    // Build a quick lookup of how many portions of each rescue meal
+    // have already been ordered, using the persisted orders.json.
+    let orders = [];
+    if (fs.existsSync(ordersFile)) {
+      try {
+        const raw = fs.readFileSync(ordersFile, "utf8");
+        orders = JSON.parse(raw);
+      } catch (err) {
+        console.error("⚠️ Failed to read orders for inventory:", err);
+      }
+    }
+
+    const soldByKey = new Map();
+    orders.forEach((order) => {
+      if (!order || !Array.isArray(order.items)) return;
+
+      order.items.forEach((item) => {
+        if (!item || !item.isRescueMeal) {
+          return;
+        }
+
+        const restaurantName = item.restaurant;
+        const mealName = item.meal;
+
+        if (!restaurantName || !mealName) {
+          return;
+        }
+
+        const key = `${restaurantName}|||${mealName}`;
+        const qtyRaw =
+          typeof item.quantity === "number"
+            ? item.quantity
+            : parseInt(item.quantity || "0", 10);
+        const qty = Number.isNaN(qtyRaw) ? 0 : qtyRaw;
+        if (qty <= 0) {
+          return;
+        }
+        soldByKey.set(key, (soldByKey.get(key) || 0) + qty);
+      });
+    });
+
     const restaurantMap = new Map();
 
     restaurants.forEach((row) => {
@@ -57,22 +98,62 @@ router.get("/dashboard/restaurants-with-meals", async (req, res) => {
     });
 
     rescueMeals.forEach((mealRow) => {
-      const restaurantName = mealRow["Restaurant Name"];
+      const restaurantName =
+        mealRow.restaurant || mealRow["Restaurant Name"] || mealRow.restaurant_name;
       if (!restaurantName || !restaurantMap.has(restaurantName)) {
         return;
       }
 
       const restaurant = restaurantMap.get(restaurantName);
 
+      const mealName =
+        mealRow.meal_name || mealRow["Meal Name"] || mealRow.name || "Rescue Meal";
+
+      const originalPriceRaw =
+        mealRow.original_price || mealRow["Original Price"] || mealRow.originalPrice;
+      const rescuePriceRaw =
+        mealRow.rescue_price || mealRow["Rescue Price"] || mealRow.rescuePrice;
+
+      const originalPriceNumber = parseFloat(originalPriceRaw);
+      const rescuePriceNumber = parseFloat(rescuePriceRaw);
+
+      const originalPrice = Number.isFinite(originalPriceNumber)
+        ? originalPriceNumber.toFixed(2)
+        : null;
+      const rescuePrice = Number.isFinite(rescuePriceNumber)
+        ? rescuePriceNumber.toFixed(2)
+        : null;
+
+      const expiresInRaw =
+        mealRow.expires_in ||
+        mealRow["expires_in"] ||
+        mealRow["Pickup Window"] ||
+        "";
+
+      const quantityRaw = mealRow.quantity || mealRow["Quantity"];
+      const baseQuantityParsed = parseInt(quantityRaw || "0", 10);
+      const totalQuantity = Number.isNaN(baseQuantityParsed)
+        ? 0
+        : baseQuantityParsed;
+
+      const inventoryKey = `${restaurantName}|||${mealName}`;
+      const soldQuantity = soldByKey.get(inventoryKey) || 0;
+      const availableQuantity = Math.max(totalQuantity - soldQuantity, 0);
+      const isSoldOut = availableQuantity <= 0;
+
       const meal = {
-        id: `${restaurantName}-${mealRow["Meal Name"]}-${mealRow["Pickup Window"]}`,
-        name: mealRow["Meal Name"] || "Rescue Meal",
-        description: mealRow["Description"] || "",
-        originalPrice: parseFloat(mealRow["Original Price"] || "0").toFixed(2),
-        rescuePrice: parseFloat(mealRow["Rescue Price"] || "0").toFixed(2),
-        pickupWindow: mealRow["Pickup Window"] || "",
-        expiresIn: mealRow["Pickup Window"] || "",
+        id: `${restaurantName}-${mealName}-${expiresInRaw || "today"}`,
+        name: mealName,
+        description: mealRow.description || mealRow["Description"] || "",
+        originalPrice,
+        rescuePrice,
+        pickupWindow: expiresInRaw || "",
+        expiresIn: expiresInRaw || "",
         isRescueMeal: true,
+        totalQuantity,
+        soldQuantity,
+        availableQuantity,
+        isSoldOut,
       };
 
       restaurant.menus.push(meal);
@@ -92,7 +173,7 @@ router.get("/dashboard/vendor-efficiency", async (req, res) => {
     res.json(efficiency);
   } catch (error) {
     console.error("❌ Error fetching vendor efficiency:", error);
-    res.status(500).json({ error: "Failed to load vendor efficiency" });
+    res.status(500).json({ error: "Failed to load vendor efficiency data" });
   }
 });
 
@@ -124,34 +205,12 @@ router.get("/dashboard/customer-feedback", async (req, res) => {
     const feedback = await readCsv(feedbackFile);
     res.json(feedback);
   } catch (error) {
-    console.error("❌ Error fetching feedback:", error);
-    res.status(500).json({ error: "Failed to load feedback" });
+    console.error("❌ Error fetching customer feedback:", error);
+    res.status(500).json({ error: "Failed to load customer feedback" });
   }
 });
 
-// Get food waste sample
-router.get("/dashboard/food-waste", async (req, res) => {
-  try {
-    const waste = await readCsv(wasteFile);
-    res.json(waste);
-  } catch (error) {
-    console.error("❌ Error fetching food waste:", error);
-    res.status(500).json({ error: "Failed to load food waste data" });
-  }
-});
-
-// Get delivery logs
-router.get("/dashboard/delivery-logs", async (req, res) => {
-  try {
-    const logs = await readCsv(deliveryLogsFile);
-    res.json(logs);
-  } catch (error) {
-    console.error("❌ Error fetching delivery logs:", error);
-    res.status(500).json({ error: "Failed to load delivery logs" });
-  }
-});
-
-// Get user impact data (now user-specific via email)
+// Get user impact (per-user stats)
 router.get("/dashboard/user-impact", async (req, res) => {
   try {
     let orders = [];
@@ -188,29 +247,28 @@ router.get("/dashboard/user-impact", async (req, res) => {
               parseFloat(item.price || item.rescuePrice || 0) || 0;
             const saved = Math.max(originalPrice - pricePaid, 0);
 
-            moneySaved += saved * (item.quantity || 1);
+            moneySaved += saved;
 
-            const wasteSaved = 1.0 * (item.quantity || 1);
-            foodWastePrevented += wasteSaved;
+            // Simple heuristic conversion
+            const wastePerMeal = 1.5; // lbs
+            const carbonPerMeal = 3.0; // kg CO2e
 
-            const carbonPerMealKg = 3;
-            carbonReduced += carbonPerMealKg * (item.quantity || 1);
-          }
+            foodWastePrevented += wastePerMeal * (item.quantity || 1);
+            carbonReduced += carbonPerMeal * (item.quantity || 1);
 
-          if (item.restaurant) {
-            restaurantsSupported.add(item.restaurant);
+            if (item.restaurant) {
+              restaurantsSupported.add(item.restaurant);
+            }
           }
         });
       }
     });
 
-    let impactLevel = "New Rescuer";
-    if (mealsOrdered >= 50) {
-      impactLevel = "Sustainability Champion";
-    } else if (mealsOrdered >= 25) {
-      impactLevel = "Eco Warrior";
-    } else if (mealsOrdered >= 10) {
-      impactLevel = "Planet Saver";
+    let impactLevel = "Getting Started";
+    if (mealsOrdered >= 10 || moneySaved >= 50) {
+      impactLevel = "Food Rescue Champion";
+    } else if (mealsOrdered >= 5 || moneySaved >= 25) {
+      impactLevel = "Rising Rescuer";
     }
 
     res.json({
@@ -230,32 +288,43 @@ router.get("/dashboard/user-impact", async (req, res) => {
 // Get community stats (remains aggregate over all orders and CSVs)
 router.get("/dashboard/community-stats", async (req, res) => {
   try {
-    const rescueMeals = await readCsv(rescueMealsFile);
-    const waste = await readCsv(wasteFile);
+    let orders = [];
+    if (fs.existsSync(ordersFile)) {
+      orders = JSON.parse(fs.readFileSync(ordersFile, "utf8"));
+    }
 
     let activeUsers = 0;
     let totalMealsRescued = 0;
-    let totalWastePrevented = 0;
     const uniqueRestaurants = new Set();
 
-    rescueMeals.forEach((row) => {
-      const meals = parseInt(row["Meals Rescued"] || "0", 10);
-      if (!Number.isNaN(meals)) {
-        totalMealsRescued += meals;
+    const userMap = new Map();
+
+    orders.forEach((order) => {
+      if (!order.userEmail) return;
+
+      const email = order.userEmail.toLowerCase();
+      if (!userMap.has(email)) {
+        userMap.set(email, 0);
       }
 
-      const restaurant = row["Restaurant Name"];
-      if (restaurant) {
-        uniqueRestaurants.add(restaurant);
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach((item) => {
+          if (item.isRescueMeal) {
+            const qty = item.quantity || 1;
+            userMap.set(email, userMap.get(email) + qty);
+            totalMealsRescued += qty;
+            if (item.restaurant) {
+              uniqueRestaurants.add(item.restaurant);
+            }
+          }
+        });
       }
     });
 
-    const userFile = path.join(__dirname, "../data/users.json");
-    if (fs.existsSync(userFile)) {
-      const users = JSON.parse(fs.readFileSync(userFile, "utf8"));
-      activeUsers = Array.isArray(users) ? users.length : 0;
-    }
+    activeUsers = Array.from(userMap.values()).filter((count) => count > 0).length;
 
+    let totalWastePrevented = 0;
+    const waste = await readCsv(wasteFile);
     waste.forEach((row) => {
       const wasteLbs = parseFloat(row["Food Waste (lbs)"] || "0");
       if (!Number.isNaN(wasteLbs)) {
