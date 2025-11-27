@@ -1,5 +1,5 @@
 // Proj2/src/frontend/src/components/Dashboard.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Cart from './Cart';
 import LeaderboardPanel from './LeaderboardPanel';
 import RestaurantDetail from './RestaurantDetail';
@@ -21,7 +21,6 @@ import {
   Zap,
 } from 'lucide-react';
 
-// Fallback static data when backend returns empty
 import { restaurants as staticRestaurants } from '../data/staticdata';
 
 // Small helper to summarize rescue inventory for a restaurant
@@ -50,6 +49,29 @@ const summarizeRescueInventory = (restaurant) => {
   };
 };
 
+// helper: default rescue meal when no menus are available
+// quantityHint is used as both starting quantity and per-order max for this box.
+const createDefaultMealForRestaurant = (restaurant, quantityHint) => {
+  const safeQty =
+    typeof quantityHint === 'number' && Number.isFinite(quantityHint)
+      ? Math.max(1, quantityHint)
+      : 1;
+
+  return {
+    id: `${restaurant.id || restaurant._id || restaurant.name}-default-rescue`,
+    name: 'Rescue Meal Box',
+    description: 'Chef-selected surplus meal from today.',
+    originalPrice: 12.0,
+    rescuePrice: 5.0,
+    pickupWindow: 'Today, 5–8 PM',
+    isRescueMeal: true,
+    // both inventory cap and per-order cap
+    availableQuantity: safeQty,
+    maxPerOrder: safeQty,
+    quantity: safeQty,
+  };
+};
+
 const Dashboard = ({ user, onLogout }) => {
   const [currentView, setCurrentView] = useState('browse');
   const [cart, setCart] = useState([]);
@@ -59,14 +81,11 @@ const Dashboard = ({ user, onLogout }) => {
   const [favorites, setFavorites] = useState(new Set());
   const [showCartToast, setShowCartToast] = useState(false);
 
-  // which restaurant is opened in detail view
   const [selectedRestaurantDetail, setSelectedRestaurantDetail] =
     useState(null);
 
-  // logout confirmation modal
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  // State for API data
   const [restaurants, setRestaurants] = useState([]);
   const [userImpact, setUserImpact] = useState({
     mealsOrdered: 0,
@@ -86,18 +105,6 @@ const Dashboard = ({ user, onLogout }) => {
   const [userOrders, setUserOrders] = useState([]);
   const [ordersError, setOrdersError] = useState(null);
 
-  // helper: default rescue meal when no menus are available
-  const createDefaultMealForRestaurant = (restaurant) => {
-    return {
-      id: `${restaurant.id || restaurant._id || restaurant.name}-default-rescue`,
-      name: 'Rescue Meal Box',
-      description: 'Chef-selected surplus meal from today.',
-      originalPrice: 12.0,
-      rescuePrice: 5.0,
-      pickupWindow: 'Today, 5–8 PM',
-    };
-  };
-
   // Fetch restaurants + community stats (with static fallback)
   useEffect(() => {
     fetch('/dashboard/restaurants-with-meals')
@@ -106,6 +113,7 @@ const Dashboard = ({ user, onLogout }) => {
         if (Array.isArray(data) && data.length > 0) {
           setRestaurants(data);
         } else {
+          // eslint-disable-next-line no-console
           console.warn(
             'restaurants-with-meals returned empty, falling back to static data'
           );
@@ -114,6 +122,7 @@ const Dashboard = ({ user, onLogout }) => {
         setLoading(false);
       })
       .catch((err) => {
+        // eslint-disable-next-line no-console
         console.error('Error fetching restaurants:', err);
         setRestaurants(staticRestaurants);
         setLoading(false);
@@ -122,7 +131,10 @@ const Dashboard = ({ user, onLogout }) => {
     fetch('/dashboard/community-stats')
       .then((res) => res.json())
       .then((data) => setCommunityStats(data))
-      .catch((err) => console.error('Error fetching community stats:', err));
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching community stats:', err);
+      });
   }, []);
 
   // Fetch user-specific impact + order history
@@ -153,6 +165,7 @@ const Dashboard = ({ user, onLogout }) => {
         }));
       })
       .catch((err) => {
+        // eslint-disable-next-line no-console
         console.error('Error fetching user impact:', err);
       });
 
@@ -160,30 +173,73 @@ const Dashboard = ({ user, onLogout }) => {
     fetch('/api/orders')
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.success && Array.isArray(data.orders)) {
-          const filtered = data.orders
-            .filter(
-              (order) =>
-                typeof order.userEmail === 'string' &&
-                order.userEmail === user.email
-            )
-            .sort((a, b) => {
-              const at = new Date(a.timestamp || 0).getTime();
-              const bt = new Date(b.timestamp || 0).getTime();
-              return bt - at;
-            });
-          setUserOrders(filtered);
-          setOrdersError(null);
+        // backend may return: [ ... ]  or  { orders: [...] }  or  { success: true, orders: [...] }
+        let ordersList = [];
+
+        if (Array.isArray(data)) {
+          ordersList = data;
+        } else if (data && Array.isArray(data.orders)) {
+          ordersList = data.orders;
         } else {
           setUserOrders([]);
           setOrdersError('Unable to load orders.');
+          return;
         }
+
+        const filtered = ordersList
+          .filter(
+            (order) =>
+              typeof order.userEmail === 'string' &&
+              order.userEmail === user.email
+          )
+          .sort((a, b) => {
+            const at = new Date(a.timestamp || 0).getTime();
+            const bt = new Date(b.timestamp || 0).getTime();
+            return bt - at;
+          });
+
+        setUserOrders(filtered);
+        setOrdersError(null);
       })
       .catch((err) => {
+        // eslint-disable-next-line no-console
         console.error('Error fetching orders:', err);
+        setUserOrders([]);
         setOrdersError('Unable to load your orders right now.');
       });
   }, [user]);
+
+  // Personalized: how many meals has this user rescued at each restaurant?
+  const rescuedMealsByRestaurant = useMemo(() => {
+    const counts = new Map();
+
+    if (!Array.isArray(userOrders)) {
+      return counts;
+    }
+
+    userOrders.forEach((order) => {
+      if (!order || !Array.isArray(order.items)) {
+        return;
+      }
+
+      order.items.forEach((item) => {
+        if (!item || !item.restaurant) {
+          return;
+        }
+
+        const restaurantName = item.restaurant;
+        const qty =
+          typeof item.quantity === 'number'
+            ? item.quantity
+            : Number(item.quantity) || 1;
+
+        const prev = counts.get(restaurantName) || 0;
+        counts.set(restaurantName, prev + qty);
+      });
+    });
+
+    return counts;
+  }, [userOrders]);
 
   // Cuisine filters
   const cuisineTypes = [
@@ -202,10 +258,102 @@ const Dashboard = ({ user, onLogout }) => {
     return matchesSearch && matchesCuisine;
   });
 
+  // Add-to-cart with merging and inventory-aware max quantity
   const addToCart = (restaurant, meal) => {
-    setCart((prev) => [...prev, { restaurant: restaurant.name, meal, quantity: 1 }]);
+    // identify this meal
+    const mealId =
+      meal.id ||
+      `${restaurant.name}-${meal.name || ''}-${meal.pickupWindow || ''}`;
 
-    // short toast
+    // inventory cap
+    const inventoryCap =
+      typeof meal.availableQuantity === 'number' &&
+      Number.isFinite(meal.availableQuantity)
+        ? meal.availableQuantity
+        : typeof meal.quantity === 'number' && Number.isFinite(meal.quantity)
+        ? meal.quantity
+        : Infinity;
+
+    // per-order cap
+    const perOrderCap =
+      typeof meal.maxPerOrder === 'number' && Number.isFinite(meal.maxPerOrder)
+        ? meal.maxPerOrder
+        : Infinity;
+
+    const maxQty =
+      inventoryCap === Infinity && perOrderCap === Infinity
+        ? Infinity
+        : Math.min(inventoryCap, perOrderCap);
+
+    if (maxQty !== Infinity && maxQty <= 0) {
+      // no stock / no per-order allowance
+      return;
+    }
+
+    // look at current cart snapshot，決定還能不能再加 1
+    let currentQty = 0;
+    if (Array.isArray(cart)) {
+      const existing = cart.find((item) => {
+        if (!item || item.restaurant !== restaurant.name || !item.meal) {
+          return false;
+        }
+        const existingMealId =
+          item.meal.id ||
+          `${restaurant.name}-${item.meal.name || ''}-${
+            item.meal.pickupWindow || ''
+          }`;
+        return existingMealId === mealId;
+      });
+
+      if (existing) {
+        currentQty = Number(existing.quantity) || 0;
+      }
+    }
+
+    if (maxQty !== Infinity && currentQty >= maxQty) {
+      // 已經到上限：RestaurantDetail 會把按鈕鎖住，這裡就什麼都不做、不跳 toast
+      return;
+    }
+
+    // 確定可以加 1 份，更新 cart，同時保險再 clamp 一次不要超出 maxQty
+    setCart((prev) => {
+      const prevCart = Array.isArray(prev) ? [...prev] : [];
+
+      const existingIndex = prevCart.findIndex((item) => {
+        if (!item || item.restaurant !== restaurant.name || !item.meal) {
+          return false;
+        }
+        const existingMealId =
+          item.meal.id ||
+          `${restaurant.name}-${item.meal.name || ''}-${
+            item.meal.pickupWindow || ''
+          }`;
+        return existingMealId === mealId;
+      });
+
+      if (existingIndex === -1) {
+        prevCart.push({
+          restaurant: restaurant.name,
+          meal,
+          quantity: 1,
+        });
+      } else {
+        const existing = prevCart[existingIndex];
+        const q = Number(existing.quantity) || 0;
+        const next = q + 1;
+        const clamped =
+          maxQty === Infinity ? next : Math.min(next, maxQty);
+
+        prevCart[existingIndex] = {
+          ...existing,
+          quantity: clamped,
+        };
+      }
+
+      return prevCart;
+    });
+
+    // 只有真的成功加進 cart 才會走到這裡，所以可以直接跳 toast
     setShowCartToast(true);
     setTimeout(() => {
       setShowCartToast(false);
@@ -225,7 +373,6 @@ const Dashboard = ({ user, onLogout }) => {
       return;
     }
 
-    // Group quantities by restaurant name
     const quantityByRestaurant = new Map();
 
     order.items.forEach((orderItem) => {
@@ -249,11 +396,13 @@ const Dashboard = ({ user, onLogout }) => {
         return;
       }
 
-      const meal = createDefaultMealForRestaurant(restaurant);
+      // default rescue box with per-order cap = previous quantity
+      const meal = createDefaultMealForRestaurant(restaurant, qty);
+
       rebuiltCart.push({
         restaurant: restaurant.name,
+        quantity: meal.quantity,
         meal,
-        quantity: qty,
       });
     });
 
@@ -286,15 +435,7 @@ const Dashboard = ({ user, onLogout }) => {
   };
 
   const handleOpenRestaurantDetail = (restaurant) => {
-    // compute inventory summary again for this restaurant
-    const { allSoldOut } = summarizeRescueInventory(restaurant);
-    
-    const restaurantWithInventory = {
-      ...restaurant,
-      allSoldOut: allSoldOut === true,
-    };
-  
-    setSelectedRestaurantDetail(restaurantWithInventory);
+    setSelectedRestaurantDetail(restaurant);
     setCurrentView('restaurantDetail');
   };
 
@@ -337,6 +478,7 @@ const Dashboard = ({ user, onLogout }) => {
 
           <nav className="hidden md:flex items-center space-x-6">
             <button
+              type="button"
               onClick={() => handleNavClick('browse')}
               className={`text-sm font-medium ${
                 currentView === 'browse' || currentView === 'restaurantDetail'
@@ -347,6 +489,7 @@ const Dashboard = ({ user, onLogout }) => {
               Browse Meals
             </button>
             <button
+              type="button"
               onClick={() => handleNavClick('impact')}
               className={`text-sm font-medium ${
                 currentView === 'impact'
@@ -357,6 +500,7 @@ const Dashboard = ({ user, onLogout }) => {
               My Impact
             </button>
             <button
+              type="button"
               onClick={() => handleNavClick('community')}
               className={`text-sm font-medium ${
                 currentView === 'community'
@@ -367,6 +511,7 @@ const Dashboard = ({ user, onLogout }) => {
               Community
             </button>
             <button
+              type="button"
               onClick={() => handleNavClick('leaderboard')}
               className={`text-sm font-medium ${
                 currentView === 'leaderboard'
@@ -377,6 +522,7 @@ const Dashboard = ({ user, onLogout }) => {
               Leaderboard
             </button>
             <button
+              type="button"
               onClick={() => setCurrentView('cart')}
               className="relative flex items-center text-gray-600 hover:text-gray-900"
             >
@@ -388,6 +534,7 @@ const Dashboard = ({ user, onLogout }) => {
               )}
             </button>
             <button
+              type="button"
               onClick={() => setShowLogoutConfirm(true)}
               className="text-sm font-medium text-red-500 hover:text-red-600"
             >
@@ -396,6 +543,7 @@ const Dashboard = ({ user, onLogout }) => {
           </nav>
 
           <button
+            type="button"
             className="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
             onClick={() => setShowMobileMenu(!showMobileMenu)}
           >
@@ -407,30 +555,35 @@ const Dashboard = ({ user, onLogout }) => {
           <div className="md:hidden bg-white border-t border-gray-100">
             <div className="px-4 py-3 space-y-2">
               <button
+                type="button"
                 onClick={() => handleNavClick('browse')}
                 className="w-full text-left text-sm py-2"
               >
                 Browse Meals
               </button>
               <button
+                type="button"
                 onClick={() => handleNavClick('impact')}
                 className="w-full text-left text-sm py-2"
               >
                 My Impact
               </button>
               <button
+                type="button"
                 onClick={() => handleNavClick('community')}
                 className="w-full text-left text-sm py-2"
               >
                 Community
               </button>
               <button
+                type="button"
                 onClick={() => handleNavClick('leaderboard')}
                 className="w-full text-left text-sm py-2"
               >
                 Leaderboard
               </button>
               <button
+                type="button"
                 onClick={() => setCurrentView('cart')}
                 className="w-full text-left text-sm py-2 flex items-center"
               >
@@ -443,6 +596,7 @@ const Dashboard = ({ user, onLogout }) => {
                 )}
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setShowMobileMenu(false);
                   setShowLogoutConfirm(true);
@@ -479,6 +633,7 @@ const Dashboard = ({ user, onLogout }) => {
 
                   <div className="flex flex-wrap items-center space-x-3">
                     <button
+                      type="button"
                       onClick={() => setFilterCuisine('all')}
                       className={`px-3 py-1 rounded-full text-xs font-medium border ${
                         filterCuisine === 'all'
@@ -492,6 +647,7 @@ const Dashboard = ({ user, onLogout }) => {
                       .filter((c) => c !== 'all')
                       .map((cuisine) => (
                         <button
+                          type="button"
                           key={cuisine}
                           onClick={() => setFilterCuisine(cuisine)}
                           className={`px-3 py-1 rounded-full text-xs font-medium border ${
@@ -512,10 +668,16 @@ const Dashboard = ({ user, onLogout }) => {
                       const hasMenus =
                         Array.isArray(restaurant.menus) &&
                         restaurant.menus.length > 0;
-                      const rescueCount = hasMenus ? restaurant.menus.length : 0;
+                      const rescueCount = hasMenus
+                        ? restaurant.menus.length
+                        : 0;
 
-                      const { totalAvailable, allSoldOut } =
+                      const inventorySummary =
                         summarizeRescueInventory(restaurant);
+                      const { totalAvailable, allSoldOut } = inventorySummary;
+
+                      const userRescueCount =
+                        rescuedMealsByRestaurant.get(restaurant.name) || 0;
 
                       return (
                         <div
@@ -536,6 +698,7 @@ const Dashboard = ({ user, onLogout }) => {
                                 </p>
                               </div>
                               <button
+                                type="button"
                                 onClick={() => toggleFavorite(restaurantId)}
                                 className="text-gray-400 hover:text-red-500"
                               >
@@ -564,47 +727,48 @@ const Dashboard = ({ user, onLogout }) => {
                               </span>
                             </div>
 
-                            {/* rescue meals count / message + inventory summary */}
                             <div className="mt-3 text-xs text-gray-600">
                               {hasMenus ? (
-                                allSoldOut ? (
-                                  <span>
-                                    {rescueCount === 1
-                                      ? 'Rescue meal listed (sold out today)'
-                                      : `${rescueCount} rescue meals listed (sold out today)`}
-                                  </span>
-                                ) : (
-                                  <span>
-                                    {rescueCount}{' '}
-                                    {rescueCount === 1
-                                      ? 'rescue meal available'
-                                      : 'rescue meals available'}
-                                  </span>
-                                )
+                                <span>
+                                  {rescueCount}{' '}
+                                  {rescueCount === 1
+                                    ? 'rescue meal listed'
+                                    : 'rescue meals listed'}
+                                  {allSoldOut && ' (sold out today)'}
+                                </span>
                               ) : (
                                 <span>
                                   Rescue meals not listed yet – you can still
                                   reserve a surprise box.
                                 </span>
                               )}
-
-                              {totalAvailable !== null && (
-                                <p
-                                  className={
-                                    'mt-1 ' +
-                                    (allSoldOut
-                                      ? 'text-red-500'
-                                      : 'text-green-700')
-                                  }
-                                >
-                                  {allSoldOut
-                                    ? 'Sold out for today'
-                                    : `${totalAvailable} rescue meals left today`}
+                              {typeof totalAvailable === 'number' &&
+                                totalAvailable > 0 &&
+                                !allSoldOut && (
+                                  <p className="mt-1 text-[11px] text-gray-500">
+                                    {totalAvailable}{' '}
+                                    {totalAvailable === 1
+                                      ? 'box left today across all meals.'
+                                      : 'boxes left today across all meals.'}
+                                  </p>
+                                )}
+                              {allSoldOut && (
+                                <p className="mt-1 text-[11px] text-red-500">
+                                  Sold out for today
+                                </p>
+                              )}
+                              {userRescueCount > 0 ? (
+                                <p className="mt-1 text-[11px] text-gray-500">
+                                  You have rescued {userRescueCount}{' '}
+                                  {userRescueCount === 1 ? 'meal' : 'meals'} here.
+                                </p>
+                              ) : (
+                                <p className="mt-1 text-[11px] text-gray-400">
+                                  Be the first to rescue here.
                                 </p>
                               )}
                             </div>
 
-                            {/* action button: always go to restaurant detail */}
                             <div className="mt-4">
                               <button
                                 type="button"
@@ -768,7 +932,6 @@ const Dashboard = ({ user, onLogout }) => {
               </div>
             </div>
 
-            {/* account-aware recent orders + "Rescue Again" */}
             <div className="bg-white rounded-xl shadow-lg p-8 mt-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">
                 Your Recent Orders
@@ -889,9 +1052,62 @@ const Dashboard = ({ user, onLogout }) => {
             cart={cart}
             setCart={setCart}
             onBack={() => setCurrentView('browse')}
-            onOrderPlaced={(result) => {
-              // hook for future analytics if needed
-              console.log('Order placed:', result);
+            onOrderPlaced={(order) => {
+              // new order definitely exists -> clear any stale order error
+              setOrdersError(null);
+
+              // eslint-disable-next-line no-console
+              console.log('Order placed:', order);
+
+              // refresh user impact
+              if (user && user.email) {
+                const emailParam = encodeURIComponent(user.email);
+                fetch(`/dashboard/user-impact?email=${emailParam}`)
+                  .then((res) => res.json())
+                  .then((data) => {
+                    setUserImpact((prev) => ({
+                      ...prev,
+                      ...data,
+                    }));
+                  })
+                  .catch((err) => {
+                    // eslint-disable-next-line no-console
+                    console.error(
+                      'Error refreshing user impact after order:',
+                      err
+                    );
+                  });
+
+                // update userOrders list with this new order
+                if (order && order.userEmail === user.email) {
+                  setUserOrders((prev) => {
+                    const prevList = Array.isArray(prev) ? [...prev] : [];
+                    const updated = [order, ...prevList];
+                    updated.sort((a, b) => {
+                      const at = new Date(a.timestamp || 0).getTime();
+                      const bt = new Date(b.timestamp || 0).getTime();
+                      return bt - at;
+                    });
+                    return updated;
+                  });
+                }
+              }
+
+              // refresh community stats
+              fetch('/dashboard/community-stats')
+                .then((res) => res.json())
+                .then((data) => {
+                  setCommunityStats(data);
+                })
+                .catch((err) => {
+                  // eslint-disable-next-line no-console
+                  console.error(
+                    'Error refreshing community stats after order:',
+                    err
+                  );
+                });
+
+              setCurrentView('impact');
             }}
             user={user}
           />
@@ -907,7 +1123,6 @@ const Dashboard = ({ user, onLogout }) => {
         )}
       </main>
 
-      {/* Logout confirmation modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-sm p-6">
