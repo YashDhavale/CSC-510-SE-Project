@@ -19,18 +19,12 @@ function readOrdersSafe() {
       return [];
     }
     const raw = fs.readFileSync(ORDERS_PATH, 'utf8');
-    if (!raw.trim()) {
-      return [];
-    }
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-    if (parsed && Array.isArray(parsed.orders)) {
-      return parsed.orders;
-    }
-    return [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Error reading orders.json:', err);
     return [];
   }
@@ -38,14 +32,10 @@ function readOrdersSafe() {
 
 function writeOrdersSafe(orders) {
   try {
-    const dir = path.dirname(ORDERS_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
     fs.writeFileSync(ORDERS_PATH, JSON.stringify(orders, null, 2), 'utf8');
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Error writing orders.json:', err);
-    throw err;
   }
 }
 
@@ -56,6 +46,7 @@ router.post('/checkout', (req, res) => {
     const items = Array.isArray(body.items) ? body.items : [];
     const userEmail = typeof body.userEmail === 'string' ? body.userEmail : null;
     const totals = body.totals || null;
+    const pickupPreference = typeof body.pickupPreference === 'string' ? body.pickupPreference : null;
 
     if (items.length === 0) {
       return res.status(400).json({
@@ -71,6 +62,7 @@ router.post('/checkout', (req, res) => {
       userEmail,
       items,
       totals,
+      pickupPreference,
       timestamp: new Date().toISOString(),
     };
 
@@ -82,6 +74,7 @@ router.post('/checkout', (req, res) => {
       order: newOrder,
     });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Error in /cart/checkout:', err);
     return res.status(500).json({
       success: false,

@@ -26,7 +26,7 @@ import { restaurants as staticRestaurants } from '../data/staticdata';
 // Small helper to summarize rescue inventory for a restaurant
 const summarizeRescueInventory = (restaurant) => {
   if (!restaurant || !Array.isArray(restaurant.menus)) {
-    return { totalAvailable: null, allSoldOut: false };
+    return { totalAvailable: null, allSoldOut: false, lowInventory: false };
   }
 
   const totalAvailable = restaurant.menus.reduce((sum, meal) => {
@@ -43,32 +43,16 @@ const summarizeRescueInventory = (restaurant) => {
     return sum + qty;
   }, 0);
 
+  const lowInventory =
+    typeof totalAvailable === 'number' &&
+    Number.isFinite(totalAvailable) &&
+    totalAvailable > 0 &&
+    totalAvailable <= 5;
+
   return {
     totalAvailable,
     allSoldOut: totalAvailable === 0,
-  };
-};
-
-// helper: default rescue meal when no menus are available
-// quantityHint is used as both starting quantity and per-order max for this box.
-const createDefaultMealForRestaurant = (restaurant, quantityHint) => {
-  const safeQty =
-    typeof quantityHint === 'number' && Number.isFinite(quantityHint)
-      ? Math.max(1, quantityHint)
-      : 1;
-
-  return {
-    id: `${restaurant.id || restaurant._id || restaurant.name}-default-rescue`,
-    name: 'Rescue Meal Box',
-    description: 'Chef-selected surplus meal from today.',
-    originalPrice: 12.0,
-    rescuePrice: 5.0,
-    pickupWindow: 'Today, 5–8 PM',
-    isRescueMeal: true,
-    // both inventory cap and per-order cap
-    availableQuantity: safeQty,
-    maxPerOrder: safeQty,
-    quantity: safeQty,
+    lowInventory,
   };
 };
 
@@ -80,10 +64,6 @@ const Dashboard = ({ user, onLogout }) => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [favorites, setFavorites] = useState(new Set());
   const [showCartToast, setShowCartToast] = useState(false);
-
-  const [selectedRestaurantDetail, setSelectedRestaurantDetail] =
-    useState(null);
-
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const [restaurants, setRestaurants] = useState([]);
@@ -100,8 +80,6 @@ const Dashboard = ({ user, onLogout }) => {
     mealsRescued: 0,
     wastePreventedTons: 0,
   });
-  const [loading, setLoading] = useState(true);
-
   const [userOrders, setUserOrders] = useState([]);
   const [ordersError, setOrdersError] = useState(null);
 
@@ -119,13 +97,12 @@ const Dashboard = ({ user, onLogout }) => {
           );
           setRestaurants(staticRestaurants);
         }
-        setLoading(false);
+        setShowCartToast(false);
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
         console.error('Error fetching restaurants:', err);
         setRestaurants(staticRestaurants);
-        setLoading(false);
       });
 
     fetch('/dashboard/community-stats')
@@ -140,14 +117,15 @@ const Dashboard = ({ user, onLogout }) => {
   // Fetch user-specific impact + order history
   useEffect(() => {
     if (!user || !user.email) {
-      setUserImpact({
+      setUserImpact((prev) => ({
+        ...prev,
         mealsOrdered: 0,
         moneySaved: 0,
         foodWastePrevented: 0,
         carbonReduced: 0,
         localRestaurantsSupported: 0,
         impactLevel: 'New Rescuer',
-      });
+      }));
       setUserOrders([]);
       setOrdersError(null);
       return;
@@ -155,7 +133,6 @@ const Dashboard = ({ user, onLogout }) => {
 
     const emailParam = encodeURIComponent(user.email);
 
-    // Impact for this specific user
     fetch(`/dashboard/user-impact?email=${emailParam}`)
       .then((res) => res.json())
       .then((data) => {
@@ -169,35 +146,17 @@ const Dashboard = ({ user, onLogout }) => {
         console.error('Error fetching user impact:', err);
       });
 
-    // Order history – we filter by userEmail on the frontend
-    fetch('/api/orders')
-      .then((res) => res.json())
-      .then((data) => {
-        // backend may return: [ ... ]  or  { orders: [...] }  or  { success: true, orders: [...] }
-        let ordersList = [];
-
-        if (Array.isArray(data)) {
-          ordersList = data;
-        } else if (data && Array.isArray(data.orders)) {
-          ordersList = data.orders;
-        } else {
-          setUserOrders([]);
-          setOrdersError('Unable to load orders.');
-          return;
+    fetch(`/dashboard/orders?email=${emailParam}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Failed to load orders');
         }
-
-        const filtered = ordersList
-          .filter(
-            (order) =>
-              typeof order.userEmail === 'string' &&
-              order.userEmail === user.email
-          )
-          .sort((a, b) => {
-            const at = new Date(a.timestamp || 0).getTime();
-            const bt = new Date(b.timestamp || 0).getTime();
-            return bt - at;
-          });
-
+        return res.json();
+      })
+      .then((data) => {
+        const filtered = Array.isArray(data)
+          ? data.filter((o) => o && o.userEmail === user.email)
+          : [];
         setUserOrders(filtered);
         setOrdersError(null);
       })
@@ -227,182 +186,152 @@ const Dashboard = ({ user, onLogout }) => {
           return;
         }
 
-        const restaurantName = item.restaurant;
-        const qty =
-          typeof item.quantity === 'number'
-            ? item.quantity
-            : Number(item.quantity) || 1;
+        const qty = Number(item.quantity) || 0;
+        if (!Number.isFinite(qty) || qty <= 0) {
+          return;
+        }
 
-        const prev = counts.get(restaurantName) || 0;
-        counts.set(restaurantName, prev + qty);
+        const prev = counts.get(item.restaurant) || 0;
+        counts.set(item.restaurant, prev + qty);
       });
     });
 
     return counts;
   }, [userOrders]);
 
-  // Cuisine filters
-  const cuisineTypes = [
-    'all',
-    ...new Set(restaurants.map((r) => r.cuisine).filter(Boolean)),
-  ];
-
-  const filteredRestaurants = restaurants.filter((r) => {
-    const matchesSearch =
-      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (r.cuisine || '').toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesCuisine =
-      filterCuisine === 'all' || r.cuisine === filterCuisine;
-
-    return matchesSearch && matchesCuisine;
-  });
-
-  // Add-to-cart with merging and inventory-aware max quantity
-  const addToCart = (restaurant, meal) => {
-    // identify this meal
-    const mealId =
-      meal.id ||
-      `${restaurant.name}-${meal.name || ''}-${meal.pickupWindow || ''}`;
-
-    // inventory cap
-    const inventoryCap =
-      typeof meal.availableQuantity === 'number' &&
-      Number.isFinite(meal.availableQuantity)
-        ? meal.availableQuantity
-        : typeof meal.quantity === 'number' && Number.isFinite(meal.quantity)
-        ? meal.quantity
-        : Infinity;
-
-    // per-order cap
-    const perOrderCap =
-      typeof meal.maxPerOrder === 'number' && Number.isFinite(meal.maxPerOrder)
-        ? meal.maxPerOrder
-        : Infinity;
-
-    const maxQty =
-      inventoryCap === Infinity && perOrderCap === Infinity
-        ? Infinity
-        : Math.min(inventoryCap, perOrderCap);
-
-    if (maxQty !== Infinity && maxQty <= 0) {
-      // no stock / no per-order allowance
-      return;
-    }
-
-    // look at current cart snapshot，決定還能不能再加 1
-    let currentQty = 0;
-    if (Array.isArray(cart)) {
-      const existing = cart.find((item) => {
-        if (!item || item.restaurant !== restaurant.name || !item.meal) {
-          return false;
-        }
-        const existingMealId =
-          item.meal.id ||
-          `${restaurant.name}-${item.meal.name || ''}-${
-            item.meal.pickupWindow || ''
-          }`;
-        return existingMealId === mealId;
-      });
-
-      if (existing) {
-        currentQty = Number(existing.quantity) || 0;
+  const cuisineTypes = useMemo(() => {
+    const set = new Set(['all']);
+    restaurants.forEach((r) => {
+      if (r.cuisine) {
+        set.add(r.cuisine);
       }
-    }
-
-    if (maxQty !== Infinity && currentQty >= maxQty) {
-      // 已經到上限：RestaurantDetail 會把按鈕鎖住，這裡就什麼都不做、不跳 toast
-      return;
-    }
-
-    // 確定可以加 1 份，更新 cart，同時保險再 clamp 一次不要超出 maxQty
-    setCart((prev) => {
-      const prevCart = Array.isArray(prev) ? [...prev] : [];
-
-      const existingIndex = prevCart.findIndex((item) => {
-        if (!item || item.restaurant !== restaurant.name || !item.meal) {
-          return false;
-        }
-        const existingMealId =
-          item.meal.id ||
-          `${restaurant.name}-${item.meal.name || ''}-${
-            item.meal.pickupWindow || ''
-          }`;
-        return existingMealId === mealId;
-      });
-
-      if (existingIndex === -1) {
-        prevCart.push({
-          restaurant: restaurant.name,
-          meal,
-          quantity: 1,
-        });
-      } else {
-        const existing = prevCart[existingIndex];
-        const q = Number(existing.quantity) || 0;
-        const next = q + 1;
-        const clamped =
-          maxQty === Infinity ? next : Math.min(next, maxQty);
-
-        prevCart[existingIndex] = {
-          ...existing,
-          quantity: clamped,
-        };
-      }
-
-      return prevCart;
     });
+    return Array.from(set);
+  }, [restaurants]);
 
-    // 只有真的成功加進 cart 才會走到這裡，所以可以直接跳 toast
-    setShowCartToast(true);
-    setTimeout(() => {
-      setShowCartToast(false);
-    }, 1000);
+  const filteredRestaurants = useMemo(() => {
+    let list = Array.isArray(restaurants) ? restaurants : [];
+
+    const query = (searchQuery || '').trim().toLowerCase();
+    if (query) {
+      list = list.filter((r) => {
+        const name = (r.name || '').toLowerCase();
+        const cuisine = (r.cuisine || '').toLowerCase();
+        return name.includes(query) || cuisine.includes(query);
+      });
+    }
+
+    if (filterCuisine !== 'all') {
+      list = list.filter((r) => r.cuisine === filterCuisine);
+    }
+
+    return list;
+  }, [restaurants, searchQuery, filterCuisine]);
+
+  const [selectedRestaurantDetail, setSelectedRestaurantDetail] =
+    useState(null);
+
+  const handleOpenRestaurantDetail = (restaurant) => {
+    setSelectedRestaurantDetail(restaurant);
+    setCurrentView('detail');
   };
 
-  // Account-aware "Rescue Again":
-  // For each restaurant in the past order, we create a new default rescue box
-  // with quantity equal to the total rescued meals from that restaurant.
-  const handleRescueAgain = (order) => {
-    if (
-      !order ||
-      !order.items ||
-      !Array.isArray(order.items) ||
-      restaurants.length === 0
-    ) {
+  const handleAddToCart = (restaurant, meal) => {
+    if (!restaurant || !meal) return;
+
+    setCart((prevCart) => {
+      const existing = Array.isArray(prevCart) ? [...prevCart] : [];
+      const mealId =
+        meal.id ||
+        `${restaurant.name}-${meal.name || ''}-${meal.pickupWindow || ''}`;
+
+      const existingIndex = existing.findIndex((item) => {
+        if (!item || item.restaurant !== restaurant.name || !item.meal) {
+          return false;
+        }
+        const existingMealId =
+          item.meal.id ||
+          `${item.restaurant}-${item.meal.name || ''}-${
+            item.meal.pickupWindow || ''
+          }`;
+        return existingMealId === mealId;
+      });
+
+      const getMaxQty = () => {
+        const inventoryCap =
+          typeof meal.availableQuantity === 'number' &&
+          Number.isFinite(meal.availableQuantity)
+            ? meal.availableQuantity
+            : typeof meal.quantity === 'number' &&
+              Number.isFinite(meal.quantity)
+            ? meal.quantity
+            : Infinity;
+
+        const perOrderCap =
+          typeof meal.maxPerOrder === 'number' &&
+          Number.isFinite(meal.maxPerOrder)
+            ? meal.maxPerOrder
+            : Infinity;
+
+        if (inventoryCap === Infinity && perOrderCap === Infinity) {
+          return Infinity;
+        }
+        return Math.min(inventoryCap, perOrderCap);
+      };
+
+      const maxQty = getMaxQty();
+
+      if (existingIndex === -1) {
+        existing.push({
+          restaurant: restaurant.name,
+          meal,
+          quantity: maxQty === Infinity ? 1 : Math.min(1, maxQty),
+        });
+      } else {
+        const entry = existing[existingIndex];
+        const currentQty = Number(entry.quantity) || 1;
+        const nextQty = maxQty === Infinity ? currentQty + 1 : currentQty + 1;
+
+        if (maxQty !== Infinity && nextQty > maxQty) {
+          entry.quantity = maxQty;
+        } else {
+          entry.quantity = nextQty;
+        }
+      }
+
+      return existing;
+    });
+
+    setShowCartToast(true);
+    setTimeout(() => setShowCartToast(false), 2000);
+  };
+
+  const handleRescueAgain = () => {
+    if (!Array.isArray(userOrders) || userOrders.length === 0) {
       return;
     }
 
-    const quantityByRestaurant = new Map();
-
-    order.items.forEach((orderItem) => {
-      if (!orderItem || !orderItem.restaurant) {
-        return;
-      }
-      const restaurantName = orderItem.restaurant;
-      const quantity =
-        orderItem.quantity && orderItem.quantity > 0
-          ? orderItem.quantity
-          : 1;
-      const prev = quantityByRestaurant.get(restaurantName) || 0;
-      quantityByRestaurant.set(restaurantName, prev + quantity);
-    });
+    const lastOrder = userOrders[0];
+    if (!lastOrder || !Array.isArray(lastOrder.items)) {
+      return;
+    }
 
     const rebuiltCart = [];
 
-    quantityByRestaurant.forEach((qty, restaurantName) => {
-      const restaurant = restaurants.find((r) => r.name === restaurantName);
-      if (!restaurant) {
+    lastOrder.items.forEach((item) => {
+      if (!item || !item.meal || !item.restaurant) {
         return;
       }
 
-      // default rescue box with per-order cap = previous quantity
-      const meal = createDefaultMealForRestaurant(restaurant, qty);
+      const qty = Number(item.quantity) || 0;
+      if (!Number.isFinite(qty) || qty <= 0) {
+        return;
+      }
 
       rebuiltCart.push({
-        restaurant: restaurant.name,
-        quantity: meal.quantity,
-        meal,
+        restaurant: item.restaurant,
+        meal: item.meal,
+        quantity: qty,
       });
     });
 
@@ -434,46 +363,58 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  const handleOpenRestaurantDetail = (restaurant) => {
-    setSelectedRestaurantDetail(restaurant);
-    setCurrentView('restaurantDetail');
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
   };
 
-  const handleConfirmLogout = () => {
+  const confirmLogout = () => {
     setShowLogoutConfirm(false);
-    onLogout();
+    if (typeof onLogout === 'function') {
+      onLogout();
+    }
   };
 
-  if (loading) {
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
+
+  const renderImpactLevelBadge = () => {
+    const level = userImpact.impactLevel || 'New Rescuer';
+
+    let bg = 'bg-gray-100';
+    let text = 'text-gray-800';
+
+    if (level === 'Impact Hero') {
+      bg = 'bg-yellow-100';
+      text = 'text-yellow-800';
+    } else if (level === 'Rescue Champion') {
+      bg = 'bg-purple-100';
+      text = 'text-purple-800';
+    } else if (level === 'Rising Rescuer') {
+      bg = 'bg-green-100';
+      text = 'text-green-800';
+    }
+
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block bg-green-100 text-green-600 rounded-full px-3 py-1 mb-4">
-            <span className="text-xs font-medium">Loading your dashboard...</span>
-          </div>
-          <p className="text-gray-600">
-            Fetching restaurants and impact data, please wait.
-          </p>
-        </div>
-      </div>
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bg} ${text}`}
+      >
+        <Zap className="w-3 h-3 mr-1" />
+        {level}
+      </span>
     );
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top nav */}
-      <header className="bg-green-50 shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="bg-green-100 text-green-600 rounded-full p-2">
-              <Truck className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Tiffin Trails</h1>
-              <p className="text-xs text-green-700">
-                Save Food. Save Money. Save Planet.
-              </p>
-            </div>
+      {/* top nav */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Truck className="w-6 h-6 text-green-600" />
+            <span className="text-lg font-bold text-gray-900">
+              Tiffin Trails
+            </span>
           </div>
 
           <nav className="hidden md:flex items-center space-x-6">
@@ -481,12 +422,12 @@ const Dashboard = ({ user, onLogout }) => {
               type="button"
               onClick={() => handleNavClick('browse')}
               className={`text-sm font-medium ${
-                currentView === 'browse' || currentView === 'restaurantDetail'
+                currentView === 'browse'
                   ? 'text-green-600'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Browse Meals
+              Browse
             </button>
             <button
               type="button"
@@ -533,533 +474,569 @@ const Dashboard = ({ user, onLogout }) => {
                 </span>
               )}
             </button>
-            <button
-              type="button"
-              onClick={() => setShowLogoutConfirm(true)}
-              className="text-sm font-medium text-red-500 hover:text-red-600"
-            >
-              Logout
-            </button>
+            <div className="flex items-center space-x-3">
+              <div className="text-right">
+                <p className="text-xs text-gray-500">Signed in as</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {user?.name || user?.email || 'Guest Rescuer'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogoutClick}
+                className="text-xs font-medium text-red-500 hover:text-red-600"
+              >
+                Log out
+              </button>
+            </div>
           </nav>
 
+          {/* mobile nav toggle */}
           <button
             type="button"
-            className="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="md:hidden flex items-center text-gray-600 hover:text-gray-900"
+            onClick={() => setShowMobileMenu((prev) => !prev)}
           >
-            {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <Menu className="w-6 h-6" />
           </button>
         </div>
 
+        {/* mobile dropdown nav */}
         {showMobileMenu && (
-          <div className="md:hidden bg-white border-t border-gray-100">
-            <div className="px-4 py-3 space-y-2">
+          <div className="md:hidden border-t border-gray-200 bg-white">
+            <nav className="px-4 py-3 space-y-2">
               <button
                 type="button"
                 onClick={() => handleNavClick('browse')}
-                className="w-full text-left text-sm py-2"
+                className={`block w-full text-left text-sm py-1 ${
+                  currentView === 'browse'
+                    ? 'text-green-600'
+                    : 'text-gray-700 hover:text-gray-900'
+                }`}
               >
-                Browse Meals
+                Browse
               </button>
               <button
                 type="button"
                 onClick={() => handleNavClick('impact')}
-                className="w-full text-left text-sm py-2"
+                className={`block w-full text-left text-sm py-1 ${
+                  currentView === 'impact'
+                    ? 'text-green-600'
+                    : 'text-gray-700 hover:text-gray-900'
+                }`}
               >
                 My Impact
               </button>
               <button
                 type="button"
                 onClick={() => handleNavClick('community')}
-                className="w-full text-left text-sm py-2"
+                className={`block w-full text-left text-sm py-1 ${
+                  currentView === 'community'
+                    ? 'text-green-600'
+                    : 'text-gray-700 hover:text-gray-900'
+                }`}
               >
                 Community
               </button>
               <button
                 type="button"
                 onClick={() => handleNavClick('leaderboard')}
-                className="w-full text-left text-sm py-2"
+                className={`block w-full text-left text-sm py-1 ${
+                  currentView === 'leaderboard'
+                    ? 'text-green-600'
+                    : 'text-gray-700 hover:text-gray-900'
+                }`}
               >
                 Leaderboard
               </button>
               <button
                 type="button"
                 onClick={() => setCurrentView('cart')}
-                className="w-full text-left text-sm py-2 flex items-center"
+                className="flex items-center text-sm text-gray-700 hover:text-gray-900"
               >
-                <ShoppingCart className="w-4 h-4 mr-2" />
+                <ShoppingCart className="w-4 h-4 mr-1" />
                 Cart
                 {cart.length > 0 && (
-                  <span className="ml-2 bg-green-600 text-white text-xs rounded-full px-2 py-0.5">
+                  <span className="ml-1 bg-green-600 text-white text-xs rounded-full px-2 py-0.5">
                     {cart.length}
                   </span>
                 )}
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowMobileMenu(false);
-                  setShowLogoutConfirm(true);
-                }}
-                className="w-full text-left text-sm py-2 text-red-500"
-              >
-                Logout
-              </button>
-            </div>
+              <div className="pt-2 border-t border-gray-100 mt-2 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500">Signed in as</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {user?.name || user?.email || 'Guest Rescuer'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogoutClick}
+                  className="text-xs font-medium text-red-500 hover:text-red-600"
+                >
+                  Log out
+                </button>
+              </div>
+            </nav>
           </div>
         )}
       </header>
 
       {/* main content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        {(currentView === 'browse' || currentView === 'restaurantDetail') && (
-          <>
-            {currentView === 'browse' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* left column: search + restaurant cards */}
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="bg-white rounded-xl shadow p-4 flex items-center space-x-3">
-                    <div className="bg-green-100 text-green-600 rounded-full p-2">
-                      <Search className="w-5 h-5" />
+      <main className="max-w-6xl mx-auto px-4 py-6">
+        {/* Browse view */}
+        {currentView === 'browse' && !selectedRestaurantDetail && (
+          <div className="space-y-6">
+            {/* hero + quick stats */}
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl p-5 flex flex-col justify-between">
+                <div>
+                  <h2 className="text-xl font-bold mb-2">
+                    Rescue surplus meals from local kitchens
+                  </h2>
+                  <p className="text-sm text-green-100">
+                    Pick up chef-made meals at a fraction of the price while
+                    reducing food waste in your neighborhood.
+                  </p>
+                </div>
+                {/* stats row：放大數字＋半透明卡片 */}
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center">
+                    <Leaf className="w-5 h-5 text-green-100 mr-2" />
+                    <div>
+                      <p className="text-3xl font-bold leading-tight">
+                        {communityStats.mealsRescued || 0}+
+                      </p>
+                      <p className="text-[11px] text-green-50 uppercase tracking-wide">
+                        meals rescued this week
+                      </p>
                     </div>
-                    <input
-                      type="text"
-                      placeholder="Search by restaurant or cuisine..."
-                      className="flex-1 border-none focus:ring-0 text-sm"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
                   </div>
+                  <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center">
+                    <Users className="w-5 h-5 text-green-100 mr-2" />
+                    <div>
+                      <p className="text-3xl font-bold leading-tight">
+                        {communityStats.activeUsers || 0}
+                      </p>
+                      <p className="text-[11px] text-green-50 uppercase tracking-wide">
+                        neighbors already rescuing
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center">
+                    <TrendingUp className="w-5 h-5 text-green-100 mr-2" />
+                    <div>
+                      <p className="text-3xl font-bold leading-tight">
+                        {communityStats.wastePreventedTons || 0}
+                      </p>
+                      <p className="text-[11px] text-green-50 uppercase tracking-wide">
+                        tons of food waste prevented
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                  <div className="flex flex-wrap items-center space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => setFilterCuisine('all')}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                        filterCuisine === 'all'
-                          ? 'bg-green-600 text-white border-green-600'
-                          : 'bg-white text-gray-600 border-gray-200'
-                      } mb-2`}
+              <div className="bg-white rounded-xl shadow-sm border border-green-50 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    Your Impact Snapshot
+                  </h3>
+                  {renderImpactLevelBadge()}
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Meals rescued</span>
+                    <span className="font-semibold text-gray-900">
+                      {userImpact.mealsOrdered || 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Money saved</span>
+                    <span className="font-semibold text-gray-900">
+                      ${userImpact.moneySaved || 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Food waste prevented</span>
+                    <span className="font-semibold text-gray-900">
+                      {userImpact.foodWastePrevented || 0} lbs
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Carbon reduced</span>
+                    <span className="font-semibold text-gray-900">
+                      {userImpact.carbonReduced || 0} kg
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRescueAgain}
+                  className="mt-3 w-full inline-flex items-center justify-center px-3 py-2 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100"
+                >
+                  Rescue Again from Last Order
+                </button>
+              </div>
+            </section>
+
+            {/* search + filters */}
+            <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-100 p-4">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
+                <div className="flex items-center w-full md:w-1/2 bg-white border border-gray-200 rounded-lg px-3 py-2">
+                  <Search className="w-4 h-4 text-gray-400 mr-2" />
+                  <input
+                    type="text"
+                    placeholder="Search by restaurant or cuisine..."
+                    className="flex-1 border-none focus:ring-0 text-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setFilterCuisine('all')}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                      filterCuisine === 'all'
+                        ? 'bg-green-600 text-white border-green-600'
+                        : 'bg-white text-gray-600 border-gray-200'
+                    } mb-2`}
+                  >
+                    All Cuisines
+                  </button>
+                  {cuisineTypes
+                    .filter((c) => c !== 'all')
+                    .map((cuisine) => (
+                      <button
+                        type="button"
+                        key={cuisine}
+                        onClick={() => setFilterCuisine(cuisine)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                          filterCuisine === cuisine
+                            ? 'bg-green-600 text-white border-green-600'
+                            : 'bg-white text-gray-600 border-gray-200'
+                        } mb-2`}
+                      >
+                        {cuisine}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            </section>
+
+            {/* restaurant cards */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-800">
+                  Restaurants with rescue meals
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Showing {filteredRestaurants.length} partners
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredRestaurants.map((restaurant) => {
+                  const restaurantId = restaurant.id || restaurant.name;
+
+                  const inventorySummary =
+                    summarizeRescueInventory(restaurant);
+                  const {
+                    totalAvailable,
+                    allSoldOut,
+                    lowInventory,
+                  } = inventorySummary;
+
+                  const userRescueCount =
+                    rescuedMealsByRestaurant.get(restaurant.name) || 0;
+
+                  return (
+                    <div
+                      key={restaurantId}
+                      className="bg-white rounded-xl shadow hover:shadow-md transition p-4 flex"
                     >
-                      All Cuisines
-                    </button>
-                    {cuisineTypes
-                      .filter((c) => c !== 'all')
-                      .map((cuisine) => (
-                        <button
-                          type="button"
-                          key={cuisine}
-                          onClick={() => setFilterCuisine(cuisine)}
-                          className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                            filterCuisine === cuisine
-                              ? 'bg-green-600 text-white border-green-600'
-                              : 'bg-white text-gray-600 border-gray-200'
-                          } mb-2`}
-                        >
-                          {cuisine}
-                        </button>
-                      ))}
-                  </div>
-
-                  <div className="space-y-4">
-                    {filteredRestaurants.map((restaurant) => {
-                      const restaurantId =
-                        restaurant.id || restaurant._id || restaurant.name;
-                      const hasMenus =
-                        Array.isArray(restaurant.menus) &&
-                        restaurant.menus.length > 0;
-                      const rescueCount = hasMenus
-                        ? restaurant.menus.length
-                        : 0;
-
-                      const inventorySummary =
-                        summarizeRescueInventory(restaurant);
-                      const { totalAvailable, allSoldOut } = inventorySummary;
-
-                      const userRescueCount =
-                        rescuedMealsByRestaurant.get(restaurant.name) || 0;
-
-                      return (
-                        <div
-                          key={restaurantId}
-                          className="bg-white rounded-xl shadow hover:shadow-md transition p-4 flex"
-                        >
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h2 className="text-lg font-semibold text-gray-800">
-                                  {restaurant.name}
-                                </h2>
-                                <p className="text-xs text-gray-500">
-                                  {restaurant.cuisine || 'Cuisine not listed'} •{' '}
-                                  {restaurant.distance
-                                    ? `${restaurant.distance} mi away`
-                                    : 'Distance not available'}
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => toggleFavorite(restaurantId)}
-                                className="text-gray-400 hover:text-red-500"
-                              >
-                                <Heart
-                                  className={`w-5 h-5 ${
-                                    favorites.has(restaurantId)
-                                      ? 'fill-red-500 text-red-500'
-                                      : ''
-                                  }`}
-                                />
-                              </button>
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <h4 className="text-sm font-semibold text-gray-900">
+                                {restaurant.name}
+                              </h4>
+                              {favorites.has(restaurantId) && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-pink-50 text-pink-600 text-[11px] font-medium">
+                                  <Heart className="w-3 h-3 mr-1" />
+                                  Favorite
+                                </span>
+                              )}
                             </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {restaurant.cuisine || 'Rescue-friendly cuisine'}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleFavorite(restaurantId)}
+                            className="text-gray-400 hover:text-pink-500"
+                            aria-label="Toggle favorite"
+                          >
+                            <Heart
+                              className={`w-4 h-4 ${
+                                favorites.has(restaurantId)
+                                  ? 'fill-pink-500 text-pink-500'
+                                  : ''
+                              }`}
+                            />
+                          </button>
+                        </div>
 
-                            <div className="mt-3 flex items-center text-xs text-gray-500 space-x-4">
-                              <span className="flex items-center">
-                                <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                                {restaurant.rating || 4.5}
+                        <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+                          <div className="flex items-center space-x-3">
+                            <span className="flex items-center">
+                              <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                              {restaurant.rating || 4.5}{' '}
+                              <span className="text-gray-400">
+                                ({restaurant.numReviews || 120})
                               </span>
-                              <span className="flex items-center">
-                                <MapPin className="w-4 h-4 mr-1" />
-                                {restaurant.address || 'Address not available'}
-                              </span>
-                              <span className="flex items-center">
-                                <Clock className="w-4 h-4 mr-1" />
-                                {restaurant.hours || 'Hours not listed'}
-                              </span>
-                            </div>
+                            </span>
+                            <span className="flex items-center">
+                              <MapPin className="w-4 h-4 mr-1" />
+                              {restaurant.address || 'Address not available'}
+                            </span>
+                            <span className="flex items-center">
+                              <Clock className="w-4 h-4 mr-1" />
+                              {restaurant.hours || 'Hours not listed'}
+                            </span>
+                          </div>
+                        </div>
 
-                            <div className="mt-3 text-xs text-gray-600">
-                              {hasMenus ? (
+                        <div className="mt-3 text-xs text-gray-600">
+                          {Array.isArray(restaurant.menus) &&
+                          restaurant.menus.length > 0 ? (
+                            (() => {
+                              const rescueCount = restaurant.menus.length;
+                              const hasMenus = rescueCount > 0;
+                              if (!hasMenus) {
+                                return (
+                                  <span>
+                                    No rescue meals listed yet. Check back
+                                    later today.
+                                  </span>
+                                );
+                              }
+                              return (
                                 <span>
                                   {rescueCount}{' '}
                                   {rescueCount === 1
                                     ? 'rescue meal listed'
                                     : 'rescue meals listed'}
                                   {allSoldOut && ' (sold out today)'}
+                                  {!allSoldOut &&
+                                    lowInventory &&
+                                    ' • Almost gone today'}
                                 </span>
-                              ) : (
-                                <span>
-                                  Rescue meals not listed yet – you can still
-                                  reserve a surprise box.
-                                </span>
-                              )}
-                              {typeof totalAvailable === 'number' &&
-                                totalAvailable > 0 &&
-                                !allSoldOut && (
-                                  <p className="mt-1 text-[11px] text-gray-500">
-                                    {totalAvailable}{' '}
-                                    {totalAvailable === 1
-                                      ? 'box left today across all meals.'
-                                      : 'boxes left today across all meals.'}
-                                  </p>
-                                )}
-                              {allSoldOut && (
-                                <p className="mt-1 text-[11px] text-red-500">
-                                  Sold out for today
-                                </p>
-                              )}
-                              {userRescueCount > 0 ? (
-                                <p className="mt-1 text-[11px] text-gray-500">
-                                  You have rescued {userRescueCount}{' '}
-                                  {userRescueCount === 1 ? 'meal' : 'meals'} here.
-                                </p>
-                              ) : (
-                                <p className="mt-1 text-[11px] text-gray-400">
-                                  Be the first to rescue here.
-                                </p>
-                              )}
-                            </div>
-
-                            <div className="mt-4">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleOpenRestaurantDetail(restaurant)
-                                }
-                                className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-green-600 text-white hover:bg-green-700"
-                              >
-                                View Rescue Meals
-                              </button>
-                            </div>
-                          </div>
+                              );
+                            })()
+                          ) : (
+                            <span>
+                              No rescue meals listed yet. Check back later
+                              today.
+                            </span>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
 
-                {/* right column: quick stats */}
-                <div className="space-y-4">
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl p-5">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-semibold">
-                        Today&apos;s Rescue Snapshot
-                      </h3>
-                      <Zap className="w-5 h-5" />
-                    </div>
-                    <p className="text-sm text-green-100 mb-2">
-                      Raleigh residents are rescuing meals and cutting food
-                      waste.
-                    </p>
-                    <div className="grid grid-cols-3 gap-3 mt-2">
-                      <div>
-                        <p className="text-xs uppercase text-green-100">
-                          Active
-                        </p>
-                        <p className="text-lg font-bold">
-                          {Number(
-                            communityStats.activeUsers || 0
-                          ).toLocaleString()}
-                        </p>
-                        <p className="text-[10px] text-green-100">
-                          neighbors this week
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase text-green-100">
-                          Meals
-                        </p>
-                        <p className="text-lg font-bold">
-                          {Number(
-                            communityStats.mealsRescued || 0
-                          ).toLocaleString()}
-                        </p>
-                        <p className="text-[10px] text-green-100">
-                          rescued from landfill
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase text-green-100">
-                          Waste
-                        </p>
-                        <p className="text-lg font-bold">
-                          {communityStats.wastePreventedTons || 0}
-                        </p>
-                        <p className="text-[10px] text-green-100">
-                          tons prevented
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                        <div className="mt-2 text-[11px] text-gray-500">
+                          {typeof totalAvailable === 'number' &&
+                          Number.isFinite(totalAvailable) ? (
+                            <span>
+                              Approx.{' '}
+                              <span className="font-semibold">
+                                {totalAvailable}
+                              </span>{' '}
+                              boxes still available today.
+                            </span>
+                          ) : (
+                            <span>
+                              This partner lists rescue boxes each afternoon.
+                            </span>
+                          )}
+                        </div>
 
-                  <div className="bg-white rounded-xl shadow p-5">
-                    <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                      Your Progress
-                    </h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Meals Rescued</span>
-                        <span className="font-semibold text-gray-900">
-                          {userImpact.mealsOrdered || 0}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Money Saved</span>
-                        <span className="font-semibold text-gray-900">
-                          ${userImpact.moneySaved || 0}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">
-                          Food Waste Prevented
-                        </span>
-                        <span className="font-semibold text-gray-900">
-                          {userImpact.foodWastePrevented || 0} lbs
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Carbon Reduced</span>
-                        <span className="font-semibold text-gray-900">
-                          {userImpact.carbonReduced || 0} kg
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {currentView === 'restaurantDetail' && selectedRestaurantDetail && (
-              <RestaurantDetail
-                restaurant={selectedRestaurantDetail}
-                cart={cart}
-                onBack={() => handleNavClick('browse')}
-                onAddToCart={addToCart}
-              />
-            )}
-          </>
-        )}
-
-        {currentView === 'impact' && (
-          <div className="max-w-7xl mx-auto px-4 py-8">
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl p-8 mb-8">
-              <h1 className="text-3xl font-bold mb-2">
-                Your Environmental Impact
-              </h1>
-              <p className="text-lg">Track the difference you are making!</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                <Package className="w-12 h-12 text-green-600 mx-auto mb-3" />
-                <p className="text-gray-600 mb-2">Meals Rescued</p>
-                <p className="text-4xl font-bold text-green-600">
-                  {userImpact.mealsOrdered || 0}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                <Leaf className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                <p className="text-gray-600 mb-2">Waste Prevented</p>
-                <p className="text-4xl font-bold text-blue-600">
-                  {userImpact.foodWastePrevented || 0} lbs
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                <TrendingUp className="w-12 h-12 text-purple-600 mx-auto mb-3" />
-                <p className="text-gray-600 mb-2">Carbon Reduced</p>
-                <p className="text-4xl font-bold text-purple-600">
-                  {userImpact.carbonReduced || 0} kg
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                <Award className="w-12 h-12 text-orange-500 mx-auto mb-3" />
-                <p className="text-gray-600 mb-2">Money Saved</p>
-                <p className="text-4xl font-bold text-orange-600">
-                  ${userImpact.moneySaved || 0}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-8 mt-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                Your Recent Orders
-              </h2>
-
-              {!user || !user.email ? (
-                <p className="text-gray-600">
-                  Log in to see your order history.
-                </p>
-              ) : userOrders.length === 0 ? (
-                <p className="text-gray-600">
-                  You have not placed any orders yet. Rescue a meal to see it
-                  appear here.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {userOrders.slice(0, 5).map((order) => (
-                    <div
-                      key={order.id}
-                      className="flex flex-col md:flex-row md:items-center md:justify-between border border-gray-100 rounded-lg p-4"
-                    >
-                      <div className="mb-2 md:mb-0">
-                        <p className="font-semibold text-gray-800">
-                          {order.items &&
-                          order.items[0] &&
-                          order.items[0].restaurant
-                            ? order.items[0].restaurant
-                            : 'Tiffin Trails order'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {order.timestamp
-                            ? new Date(order.timestamp).toLocaleString()
-                            : 'Time not available'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {order.totals && order.totals.total
-                            ? `Total: $${order.totals.total}`
-                            : null}
-                        </p>
-                        {order.totals && order.totals.rescueMealCount ? (
-                          <p className="text-sm text-green-600">
-                            {order.totals.rescueMealCount} rescue meal
-                            {order.totals.rescueMealCount > 1 ? 's' : ''}
+                        {userRescueCount > 0 && (
+                          <p className="mt-1 text-[11px] text-green-700">
+                            You&apos;ve rescued{' '}
+                            <span className="font-semibold">
+                              {userRescueCount}
+                            </span>{' '}
+                            meals from this restaurant.
                           </p>
-                        ) : null}
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        {ordersError && (
-                          <span className="text-xs text-red-500">
-                            {ordersError}
-                          </span>
                         )}
+
+                        {userRescueCount === 0 && (
+                          <p className="mt-1 text-[11px] text-gray-400">
+                            Be the first to rescue here.
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="ml-4 flex flex-col justify-between items-end">
                         <button
                           type="button"
-                          onClick={() => handleRescueAgain(order)}
-                          className="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
+                          onClick={() =>
+                            handleOpenRestaurantDetail(restaurant)
+                          }
+                          className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-green-600 text-white hover:bg-green-700"
                         >
-                          <span className="mr-2">Rescue Again</span>
-                          <ShoppingCart className="w-4 h-4" />
+                          View Rescue Meals
                         </button>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* Restaurant detail view */}
+        {currentView === 'detail' && selectedRestaurantDetail && (
+          <RestaurantDetail
+            restaurant={selectedRestaurantDetail}
+            cart={cart}
+            onBack={() => {
+              setCurrentView('browse');
+              setSelectedRestaurantDetail(null);
+            }}
+            onAddToCart={handleAddToCart}
+          />
+        )}
+
+        {/* My Impact view */}
+        {currentView === 'impact' && (
+          <section className="space-y-6">
+            <div className="bg-white rounded-xl shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Your Impact
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    See how your rescues add up over time.
+                  </p>
                 </div>
+                {renderImpactLevelBadge()}
+              </div>
+
+              {ordersError && (
+                <p className="mb-4 text-xs text-red-500">
+                  {ordersError}
+                </p>
               )}
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                  <Package className="w-12 h-12 text-green-600 mx-auto mb-3" />
+                  <p className="text-gray-600 mb-2">Meals Rescued</p>
+                  <p className="text-4xl font-bold text-green-600">
+                    {userImpact.mealsOrdered || 0}
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                  <Leaf className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+                  <p className="text-gray-600 mb-2">Waste Prevented</p>
+                  <p className="text-4xl font-bold text-blue-600">
+                    {userImpact.foodWastePrevented || 0} lbs
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                  <TrendingUp className="w-12 h-12 text-purple-600 mx-auto mb-3" />
+                  <p className="text-gray-600 mb-2">Carbon Reduced</p>
+                  <p className="text-4xl font-bold text-purple-600">
+                    {userImpact.carbonReduced || 0} kg
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                  <Award className="w-12 h-12 text-orange-500 mx-auto mb-3" />
+                  <p className="text-gray-600 mb-2">Money Saved</p>
+                  <p className="text-4xl font-bold text-orange-600">
+                    ${userImpact.moneySaved || 0}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg p-8 mt-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                  How your rescues help
+                </h2>
+                <ul className="space-y-3 text-sm text-gray-600">
+                  <li>
+                    <span className="font-semibold text-gray-800">
+                      Every rescued box
+                    </span>{' '}
+                    helps a local restaurant recoup costs on surplus food.
+                  </li>
+                  <li>
+                    <span className="font-semibold text-gray-800">
+                      Prevent food waste
+                    </span>{' '}
+                    by giving meals a second chance instead of heading to
+                    landfill.
+                  </li>
+                  <li>
+                    <span className="font-semibold text-gray-800">
+                      Reduce emissions
+                    </span>{' '}
+                    from food production and disposal by rescuing what&apos;s
+                    already been cooked.
+                  </li>
+                </ul>
+              </div>
             </div>
-          </div>
+          </section>
         )}
 
-        {currentView === 'leaderboard' && (
-          <div className="bg-white rounded-xl shadow p-6">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">
-              Top Restaurants
-            </h3>
-            <LeaderboardPanel />
-          </div>
-        )}
-
+        {/* Community view */}
         {currentView === 'community' && (
-          <div className="max-w-7xl mx-auto px-4 py-8">
-            <div className="bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl p-8 mb-8">
-              <h1 className="text-3xl font-bold mb-2">Community Impact</h1>
-              <p className="text-lg">
-                Together we are making a difference!
+          <section className="space-y-6">
+            <div className="bg-white rounded-xl shadow p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                Community
+              </h2>
+              <p className="text-sm text-gray-600">
+                Community features are coming soon in this prototype.
               </p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                <Users className="w-12 h-12 text-purple-600 mx-auto mb-3" />
-                <p className="text-gray-600 mb-2">Active Users</p>
-                <p className="text-5xl font-bold text-purple-600">
-                  {Number(communityStats.activeUsers || 0).toLocaleString()}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                <Package className="w-12 h-12 text-green-600 mx-auto mb-3" />
-                <p className="text-gray-600 mb-2">Meals Rescued</p>
-                <p className="text-5xl font-bold text-green-600">
-                  {Number(communityStats.mealsRescued || 0).toLocaleString()}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                <Leaf className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                <p className="text-gray-600 mb-2">Waste Prevented</p>
-                <p className="text-5xl font-bold text-blue-600">
-                  {communityStats.wastePreventedTons || 0} tons
-                </p>
-              </div>
-            </div>
-          </div>
+          </section>
         )}
 
+        {/* Leaderboard view */}
+        {currentView === 'leaderboard' && (
+          <LeaderboardPanel communityStats={communityStats} />
+        )}
+
+        {/* Cart view */}
         {currentView === 'cart' && (
           <Cart
             cart={cart}
             setCart={setCart}
             onBack={() => setCurrentView('browse')}
             onOrderPlaced={(order) => {
-              // new order definitely exists -> clear any stale order error
               setOrdersError(null);
 
               // eslint-disable-next-line no-console
               console.log('Order placed:', order);
 
-              // refresh user impact
+              // if order is missing / malformed, just go to impact safely
+              if (!order) {
+                setCurrentView('impact');
+                return;
+              }
+
+              // refresh user impact if we know user email
               if (user && user.email) {
                 const emailParam = encodeURIComponent(user.email);
                 fetch(`/dashboard/user-impact?email=${emailParam}`)
@@ -1077,20 +1054,20 @@ const Dashboard = ({ user, onLogout }) => {
                       err
                     );
                   });
+              }
 
-                // update userOrders list with this new order
-                if (order && order.userEmail === user.email) {
-                  setUserOrders((prev) => {
-                    const prevList = Array.isArray(prev) ? [...prev] : [];
-                    const updated = [order, ...prevList];
-                    updated.sort((a, b) => {
-                      const at = new Date(a.timestamp || 0).getTime();
-                      const bt = new Date(b.timestamp || 0).getTime();
-                      return bt - at;
-                    });
-                    return updated;
+              // update userOrders list with this new order (if email matches)
+              if (user && user.email && order.userEmail === user.email) {
+                setUserOrders((prev) => {
+                  const prevList = Array.isArray(prev) ? [...prev] : [];
+                  const updated = [order, ...prevList];
+                  updated.sort((a, b) => {
+                    const at = new Date(a?.timestamp || 0).getTime();
+                    const bt = new Date(b?.timestamp || 0).getTime();
+                    return bt - at;
                   });
-                }
+                  return updated;
+                });
               }
 
               // refresh community stats
@@ -1107,6 +1084,101 @@ const Dashboard = ({ user, onLogout }) => {
                   );
                 });
 
+              // Update in-memory restaurant inventory so Browse / detail views
+              // reflect the latest remaining rescue boxes after this order.
+              if (Array.isArray(order.items) && order.items.length > 0) {
+                setRestaurants((prevRestaurants) => {
+                  if (!Array.isArray(prevRestaurants) || prevRestaurants.length === 0) {
+                    return prevRestaurants;
+                  }
+
+                  const nextRestaurants = prevRestaurants.map((rest) => {
+                    if (!rest || rest.name == null) {
+                      return rest;
+                    }
+
+                    if (!Array.isArray(rest.menus) || rest.menus.length === 0) {
+                      return rest;
+                    }
+
+                    const updatedMenus = rest.menus.map((meal) => ({ ...meal }));
+                    let changed = false;
+
+                    order.items.forEach((item) => {
+                      if (
+                        !item ||
+                        !item.meal ||
+                        typeof item.quantity === 'undefined' ||
+                        item.restaurant !== rest.name
+                      ) {
+                        return;
+                      }
+
+                      const qty = Number(item.quantity) || 0;
+                      if (qty <= 0) {
+                        return;
+                      }
+
+                      const orderedMealId =
+                        item.meal.id ||
+                        `${rest.name}-${item.meal.name || ''}-${
+                          item.meal.pickupWindow || ''
+                        }`;
+
+                      updatedMenus.forEach((m) => {
+                        const candidateId =
+                          m.id ||
+                          `${rest.name}-${m.name || ''}-${m.pickupWindow || ''}`;
+
+                        if (candidateId !== orderedMealId) {
+                          return;
+                        }
+
+                        const currentAvail =
+                          typeof m.availableQuantity === 'number' &&
+                          Number.isFinite(m.availableQuantity)
+                            ? m.availableQuantity
+                            : typeof m.quantity === 'number' &&
+                              Number.isFinite(m.quantity)
+                            ? m.quantity
+                            : null;
+
+                        if (currentAvail === null) {
+                          return;
+                        }
+
+                        const nextAvail = Math.max(0, currentAvail - qty);
+
+                        if (
+                          typeof m.availableQuantity === 'number' &&
+                          Number.isFinite(m.availableQuantity)
+                        ) {
+                          m.availableQuantity = nextAvail;
+                        } else if (
+                          typeof m.quantity === 'number' &&
+                          Number.isFinite(m.quantity)
+                        ) {
+                          m.quantity = nextAvail;
+                        }
+
+                        changed = true;
+                      });
+                    });
+
+                    if (!changed) {
+                      return rest;
+                    }
+
+                    return {
+                      ...rest,
+                      menus: updatedMenus,
+                    };
+                  });
+
+                  return nextRestaurants;
+                });
+              }
+
               setCurrentView('impact');
             }}
             user={user}
@@ -1117,34 +1189,43 @@ const Dashboard = ({ user, onLogout }) => {
           <div className="fixed bottom-6 right-6 z-50">
             <div className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2">
               <ShoppingCart className="w-4 h-4" />
-              <span className="text-sm font-medium">Added to cart</span>
+              <span className="text-sm">Added to cart</span>
             </div>
           </div>
         )}
       </main>
 
+      {/* logout confirmation modal */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">
-              Confirm Logout
-            </h2>
-            <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to log out? Any items in your cart will not
-              be saved.
-            </p>
-            <div className="flex justify-end space-x-3">
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-gray-900">
+                Confirm logout
+              </h2>
               <button
                 type="button"
-                onClick={() => setShowLogoutConfirm(false)}
-                className="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                onClick={cancelLogout}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to log out of Tiffin Trails?
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={cancelLogout}
+                className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleConfirmLogout}
-                className="px-4 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600"
+                onClick={confirmLogout}
+                className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600"
               >
                 Log out
               </button>
