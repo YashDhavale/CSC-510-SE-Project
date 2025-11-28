@@ -1877,5 +1877,229 @@
     },
     "pickupPreference": "any",
     "timestamp": "2025-11-28T10:23:24.837Z"
+  },
+  {
+    "id": "order_1764328121145",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": {
+          "id": "eastside-deli-veggie-grain-bowl",
+          "name": "Veggie Grain Bowl",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 12.99,
+          "rescuePrice": 7.99,
+          "pickupWindow": "Pickup within 1 hour",
+          "quantity": 2,
+          "availableQuantity": 1,
+          "maxPerOrder": 2,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "isRescueMeal": true,
+        "price": 7.99,
+        "originalPrice": 12.99
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 7.99,
+      "youSave": 5
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-28T11:08:41.145Z"
+  },
+  {
+    "id": "order_1764328161175",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "Oak Street Bistro",
+        "meal": {
+          "id": "oak-street-bistro-biscuits-gravy",
+          "name": "Biscuits & Gravy",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 9.99,
+          "rescuePrice": 5.99,
+          "pickupWindow": "Pickup within 3 hours",
+          "quantity": 4,
+          "availableQuantity": 3,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 3,
+        "isRescueMeal": true,
+        "price": 5.99,
+        "originalPrice": 9.99
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 3,
+      "subtotal": 17.97,
+      "youSave": 12
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-28T11:09:21.175Z"
+  },
+  {
+    "id": "order_1764328182819",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": {
+          "id": "village-noodle-bar-veggie-ramen",
+          "name": "Veggie Ramen",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 12.49,
+          "rescuePrice": 7.49,
+          "pickupWindow": "Pickup within 1 hour",
+          "quantity": 4,
+          "availableQuantity": 3,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 3,
+        "isRescueMeal": true,
+        "price": 7.49,
+        "originalPrice": 12.49
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 3,
+      "subtotal": 22.47,
+      "youSave": 15
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-28T11:09:42.819Z"
+  },
+  {
+    "id": "order_1764328826711",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": {
+          "id": "village-noodle-bar-veggie-ramen",
+          "name": "Veggie Ramen",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 12.49,
+          "rescuePrice": 7.49,
+          "pickupWindow": "Pickup within 1 hour",
+          "quantity": 4,
+          "availableQuantity": 3,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "isRescueMeal": true,
+        "price": 7.49,
+        "originalPrice": 12.49
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 7.49,
+      "youSave": 5
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-28T11:20:26.712Z"
+  },
+  {
+    "id": "order_1764328912827",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": {
+          "id": "village-noodle-bar-veggie-ramen",
+          "name": "Veggie Ramen",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 12.49,
+          "rescuePrice": 7.49,
+          "pickupWindow": "Pickup within 1 hour",
+          "quantity": 4,
+          "availableQuantity": 3,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "isRescueMeal": true,
+        "price": 7.49,
+        "originalPrice": 12.49
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 7.49,
+      "youSave": 5
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-28T11:21:52.827Z"
+  },
+  {
+    "id": "order_1764329668105",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "Triangle BBQ Co.",
+        "meal": {
+          "id": "triangle-bbq-co-pulled-pork-sandwich",
+          "name": "Pulled Pork Sandwich",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 11.99,
+          "rescuePrice": 6.99,
+          "pickupWindow": "Pickup within 2 hours",
+          "quantity": 3,
+          "availableQuantity": 3,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "isRescueMeal": true,
+        "price": 6.99,
+        "originalPrice": 11.99
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 6.99,
+      "youSave": 5
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-28T11:34:28.105Z"
+  },
+  {
+    "id": "order_1764330171984",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": {
+          "id": "greenbite-cafe-veggie-thali",
+          "name": "Veggie Thali",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 13.99,
+          "rescuePrice": 8.99,
+          "pickupWindow": "Pickup within 2 hours",
+          "quantity": 5,
+          "availableQuantity": 4,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "isRescueMeal": true,
+        "price": 8.99,
+        "originalPrice": 13.99
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 8.99,
+      "youSave": 5
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-28T11:42:51.984Z"
   }
 ]

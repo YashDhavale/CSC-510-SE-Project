@@ -6,18 +6,21 @@
     "sold": 3
   },
   "eastside-deli-veggie-grain-bowl": {
-    "sold": 1
+    "sold": 2
   },
   "greenbite-cafe-veggie-thali": {
-    "sold": 1
+    "sold": 2
   },
   "greenbite-cafe-paneer-tikka-bowl": {
     "sold": 1
   },
   "village-noodle-bar-veggie-ramen": {
-    "sold": 1
+    "sold": 6
   },
   "oak-street-bistro-biscuits-gravy": {
+    "sold": 4
+  },
+  "triangle-bbq-co-pulled-pork-sandwich": {
     "sold": 1
   }
 }

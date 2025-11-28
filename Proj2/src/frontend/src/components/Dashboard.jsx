@@ -346,7 +346,7 @@ const Dashboard = ({ user, onLogout }) => {
   };
 
   // 被 Cart 在下單成功時呼叫：更新 Impact 的 history + 重新抓 impact 指標
-  const handleOrderPlacedFromCart = (orderFromServer, payload) => {
+    const handleOrderPlacedFromCart = (orderFromServer, payload) => {
     if (!payload || !Array.isArray(payload.items)) {
       setOrdersError(null);
       return;
@@ -395,7 +395,73 @@ const Dashboard = ({ user, onLogout }) => {
     // 成功有本地訂單後就不要再顯示 error banner
     setOrdersError(null);
 
-    // 順便重新抓一次 impact 指標（不改 UI，只更新數字）
+    // ----- 前端同步扣減 availableQuantity（畫面上的庫存） -----
+    const orderItems = Array.isArray(payload.items) ? payload.items : [];
+
+    if (orderItems.length > 0) {
+      setRestaurants((prev) => {
+        if (!Array.isArray(prev) || prev.length === 0) {
+          return prev;
+        }
+
+        const updated = prev.map((restaurant) => {
+          if (!Array.isArray(restaurant.menus)) {
+            return restaurant;
+          }
+
+          const updatedMenus = restaurant.menus.map((meal) => {
+            if (!meal || !meal.id) {
+              return meal;
+            }
+
+            const totalOrderedForMeal = orderItems.reduce((sum, item) => {
+              if (!item || !item.meal || item.meal.id !== meal.id) {
+                return sum;
+              }
+              const q = Number(item.quantity) || 0;
+              return sum + q;
+            }, 0);
+
+            if (totalOrderedForMeal <= 0) {
+              return meal;
+            }
+
+            const currentAvailable =
+              typeof meal.availableQuantity === 'number' &&
+              Number.isFinite(meal.availableQuantity)
+                ? meal.availableQuantity
+                : typeof meal.quantity === 'number' &&
+                  Number.isFinite(meal.quantity)
+                ? meal.quantity
+                : null;
+
+            if (currentAvailable === null) {
+              // no inventory info, just return meal as-is
+              return meal;
+            }
+
+            const nextAvailable = Math.max(
+              0,
+              currentAvailable - totalOrderedForMeal
+            );
+
+            return {
+              ...meal,
+              availableQuantity: nextAvailable,
+            };
+          });
+
+          return {
+            ...restaurant,
+            menus: updatedMenus,
+          };
+        });
+
+        return updated;
+      });
+    }
+
+    // ----- 重新抓一次 impact 指標（只更新數字，不改 UI 結構） -----
     if (user && user.email) {
       const emailParam = encodeURIComponent(user.email);
       fetch(`/dashboard/user-impact?email=${emailParam}`)
@@ -416,73 +482,73 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  const filteredRestaurants = useMemo(() => {
-    const term = searchQuery.toLowerCase().trim();
 
-    const filtered = restaurants
-      .filter((restaurant) => {
-        const matchesCuisine =
-          filterCuisine === 'all' ||
-          (restaurant.cuisine &&
-            restaurant.cuisine.toLowerCase() ===
-              filterCuisine.toLowerCase());
-        if (!matchesCuisine) return false;
+    const filteredRestaurants = useMemo(() => {
+      const term = searchQuery.toLowerCase().trim();
 
-        if (!term) return true;
-        const nameMatch = restaurant.name
-          ?.toLowerCase()
-          .includes(term);
-        const cuisineMatch = restaurant.cuisine
-          ?.toLowerCase()
-          .includes(term);
-        const neighborhoodMatch = restaurant.neighborhood
-          ?.toLowerCase()
-          .includes(term);
+      // 先做搜尋 + cuisine 過濾
+      const filtered = restaurants
+        .filter((restaurant) => {
+          const matchesCuisine =
+            filterCuisine === 'all' ||
+            (restaurant.cuisine &&
+              restaurant.cuisine.toLowerCase() ===
+                filterCuisine.toLowerCase());
+          if (!matchesCuisine) return false;
 
-        return nameMatch || cuisineMatch || neighborhoodMatch;
-      })
-      .map((restaurant) => {
-        const inventorySummary = summarizeRescueInventory(restaurant);
-        return {
-          ...restaurant,
-          inventorySummary,
-        };
-      });
+          if (!term) return true;
 
-    // sort by:
-    // 1) favorited restaurants first
-    // 2) restaurants with available rescue meals
-    // 3) name alphabetical
-    const score = (r) => {
-      const isFav = favorites.has(r.id) ? 2 : 0;
-      const hasRescue =
-        Array.isArray(r.menus) &&
-        r.menus.some((meal) => {
-          const available =
-            typeof meal.availableQuantity === 'number'
-              ? meal.availableQuantity
-              : meal.quantityAvailable || 0;
-          const isSoldOut = available <= 0 || meal.isSoldOut;
-          return !isSoldOut;
+          const nameMatch = restaurant.name
+            ?.toLowerCase()
+            .includes(term);
+          const cuisineMatch = restaurant.cuisine
+            ?.toLowerCase()
+            .includes(term);
+          const neighborhoodMatch = restaurant.neighborhood
+            ?.toLowerCase()
+            .includes(term);
+
+          return nameMatch || cuisineMatch || neighborhoodMatch;
         })
-          ? 1
-          : 0;
-      return isFav + hasRescue;
-    };
+        .map((restaurant) => {
+          // 統一算一次庫存總數，後面排序直接用這個
+          const inventorySummary = summarizeRescueInventory(restaurant);
+          return {
+            ...restaurant,
+            inventorySummary,
+          };
+        });
 
-    filtered.sort((a, b) => {
-      const sa = score(a);
-      const sb = score(b);
-      if (sa !== sb) return sb - sa;
-      const nameA = (a.name || '').toLowerCase();
-      const nameB = (b.name || '').toLowerCase();
-      if (nameA < nameB) return -1;
-      if (nameA > nameB) return 1;
-      return 0;
-    });
+      const scored = filtered
+        .map((r) => {
+          const inv = r.inventorySummary || {};
+          const totalAvailable = Number(
+            inv.totalAvailable != null ? inv.totalAvailable : 0
+          );
+          const hasRescue = totalAvailable > 0 ? 1 : 0;
+          const isFav = favorites.has(r.id) ? 1 : 0;
 
-    return filtered;
-  }, [restaurants, searchQuery, filterCuisine, favorites]);
+          const score = isFav * 100 + hasRescue * 10;
+
+          return {
+            ...r,
+            _score: score,
+          };
+        })
+        .sort((a, b) => {
+          if (a._score !== b._score) {
+            return b._score - a._score;
+          }
+          const nameA = (a.name || '').toLowerCase();
+          const nameB = (b.name || '').toLowerCase();
+          if (nameA < nameB) return -1;
+          if (nameA > nameB) return 1;
+          return 0;
+        });
+
+      return scored;
+    }, [restaurants, searchQuery, filterCuisine, favorites]);
+
 
   const restaurantLookup = useMemo(() => {
     const map = new Map();
@@ -558,7 +624,7 @@ const Dashboard = ({ user, onLogout }) => {
                 Tiffin Trails
               </h1>
               <p className="text-xs text-gray-500">
-                Rescue surplus meals from Raleigh restaurants
+                Save Food. Save money. Save Planet.
               </p>
             </div>
           </div>
@@ -1264,6 +1330,7 @@ const Dashboard = ({ user, onLogout }) => {
             />
           </section>
         )}
+
 
         {/* restaurant detail view */}
         {currentView === 'restaurant-detail' && (

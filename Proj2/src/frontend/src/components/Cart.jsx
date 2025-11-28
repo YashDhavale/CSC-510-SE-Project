@@ -1,7 +1,8 @@
-// Cart page with client-side inventory guard.
-// - Quantity "+" button will not exceed the available inventory
-//   reported on each meal (availableQuantity or quantity).
-// - Layout and styling follow the original Tiffin Trails design.
+// Proj2/src/frontend/src/components/Cart.jsx
+// Cart page with client-side inventory guard and pickup time preference.
+// - Quantity +/- buttons never exceed available inventory (availableQuantity or quantity).
+// - Sends pickupPreference to backend so orders carry a simple time-slot hint.
+// - After successful checkout, shows an in-app thank-you screen instead of a blank page.
 
 import React, { useState } from 'react';
 import { ArrowLeft, Plus, Minus, Trash2 } from 'lucide-react';
@@ -9,34 +10,40 @@ import { ArrowLeft, Plus, Minus, Trash2 } from 'lucide-react';
 const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [pickupPreference, setPickupPreference] = useState('any');
-  // Local state for post-checkout thank-you screen
-  const [orderSuccess, setOrderSuccess] = useState(null);
+  const [orderSuccess, setOrderSuccess] = useState(null); // { rescuedMeals, youSave }
 
   const safeCart = Array.isArray(cart) ? cart : [];
 
-  // Get rescue price for a cart item
+  // ----- Helpers for pricing & limits -----
+
   const getUnitPrice = (item) => {
-    if (!item || !item.meal) return 0;
-    const meal = item.meal;
-    if (typeof meal.rescuePrice === 'number') return meal.rescuePrice;
-    if (typeof meal.rescue_price === 'number') return meal.rescue_price;
-    return Number(meal.rescuePrice || meal.rescue_price || 5.0) || 5.0;
+    const meal = item.meal || {};
+    const raw = Number(meal.rescuePrice);
+    if (Number.isFinite(raw) && raw > 0) {
+      return raw;
+    }
+    const fallback = Number(meal.price);
+    if (Number.isFinite(fallback) && fallback > 0) {
+      return fallback;
+    }
+    return 5.0;
   };
 
-  // Get original (non-rescue) price for a cart item
   const getOriginalPrice = (item) => {
-    if (!item || !item.meal) return 0;
-    const meal = item.meal;
-    if (typeof meal.originalPrice === 'number') return meal.originalPrice;
-    if (typeof meal.original_price === 'number') return meal.original_price;
-    return Number(meal.originalPrice || meal.original_price || 12.0) || 12.0;
+    const meal = item.meal || {};
+    const raw = Number(meal.originalPrice);
+    if (Number.isFinite(raw) && raw > 0) {
+      return raw;
+    }
+    const rescue = getUnitPrice(item);
+    return rescue + 3.0;
   };
 
-  // Compute maximum allowed quantity for a single cart line
+  // Max quantity allowed for a single cart line:
+  //  - inventory cap: min(availableQuantity, quantity) if present
+  //  - per-order cap: meal.maxPerOrder if present
   const getMaxQuantityForItem = (item) => {
-    if (!item || !item.meal) return Infinity;
-
-    const meal = item.meal;
+    const meal = item.meal || {};
 
     const inventoryCap =
       typeof meal.availableQuantity === 'number' &&
@@ -54,23 +61,41 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
     if (inventoryCap === Infinity && perOrderCap === Infinity) {
       return Infinity;
     }
-    return Math.min(inventoryCap, perOrderCap);
+    if (inventoryCap === Infinity) {
+      return Math.max(0, perOrderCap);
+    }
+    if (perOrderCap === Infinity) {
+      return Math.max(0, inventoryCap);
+    }
+    return Math.max(0, Math.min(inventoryCap, perOrderCap));
   };
 
-  // Update quantity with guard for min=1 and max inventory/per-order cap
   const handleQuantityChange = (index, delta) => {
     setCart((prev) => {
       const current = Array.isArray(prev) ? [...prev] : [];
-      if (!current[index]) return current;
+      if (index < 0 || index >= current.length) {
+        return current;
+      }
 
       const item = current[index];
+      const meal = item.meal || {};
       const maxQty = getMaxQuantityForItem(item);
 
-      const existingQty = Number(item.quantity) || 1;
-      let nextQty = existingQty + delta;
+      const currentQty = Number(item.quantity) || 1;
+      let nextQty = currentQty + delta;
 
-      if (nextQty < 1) nextQty = 1;
-      if (maxQty !== Infinity && nextQty > maxQty) nextQty = maxQty;
+      // If decrementing below 1, treat as remove.
+      if (nextQty <= 0) {
+        current.splice(index, 1);
+        return current;
+      }
+
+      if (maxQty !== Infinity && nextQty > maxQty) {
+        nextQty = maxQty;
+        window.alert(
+          `You can only rescue up to ${maxQty} of "${meal.name || 'this meal'}" for this order.`
+        );
+      }
 
       current[index] = {
         ...item,
@@ -83,38 +108,59 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
   const handleRemoveItem = (index) => {
     setCart((prev) => {
       const current = Array.isArray(prev) ? [...prev] : [];
+      if (index < 0 || index >= current.length) {
+        return current;
+      }
       current.splice(index, 1);
       return current;
     });
   };
 
-  // Total rescued meal count (sum of quantities)
+  // ----- Aggregate totals -----
+
   const rescueMealCount = safeCart.reduce(
     (sum, item) => sum + (Number(item.quantity) || 0),
     0
   );
 
-  // Subtotal (rescue price)
   const subtotal = safeCart.reduce((sum, item) => {
     const qty = Number(item.quantity) || 0;
-    return sum + getUnitPrice(item) * qty;
+    const unit = getUnitPrice(item);
+    return sum + qty * unit;
   }, 0);
 
-  // Original total before rescue discount
   const totalOriginal = safeCart.reduce((sum, item) => {
     const qty = Number(item.quantity) || 0;
-    return sum + getOriginalPrice(item) * qty;
+    const orig = getOriginalPrice(item);
+    return sum + qty * orig;
   }, 0);
 
-  const youSave = Math.max(totalOriginal - subtotal, 0);
+  const youSave = totalOriginal - subtotal;
 
-  // Place order via backend and show thank-you screen instead of blank page
+  // ----- Checkout handler (talks to backend /checkout) -----
+
   const handlePlaceOrder = async () => {
-    if (safeCart.length === 0 || isPlacingOrder) return;
+    if (safeCart.length === 0) {
+      window.alert('Your cart is empty. Please add a rescue meal first.');
+      return;
+    }
+
+    // Validate client-side that no cart line exceeds allowed limit
+    for (let i = 0; i < safeCart.length; i += 1) {
+      const item = safeCart[i];
+      const maxQty = getMaxQuantityForItem(item);
+      const qty = Number(item.quantity) || 0;
+      if (maxQty !== Infinity && qty > maxQty) {
+        const mealName = (item.meal && item.meal.name) || 'this meal';
+        window.alert(
+          `You have ${qty}x "${mealName}" in your cart, but only ${maxQty} are allowed for this order. Please adjust your quantities.`
+        );
+        return;
+      }
+    }
 
     setIsPlacingOrder(true);
 
-    // Build payload once so we can also pass it back to Dashboard
     const payload = {
       items: safeCart.map((item) => {
         const unitPrice = getUnitPrice(item);
@@ -155,10 +201,9 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
       try {
         data = await response.json();
       } catch (e) {
-        // ignore json parse error, data stays {}
+        // ignore JSON parse errors
       }
 
-      // Non-OK HTTP response (e.g., 500)
       if (!response.ok) {
         window.alert(
           data.error ||
@@ -169,7 +214,6 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
         return;
       }
 
-      // Backend responded but did not accept the order
       if (!data.success) {
         window.alert(
           data.error ||
@@ -190,9 +234,8 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
       });
       setIsPlacingOrder(false);
 
-      // Let parent Dashboard know an order was placed (for impact, orders list, etc.)
+      // Notify parent Dashboard (for impact, orders list, etc.)
       if (typeof onOrderPlaced === 'function') {
-        // Pass both backend order (may be null/partial) and the payload we sent
         onOrderPlaced(order, payload);
       }
     } catch (err) {
@@ -205,7 +248,9 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
     }
   };
 
-  // After successful checkout: full-screen thank-you message instead of blank page
+  // ----- UI states -----
+
+  // After successful checkout: full-screen thank-you message (no blank page)
   if (orderSuccess) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -213,39 +258,43 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="w-6" />
             <h1 className="text-lg font-semibold text-gray-900">
-              Thank you for rescuing food!
+              Rescue complete
             </h1>
             <div className="w-6" />
           </div>
         </header>
 
-        <main className="max-w-3xl mx-auto px-4 py-10 text-center">
-          <p className="text-gray-700 mb-4">
-            You just rescued {orderSuccess.rescuedMeals} meals and saved $
-            {orderSuccess.youSave.toFixed(2)}.
-          </p>
-          <p className="text-gray-500 mb-8">
-            Your choices help local restaurants reduce waste and support your
-            community.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setOrderSuccess(null);
-              if (typeof onBack === 'function') {
-                onBack();
-              }
-            }}
-            className="inline-flex items-center px-4 py-2 rounded-full bg-green-600 text-white text-sm font-medium hover:bg-green-700"
-          >
-            Continue rescuing meals
-          </button>
+        <main className="px-4 py-8">
+          <div className="max-w-md mx-auto bg-white rounded-xl shadow p-6 text-center">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              Thank you for rescuing food!
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              You rescued{' '}
+              <span className="font-semibold text-green-700">
+                {orderSuccess.rescuedMeals} meal
+                {orderSuccess.rescuedMeals === 1 ? '' : 's'}
+              </span>{' '}
+              and saved approximately{' '}
+              <span className="font-semibold">
+                ${orderSuccess.youSave.toFixed(2)}
+              </span>
+              .
+            </p>
+            <button
+              type="button"
+              onClick={onBack}
+              className="mt-4 inline-flex items-center px-4 py-2 rounded-full bg-green-600 text-white text-sm font-semibold hover:bg-green-700"
+            >
+              Back to Browse
+            </button>
+          </div>
         </main>
       </div>
     );
   }
 
-  // Empty cart view
+  // Empty cart state
   if (safeCart.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -257,33 +306,34 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
               className="flex items-center text-sm text-gray-600 hover:text-gray-900"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Browse
+              Back
             </button>
             <h1 className="text-lg font-semibold text-gray-900">Your Cart</h1>
             <div className="w-6" />
           </div>
         </header>
 
-        <main className="max-w-3xl mx-auto px-4 py-10 text-center">
-          <p className="text-gray-600 mb-4">
-            Your cart is empty. Start rescuing meals from local restaurants!
-          </p>
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center px-4 py-2 rounded-full bg-green-600 text-white text-sm font-medium hover:bg-green-700"
-          >
-            Browse Restaurants
-          </button>
+        <main className="px-4 py-8">
+          <div className="max-w-lg mx-auto bg-white rounded-xl shadow p-6 text-center">
+            <p className="text-sm text-gray-600 mb-4">
+              You don&apos;t have any rescue meals in your cart yet.
+            </p>
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center px-4 py-2 rounded-full bg-green-600 text-white text-sm font-semibold hover:bg-green-700"
+            >
+              Browse rescue meals
+            </button>
+          </div>
         </main>
       </div>
     );
   }
 
-  // Normal cart view with items and order summary
+  // Normal cart view
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* header */}
       <header className="bg-white shadow">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
@@ -292,16 +342,15 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
             className="flex items-center text-sm text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Browse
+            Back to Dashboard
           </button>
           <h1 className="text-lg font-semibold text-gray-900">Your Cart</h1>
           <div className="w-6" />
         </div>
       </header>
 
-      {/* main */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="px-4 py-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: cart items */}
           <div className="lg:col-span-2 space-y-4">
             {safeCart.map((item, index) => {
@@ -311,6 +360,12 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
               const qty = Number(item.quantity) || 1;
               const lineTotal = unitPrice * qty;
               const maxQty = getMaxQuantityForItem(item);
+
+              const inventoryInfo =
+                typeof meal.availableQuantity === 'number' &&
+                Number.isFinite(meal.availableQuantity)
+                  ? meal.availableQuantity
+                  : null;
 
               return (
                 <div
@@ -332,15 +387,35 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
                       <p className="text-sm font-semibold text-green-700">
                         ${unitPrice.toFixed(2)} rescue
                       </p>
-                      {Number.isFinite(originalPrice) &&
-                        originalPrice > unitPrice && (
-                          <p className="text-xs text-gray-400 line-through">
+                      {Number.isFinite(originalPrice) && originalPrice > 0 && (
+                        <p className="text-xs text-gray-500">
+                          <span className="line-through text-gray-400">
                             ${originalPrice.toFixed(2)}
-                          </p>
-                        )}
+                          </span>{' '}
+                          <span className="text-green-600 font-semibold">
+                            you save ${(originalPrice - unitPrice).toFixed(2)}
+                          </span>
+                        </p>
+                      )}
                     </div>
 
-                    <div className="flex items-center space-x-2 mt-3">
+                    {inventoryInfo !== null && (
+                      <p className="mt-1 text-[11px] text-gray-500">
+                        {inventoryInfo <= 0
+                          ? 'Sold out after this order window'
+                          : `${inventoryInfo} left today`}
+                      </p>
+                    )}
+
+                    {maxQty !== Infinity && (
+                      <p className="mt-1 text-[11px] text-gray-500">
+                        Max {maxQty} per order
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col items-end space-y-2 ml-4">
+                    <div className="flex items-center space-x-2">
                       <button
                         type="button"
                         onClick={() => handleQuantityChange(index, -1)}
@@ -348,43 +423,28 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
                       >
                         <Minus className="w-4 h-4" />
                       </button>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="w-8 text-center text-sm font-semibold">
                         {qty}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleQuantityChange(index, 1)}
-                        className={`p-1 rounded-full border text-gray-600 hover:bg-gray-100 ${
-                          maxQty !== Infinity && qty >= maxQty
-                            ? 'opacity-40 cursor-not-allowed'
-                            : 'border-gray-300'
-                        }`}
-                        disabled={maxQty !== Infinity && qty >= maxQty}
+                        className="p-1 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
-                      {maxQty !== Infinity && (
-                        <span className="ml-2 text-[11px] text-gray-400">
-                          Max {maxQty} per order (based on inventory)
-                        </span>
-                      )}
                     </div>
-
+                    <p className="text-sm font-semibold text-gray-900">
+                      ${lineTotal.toFixed(2)}
+                    </p>
                     <button
                       type="button"
                       onClick={() => handleRemoveItem(index)}
-                      className="mt-2 flex items-center text-xs text-red-500 hover:text-red-600"
+                      className="flex items-center text-xs text-red-500 hover:text-red-600"
                     >
                       <Trash2 className="w-3 h-3 mr-1" />
                       Remove
                     </button>
-                  </div>
-
-                  <div className="ml-4 text-right">
-                    <p className="text-sm font-semibold text-gray-900">
-                      ${lineTotal.toFixed(2)}
-                    </p>
-                    <p className="text-[11px] text-gray-400">Rescue total</p>
                   </div>
                 </div>
               );
@@ -453,9 +513,7 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
                     : 'bg-green-600 text-white hover:bg-green-700'
                 }`}
               >
-                {isPlacingOrder
-                  ? 'Placing Order...'
-                  : 'Place Order & Rescue Food'}
+                {isPlacingOrder ? 'Placing order...' : 'Place Order'}
               </button>
             </div>
           </div>

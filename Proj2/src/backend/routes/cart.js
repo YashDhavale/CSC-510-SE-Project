@@ -2,8 +2,8 @@
 // Simple checkout route for Tiffin Trails.
 // - Accepts the current cart payload from frontend.
 // - Appends a new order entry into data/orders.json.
-// - Does NOT do extra inventory validation (the frontend already
-//   enforces per-meal limits based on availableQuantity).
+// - Performs a server-side inventory check so that we never
+//   oversell beyond the base quantity defined for each rescue meal.
 
 const express = require('express');
 const fs = require('fs');
@@ -72,7 +72,7 @@ function writeOrdersSafe(orders) {
   }
 }
 
-// POST /cart/checkout
+// POST /checkout
 router.post('/checkout', (req, res) => {
   try {
     const body = req.body || {};
@@ -89,9 +89,10 @@ router.post('/checkout', (req, res) => {
       });
     }
 
-    // Load current inventory snapshot and increment sold counters
+    // Load current inventory snapshot
     const inventory = readInventorySafe();
 
+    // Normalize quantities once so both validation and persistence use the same values
     const normalizedItems = items.map((item) => {
       const quantity = Number(item.quantity) || 0;
       return {
@@ -100,6 +101,58 @@ router.post('/checkout', (req, res) => {
       };
     });
 
+    // Server-side guard: ensure requested quantity does not exceed remaining inventory.
+    // We use the meal.quantity field (base quantity for the day) minus the
+    // existing inventory.sold count to compute remaining availability.
+    const inventoryErrors = [];
+
+    normalizedItems.forEach((item) => {
+      const meal = item.meal || {};
+      const mealId = meal.id;
+      const quantity = Number(item.quantity) || 0;
+
+      if (!mealId || quantity <= 0) {
+        return;
+      }
+
+      const baseQty =
+        typeof meal.quantity === 'number' && Number.isFinite(meal.quantity)
+          ? meal.quantity
+          : null;
+
+      const existingEntry =
+        inventory && Object.prototype.hasOwnProperty.call(inventory, mealId)
+          ? inventory[mealId]
+          : {};
+      const soldSoFar =
+        existingEntry && typeof existingEntry.sold === 'number'
+          ? existingEntry.sold
+          : 0;
+
+      if (baseQty !== null) {
+        const available = baseQty - soldSoFar;
+        if (available <= 0 || quantity > available) {
+          inventoryErrors.push({
+            mealId,
+            mealName: meal.name || 'Rescue meal',
+            requested: quantity,
+            available: available > 0 ? available : 0,
+          });
+        }
+      }
+    });
+
+    if (inventoryErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error:
+          'One or more rescue meals are no longer available in the requested quantity.',
+        inventoryErrors,
+      });
+    }
+
+    // At this point the requested quantities are valid, so we can safely
+    // increment the sold counters in inventory.json.
     normalizedItems.forEach((item) => {
       const meal = item.meal || {};
       const mealId = meal.id;
