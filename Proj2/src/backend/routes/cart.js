@@ -12,6 +12,7 @@ const path = require('path');
 const router = express.Router();
 
 const ORDERS_PATH = path.join(__dirname, '../data', 'orders.json');
+const INVENTORY_PATH = path.join(__dirname, '../data', 'inventory.json');
 
 function readOrdersSafe() {
   try {
@@ -27,6 +28,38 @@ function readOrdersSafe() {
     // eslint-disable-next-line no-console
     console.error('Error reading orders.json:', err);
     return [];
+  }
+}
+
+function readInventorySafe() {
+  try {
+    if (!fs.existsSync(INVENTORY_PATH)) {
+      return {};
+    }
+    const raw = fs.readFileSync(INVENTORY_PATH, 'utf8');
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
+    }
+    return {};
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Error reading inventory.json:', err);
+    return {};
+  }
+}
+
+function writeInventorySafe(inventory) {
+  try {
+    fs.writeFileSync(
+      INVENTORY_PATH,
+      JSON.stringify(inventory, null, 2),
+      'utf8'
+    );
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Error writing inventory.json:', err);
   }
 }
 
@@ -46,7 +79,8 @@ router.post('/checkout', (req, res) => {
     const items = Array.isArray(body.items) ? body.items : [];
     const userEmail = typeof body.userEmail === 'string' ? body.userEmail : null;
     const totals = body.totals || null;
-    const pickupPreference = typeof body.pickupPreference === 'string' ? body.pickupPreference : null;
+    const pickupPreference =
+      typeof body.pickupPreference === 'string' ? body.pickupPreference : null;
 
     if (items.length === 0) {
       return res.status(400).json({
@@ -55,12 +89,47 @@ router.post('/checkout', (req, res) => {
       });
     }
 
+    // Load current inventory snapshot and increment sold counters
+    const inventory = readInventorySafe();
+
+    const normalizedItems = items.map((item) => {
+      const quantity = Number(item.quantity) || 0;
+      return {
+        ...item,
+        quantity,
+      };
+    });
+
+    normalizedItems.forEach((item) => {
+      const meal = item.meal || {};
+      const mealId = meal.id;
+      const quantity = Number(item.quantity) || 0;
+
+      if (!mealId || quantity <= 0) {
+        return;
+      }
+
+      const existingEntry =
+        inventory && Object.prototype.hasOwnProperty.call(inventory, mealId)
+          ? inventory[mealId]
+          : {};
+      const soldSoFar =
+        existingEntry && typeof existingEntry.sold === 'number'
+          ? existingEntry.sold
+          : 0;
+
+      inventory[mealId] = {
+        ...existingEntry,
+        sold: soldSoFar + quantity,
+      };
+    });
+
     const existingOrders = readOrdersSafe();
 
     const newOrder = {
       id: `order_${Date.now()}`,
       userEmail,
-      items,
+      items: normalizedItems,
       totals,
       pickupPreference,
       timestamp: new Date().toISOString(),
@@ -68,6 +137,7 @@ router.post('/checkout', (req, res) => {
 
     existingOrders.push(newOrder);
     writeOrdersSafe(existingOrders);
+    writeInventorySafe(inventory);
 
     return res.json({
       success: true,

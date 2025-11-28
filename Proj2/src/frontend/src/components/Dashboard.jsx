@@ -238,13 +238,13 @@ const Dashboard = ({ user, onLogout }) => {
 
   const handleAddToCart = (restaurant, meal) => {
     if (!restaurant || !meal) return;
-
+    
     setCart((prevCart) => {
       const existing = Array.isArray(prevCart) ? [...prevCart] : [];
       const mealId =
         meal.id ||
         `${restaurant.name}-${meal.name || ''}-${meal.pickupWindow || ''}`;
-
+    
       const existingIndex = existing.findIndex((item) => {
         if (!item || item.restaurant !== restaurant.name || !item.meal) {
           return false;
@@ -256,55 +256,88 @@ const Dashboard = ({ user, onLogout }) => {
           }`;
         return existingMealId === mealId;
       });
-
+    
       const getMaxQty = () => {
-        const inventoryCap =
+        const inventoryCapRaw =
           typeof meal.availableQuantity === 'number' &&
           Number.isFinite(meal.availableQuantity)
             ? meal.availableQuantity
-            : typeof meal.quantity === 'number' &&
-              Number.isFinite(meal.quantity)
+            : typeof meal.quantity === 'number' && Number.isFinite(meal.quantity)
             ? meal.quantity
             : Infinity;
-
-        const perOrderCap =
+      
+        const perOrderCapRaw =
           typeof meal.maxPerOrder === 'number' &&
           Number.isFinite(meal.maxPerOrder)
             ? meal.maxPerOrder
             : Infinity;
-
+      
+        const inventoryCap =
+          Number.isFinite(inventoryCapRaw) && inventoryCapRaw >= 0
+            ? inventoryCapRaw
+            : Infinity;
+        const perOrderCap =
+          Number.isFinite(perOrderCapRaw) && perOrderCapRaw > 0
+            ? perOrderCapRaw
+            : Infinity;
+      
         if (inventoryCap === Infinity && perOrderCap === Infinity) {
           return Infinity;
         }
-        return Math.min(inventoryCap, perOrderCap);
+        if (inventoryCap === Infinity) {
+          return perOrderCap;
+        }
+        if (perOrderCap === Infinity) {
+          return inventoryCap;
+        }
+        return Math.max(0, Math.min(inventoryCap, perOrderCap));
       };
-
+    
       const maxQty = getMaxQty();
-
+    
+      // no stock at all → do nothing
+      if (maxQty === 0) {
+        return existing;
+      }
+    
       if (existingIndex === -1) {
+        const initialQty = maxQty === Infinity ? 1 : Math.min(1, maxQty);
+        if (initialQty <= 0) {
+          return existing;
+        }
         existing.push({
           restaurant: restaurant.name,
           meal,
-          quantity: maxQty === Infinity ? 1 : Math.min(1, maxQty),
+          quantity: initialQty,
         });
       } else {
         const entry = existing[existingIndex];
-        const currentQty = Number(entry.quantity) || 1;
-        const nextQty = maxQty === Infinity ? currentQty + 1 : currentQty + 1;
-
-        if (maxQty !== Infinity && nextQty > maxQty) {
-          entry.quantity = maxQty;
-        } else {
-          entry.quantity = nextQty;
+        const currentQtyRaw = Number(entry.quantity);
+        const currentQty =
+          Number.isFinite(currentQtyRaw) && currentQtyRaw > 0
+            ? currentQtyRaw
+            : 1;
+      
+        if (maxQty !== Infinity && currentQty >= maxQty) {
+          // already at cap, no further increment
+          return existing;
         }
+      
+        const nextQty =
+          maxQty === Infinity
+            ? currentQty + 1
+            : Math.min(currentQty + 1, maxQty);
+      
+        entry.quantity = nextQty;
       }
-
+    
       return existing;
     });
-
+  
     setShowCartToast(true);
     setTimeout(() => setShowCartToast(false), 2000);
   };
+
 
   const handleRescueAgain = () => {
     if (!Array.isArray(userOrders) || userOrders.length === 0) {

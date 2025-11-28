@@ -50,50 +50,49 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
     }
 
     const qty = Number(entry.quantity);
-    return Number.isFinite(qty) && qty > 0 ? qty : 0;
+    return Number.isFinite(qty) ? Math.max(0, qty) : 0;
   };
 
   const computeLimitInfo = (meal) => {
-    const inventoryCap =
-      typeof meal.availableQuantity === 'number' &&
-      Number.isFinite(meal.availableQuantity)
-        ? meal.availableQuantity
-        : typeof meal.quantity === 'number' && Number.isFinite(meal.quantity)
-        ? meal.quantity
+    const rawAvailable = Number(meal.availableQuantity);
+    const available =
+      Number.isFinite(rawAvailable) && rawAvailable >= 0
+        ? rawAvailable
         : Infinity;
 
+    const perOrderCapRaw = Number(meal.maxPerOrder);
     const perOrderCap =
-      typeof meal.maxPerOrder === 'number' && Number.isFinite(meal.maxPerOrder)
-        ? meal.maxPerOrder
+      Number.isFinite(perOrderCapRaw) && perOrderCapRaw > 0
+        ? perOrderCapRaw
         : Infinity;
 
     let maxQty;
-    if (inventoryCap === Infinity && perOrderCap === Infinity) {
+    if (available === Infinity && perOrderCap === Infinity) {
       maxQty = Infinity;
-    } else if (inventoryCap === Infinity) {
+    } else if (available === Infinity) {
       maxQty = Math.max(0, perOrderCap);
     } else if (perOrderCap === Infinity) {
-      maxQty = Math.max(0, inventoryCap);
+      maxQty = Math.max(0, available);
     } else {
-      maxQty = Math.max(0, Math.min(inventoryCap, perOrderCap));
+      maxQty = Math.max(0, Math.min(available, perOrderCap));
     }
 
     const inCart = getCartQuantityForMeal(meal);
-
     const isAtLimit =
       maxQty === 0 || (maxQty !== Infinity && inCart >= maxQty);
 
-    return { maxQty, inCart, isAtLimit };
+    return { maxQty, inCart, isAtLimit, available };
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
+      {/* sticky top bar */}
+      <header className="bg-white shadow sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
+            className="flex items-center text-sm text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Browse
@@ -133,29 +132,37 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                 </span>
                 <span className="flex items-center">
                   <Clock className="w-4 h-4 mr-1" />
-                  {restaurant.hours || 'Hours not listed'}
+                  {restaurant.hours || 'Today · 11:00 AM – 8:00 PM'}
+                </span>
+              </div>
+              <div className="flex items-center text-xs text-gray-500 mt-2 space-x-3">
+                <span className="flex items-center">
+                  <Star className="w-4 h-4 mr-1 text-yellow-400" />
+                  {restaurant.rating?.toFixed
+                    ? restaurant.rating.toFixed(1)
+                    : restaurant.rating || 4.5}{' '}
+                  ·{' '}
+                  {restaurant.numReviews
+                    ? `${restaurant.numReviews}+ reviews`
+                    : 'Community favorite'}
                 </span>
               </div>
             </div>
-
-            <div className="mt-4 md:mt-0 flex items-center space-x-4">
-              <div className="flex items-center">
-                <Star className="w-5 h-5 text-yellow-400 mr-1" />
-                <span className="text-sm font-semibold text-gray-800">
-                  {restaurant.rating || 4.5}
-                </span>
-                <span className="text-xs text-gray-500 ml-1">
-                  ({restaurant.numReviews || 120} reviews)
-                </span>
-              </div>
-              <div className="flex items-center text-xs text-green-700 bg-green-50 px-3 py-1 rounded-full">
-                <Leaf className="w-4 h-4 mr-1" />
-                <span>
-                  Meals listed:{' '}
-                  {Array.isArray(restaurant.menus)
-                    ? restaurant.menus.length
-                    : 0}
-                </span>
+            <div className="mt-4 md:mt-0">
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center text-xs text-green-700 bg-green-50 px-3 py-1 rounded-full">
+                  <Leaf className="w-4 h-4 mr-1" />
+                  <span>Community rescue partner</span>
+                </div>
+                <div className="flex items-center text-xs text-green-700 bg-green-50 px-3 py-1 rounded-full">
+                  <Leaf className="w-4 h-4 mr-1" />
+                  <span>
+                    Meals listed:{' '}
+                    {Array.isArray(restaurant.menus)
+                      ? restaurant.menus.length
+                      : 0}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -177,33 +184,27 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                   maxQty,
                   inCart,
                   isAtLimit,
+                  available,
                 } = computeLimitInfo(meal);
 
-                const originalPrice =
-                  typeof meal.originalPrice === 'number'
-                    ? meal.originalPrice
-                    : Number(meal.originalPrice);
-                const rescuePrice =
-                  typeof meal.rescuePrice === 'number'
-                    ? meal.rescuePrice
-                    : Number(meal.rescuePrice);
+                const originalPriceNum = Number(meal.originalPrice);
+                const rescuePriceNum = Number(meal.rescuePrice);
 
                 const hasPrices =
-                  Number.isFinite(originalPrice) && Number.isFinite(rescuePrice);
+                  Number.isFinite(originalPriceNum) &&
+                  Number.isFinite(rescuePriceNum);
 
-                const savings = hasPrices ? originalPrice - rescuePrice : null;
+                const savings = hasPrices
+                  ? originalPriceNum - rescuePriceNum
+                  : null;
 
-                const availableLeft =
-                  typeof meal.availableQuantity === 'number' &&
-                  Number.isFinite(meal.availableQuantity)
-                    ? Math.max(0, meal.availableQuantity - inCart)
-                    : null;
+                const isSoldOut =
+                  Number.isFinite(available) && available <= 0;
 
                 const isLowInventory =
-                  availableLeft !== null && availableLeft > 0 && availableLeft <= 3;
+                  Number.isFinite(available) && available > 0 && available <= 3;
 
-                const noAvailable =
-                  availableLeft !== null && availableLeft <= 0;
+                const noAvailable = isSoldOut;
 
                 const handleClick = () => {
                   if (noAvailable || isAtLimit) {
@@ -214,7 +215,8 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
 
                 const buttonBase =
                   'inline-flex items-center justify-center px-3 py-1 rounded-md text-[11px] font-medium';
-                const buttonEnabled = ' bg-green-600 text-white hover:bg-green-700';
+                const buttonEnabled =
+                  ' bg-green-600 text-white hover:bg-green-700';
                 const buttonDisabled =
                   ' bg-gray-200 text-gray-400 cursor-not-allowed';
 
@@ -226,6 +228,12 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                 } else if (isAtLimit) {
                   buttonLabel = 'Limit reached';
                 }
+
+                const buttonTitle = noAvailable
+                  ? 'This rescue meal is sold out for today'
+                  : isAtLimit
+                  ? 'You have reached the maximum for this meal'
+                  : 'Add this rescue meal to your cart';
 
                 return (
                   <div
@@ -249,19 +257,13 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                           Expires in {meal.expiresIn}
                         </p>
                       )}
-                      {availableLeft !== null && (
+                      {Number.isFinite(available) && (
                         <p className="mt-1 text-xs text-gray-600">
-                          {availableLeft} left today
+                          {available} left today
                           {isLowInventory && (
                             <span className="text-red-500 font-semibold">
                               {' '}
                               • Almost gone today
-                            </span>
-                          )}
-                          {maxQty !== Infinity && (
-                            <span className="text-gray-400">
-                              {' '}
-                              (max {maxQty} per order)
                             </span>
                           )}
                         </p>
@@ -269,40 +271,61 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                     </div>
 
                     <div className="mt-4 flex items-center justify-between">
-                      <div className="text-right">
+                      <div>
                         {hasPrices ? (
                           <>
-                            <p className="text-sm font-semibold text-gray-900">
-                              ${rescuePrice.toFixed(2)}
+                            <p className="text-sm font-semibold text-green-700">
+                              ${rescuePriceNum.toFixed(2)} rescue price
                             </p>
-                            <p className="text-xs text-gray-400 line-through">
-                              ${originalPrice.toFixed(2)}
+                            <p className="text-xs text-gray-500">
+                              <span className="line-through text-gray-400">
+                                ${originalPriceNum.toFixed(2)}
+                              </span>{' '}
+                              {savings !== null && savings > 0 && (
+                                <span className="text-green-600 font-semibold">
+                                  · Save ${savings.toFixed(2)}
+                                </span>
+                              )}
                             </p>
-                            {savings > 0 && (
-                              <p className="text-[11px] text-green-600">
-                                You save ${savings.toFixed(2)} per box
-                              </p>
-                            )}
                           </>
                         ) : (
-                          <p className="text-sm font-semibold text-gray-900">
-                            ${rescuePrice.toFixed(2)}
+                          <p className="text-sm text-gray-500">
+                            Rescue pricing available at checkout
+                          </p>
+                        )}
+                        {maxQty !== Infinity && (
+                          <p className="mt-1 text-[11px] text-gray-500">
+                            Max {maxQty} per order
+                            {inCart > 0 && (
+                              <>
+                                {' '}
+                                · You have {inCart} in your cart
+                              </>
+                            )}
                           </p>
                         )}
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={handleClick}
-                        disabled={isDisabled}
-                        className={
-                          buttonBase +
-                          (isDisabled ? buttonDisabled : buttonEnabled)
-                        }
-                      >
-                        <ShoppingCart className="w-4 h-4 mr-1" />
-                        {buttonLabel}
-                      </button>
+                      <div className="flex flex-col items-end space-y-1">
+                        {inCart > 0 && (
+                          <p className="text-[10px] text-green-600">
+                            In cart: {inCart}x
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleClick}
+                          disabled={isDisabled}
+                          title={buttonTitle}
+                          className={
+                            buttonBase +
+                            (isDisabled ? buttonDisabled : buttonEnabled)
+                          }
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-1" />
+                          {buttonLabel}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

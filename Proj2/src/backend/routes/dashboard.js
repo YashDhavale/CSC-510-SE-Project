@@ -5,11 +5,11 @@
 //   GET  /dashboard/community-stats
 //   GET  /dashboard/user-impact?email=...
 //   GET  /api/restaurant-points
-//   POST /cart/checkout
 //
 // It joins Restaurant_Metadata.csv with rescue_meals.csv to provide
 // per-restaurant rescue meal listings plus some simple stats for the
-// dashboard UI.
+// dashboard UI. It also uses inventory.json to track how many units
+// of each rescue meal have already been sold (persistent inventory).
 
 const express = require("express");
 const fs = require("fs");
@@ -19,34 +19,76 @@ const csv = require("csv-parser");
 const router = express.Router();
 
 // ---------- paths ----------
+//
+// CSV data for restaurants / meals lives in Proj2/data.
+// JSON data for backend (orders, inventory, points) lives in Proj2/src/backend/data.
 
-const DATA_DIR = path.join(__dirname, "../data");
+// __dirname = Proj2/src/backend/routes
+// ../../../data => Proj2/data
+const CSV_DATA_DIR = path.join(__dirname, "../../../data");
+const BACKEND_DATA_DIR = path.join(__dirname, "../data");
 
-const RESTAURANT_META_CSV = path.join(
-  DATA_DIR,
-  "Restaurant_Metadata.csv"
+const RESTAURANT_META_CSV = path.join(CSV_DATA_DIR, "Restaurant_Metadata.csv");
+const RESCUE_MEALS_CSV = path.join(CSV_DATA_DIR, "rescue_meals.csv");
+const ORDERS_JSON = path.join(BACKEND_DATA_DIR, "orders.json");
+const INVENTORY_JSON = path.join(BACKEND_DATA_DIR, "inventory.json");
+const RESTAURANT_POINTS_JSON = path.join(
+  BACKEND_DATA_DIR,
+  "restaurant_points.json"
 );
-const RESCUE_MEALS_CSV = path.join(DATA_DIR, "rescue_meals.csv");
-const ORDERS_JSON = path.join(DATA_DIR, "orders.json");
 
-// ---------- helpers ----------
-
-function loadCsvRows(csvPath) {
-  return new Promise((resolve, reject) => {
-    const rows = [];
-    fs.createReadStream(csvPath)
-      .pipe(csv())
-      .on("data", (row) => {
-        rows.push(row);
-      })
-      .on("end", () => resolve(rows))
-      .on("error", (err) => reject(err));
-  });
-}
+// ---------- helpers: generic ----------
 
 function safeNumber(value, fallback = 0) {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
+}
+
+function slugify(str) {
+  return String(str || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function loadCsvRows(csvPath) {
+  // Robust CSV loader:
+  // - If file missing, resolves to [].
+  // - Any stream error resolves to [] instead of crashing the server.
+  return new Promise((resolve) => {
+    try {
+      if (!fs.existsSync(csvPath)) {
+        // eslint-disable-next-line no-console
+        console.warn(`CSV file not found, returning []: ${csvPath}`);
+        return resolve([]);
+      }
+
+      const rows = [];
+      const stream = fs.createReadStream(csvPath);
+
+      stream.on("error", (err) => {
+        // eslint-disable-next-line no-console
+        console.error(`Error opening CSV file ${csvPath}:`, err);
+        return resolve([]);
+      });
+
+      stream
+        .pipe(csv())
+        .on("data", (row) => {
+          rows.push(row);
+        })
+        .on("end", () => resolve(rows))
+        .on("error", (err) => {
+          // eslint-disable-next-line no-console
+          console.error(`Error parsing CSV file ${csvPath}:`, err);
+          resolve([]);
+        });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(`Unexpected error in loadCsvRows(${csvPath}):`, err);
+      resolve([]);
+    }
+  });
 }
 
 function loadOrders() {
@@ -57,8 +99,7 @@ function loadOrders() {
     const raw = fs.readFileSync(ORDERS_JSON, "utf8");
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
+    return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("Error loading orders.json:", err);
@@ -75,7 +116,43 @@ function writeOrders(orders) {
   }
 }
 
-// ---------- restaurants-with-meals ----------
+function loadInventory() {
+  try {
+    if (!fs.existsSync(INVENTORY_JSON)) {
+      return {};
+    }
+    const raw = fs.readFileSync(INVENTORY_JSON, "utf8");
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed;
+    }
+    return {};
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("Error loading inventory.json:", err);
+    return {};
+  }
+}
+
+function writeInventory(inventory) {
+  try {
+    fs.writeFileSync(
+      INVENTORY_JSON,
+      JSON.stringify(inventory, null, 2),
+      "utf8"
+    );
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("Error writing inventory.json:", err);
+  }
+}
+
+// ---------- GET /dashboard/restaurants-with-meals ----------
+//
+// Builds restaurant objects from Restaurant_Metadata.csv,
+// then attaches rescue meals from rescue_meals.csv,
+// and adjusts availableQuantity using inventory.json (sold counts).
 
 router.get("/dashboard/restaurants-with-meals", async (req, res) => {
   try {
@@ -84,63 +161,85 @@ router.get("/dashboard/restaurants-with-meals", async (req, res) => {
       loadCsvRows(RESCUE_MEALS_CSV),
     ]);
 
-    const byId = new Map();
+    const inventory = loadInventory();
 
+    const restaurantsByName = new Map();
+
+    // 1) Build base restaurant objects from metadata CSV
     metaRows.forEach((row) => {
-      const id = row.id || row.ID || row.restaurant_id || row.RestaurantID;
-      if (!id) return;
+      const name = (row.restaurant || row.name || "").trim();
+      if (!name) return;
 
-      byId.set(id, {
+      const id = slugify(name);
+      const cuisine = (row.cuisine || "American").toString();
+      const avgOrders = safeNumber(row.avg_daily_orders, 100);
+
+      const rating =
+        avgOrders >= 300 ? 4.8 : avgOrders >= 200 ? 4.6 : avgOrders >= 100 ? 4.4 : 4.2;
+      const numReviews =
+        avgOrders >= 300 ? 240 : avgOrders >= 200 ? 180 : avgOrders >= 100 ? 120 : 60;
+
+      const zip = row.zip_code || "";
+      const address = zip ? `Raleigh, NC ${zip}` : "Raleigh, NC";
+      const hours = "Today · 11:00 AM – 8:00 PM";
+
+      restaurantsByName.set(name, {
         id,
-        name: row.name || row.restaurant_name || "",
-        address: row.address || row.Address || "",
-        cuisine: row.cuisine || row.Cuisine || "",
-        rating: safeNumber(row.rating, 4.5),
-        numReviews: safeNumber(row.numReviews, 0),
-        hours: row.hours || row.Hours || "",
-        img: row.image || row.Image || row.img || "",
+        name,
+        cuisine,
+        rating,
+        numReviews,
+        address,
+        hours,
         menus: [],
       });
     });
 
+    // 2) Attach rescue meals from rescue_meals.csv
     mealRows.forEach((row) => {
-      const restaurantId =
-        row.restaurant_id || row.RestaurantID || row.id || row.ID;
-      if (!restaurantId) return;
+      const restaurantName = (row.restaurant || "").trim();
+      if (!restaurantName) return;
 
-      const restaurant = byId.get(restaurantId);
+      const restaurant = restaurantsByName.get(restaurantName);
       if (!restaurant) return;
 
-      const availableQuantity = safeNumber(row.available_quantity, 0);
-      const maxPerOrder = safeNumber(row.max_per_order, availableQuantity);
+      const mealName = row.meal_name || row.name || "Rescue Meal Box";
+      const baseQty = safeNumber(row.quantity, 0);
 
-      const rescuePrice =
-        typeof row.rescue_price !== "undefined"
-          ? safeNumber(row.rescue_price, 5.0)
-          : 5.0;
-      const originalPrice =
-        typeof row.original_price !== "undefined"
-          ? safeNumber(row.original_price, 12.0)
-          : 12.0;
+      const mealId = slugify(`${restaurantName}-${mealName}`);
+
+      const invEntry = inventory[mealId];
+      const soldCount =
+        invEntry && typeof invEntry.sold === "number" ? invEntry.sold : 0;
+
+      const availableRaw = baseQty - soldCount;
+      const availableQuantity = availableRaw > 0 ? availableRaw : 0;
+
+      const originalPrice = safeNumber(row.original_price, 12.0);
+      const rescuePrice = safeNumber(row.rescue_price, 6.0);
+
+      const pickupWindow = row.expires_in
+        ? `Pickup within ${row.expires_in}`
+        : "Today, 5–8 PM";
+
+      const maxPerOrder =
+        baseQty > 0 ? Math.min(baseQty, 3) : availableQuantity > 0 ? availableQuantity : 1;
 
       restaurant.menus.push({
-        id: row.meal_id || row.id || `${restaurantId}-${row.meal_name || ""}`,
-        name: row.meal_name || row.name || "Rescue Meal Box",
-        description:
-          row.description ||
-          "Chef-selected surplus meal from today.",
-        pickupWindow: row.pickup_window || "Today, 5–8 PM",
-        expiresIn: row.expires_in || "",
-        rescuePrice,
+        id: mealId,
+        name: mealName,
+        description: "Chef-selected surplus meal from today's unsold portions.",
         originalPrice,
+        rescuePrice,
+        pickupWindow,
+        quantity: baseQty,
         availableQuantity,
-        maxPerOrder:
-          maxPerOrder > 0 ? maxPerOrder : availableQuantity || 1,
+        maxPerOrder,
         isRescueMeal: true,
       });
     });
 
-    const results = Array.from(byId.values());
+    const results = Array.from(restaurantsByName.values());
     return res.json(results);
   } catch (err) {
     // eslint-disable-next-line no-console
@@ -151,13 +250,15 @@ router.get("/dashboard/restaurants-with-meals", async (req, res) => {
   }
 });
 
-// ---------- community-stats ----------
+// ---------- GET /dashboard/community-stats ----------
+//
+// Aggregates community-level stats from orders.json.
 
 router.get("/dashboard/community-stats", (req, res) => {
   try {
     const orders = loadOrders();
 
-    let activeUsersSet = new Set();
+    const activeUsersSet = new Set();
     let totalMealsRescued = 0;
     let totalWastePreventedLbs = 0;
 
@@ -169,18 +270,18 @@ router.get("/dashboard/community-stats", (req, res) => {
       }
 
       order.items.forEach((item) => {
+        if (!item || item.isRescueMeal === false) return;
         const qty = safeNumber(item.quantity, 0);
         totalMealsRescued += qty;
-        totalWastePreventedLbs += qty * 2.5;
+        totalWastePreventedLbs += qty * 2.5; // simple heuristic
       });
     });
 
-    const mealsRescued = totalMealsRescued;
     const wastePreventedTons = totalWastePreventedLbs / 2000;
 
     return res.json({
       activeUsers: activeUsersSet.size,
-      mealsRescued,
+      mealsRescued: totalMealsRescued,
       wastePreventedTons: Number(wastePreventedTons.toFixed(2)),
     });
   } catch (err) {
@@ -192,20 +293,27 @@ router.get("/dashboard/community-stats", (req, res) => {
   }
 });
 
-// ---------- user-impact ----------
+// ---------- GET /dashboard/user-impact ----------
+//
+// Returns per-user impact summary, used by the "My Impact" panel in the dashboard.
 
 router.get("/dashboard/user-impact", (req, res) => {
   try {
-    const email = req.query.email;
+    const emailRaw = (req.query.email || "").toString();
+    const email = emailRaw.toLowerCase().trim();
+
     if (!email) {
       return res.status(400).json({
         error: "Missing email parameter.",
       });
     }
 
-    const orders = loadOrders().filter(
-      (o) => o && o.userEmail === email
-    );
+    const allOrders = loadOrders();
+
+    const orders = allOrders.filter((o) => {
+      if (!o || !o.userEmail) return false;
+      return o.userEmail.toString().toLowerCase().trim() === email;
+    });
 
     let mealsOrdered = 0;
     let moneySaved = 0;
@@ -214,22 +322,30 @@ router.get("/dashboard/user-impact", (req, res) => {
     const restaurantSet = new Set();
 
     orders.forEach((order) => {
-      if (!order || !Array.isArray(order.items)) return;
+      const items = Array.isArray(order.items) ? order.items : [];
 
-      order.items.forEach((item) => {
+      items.forEach((item) => {
+        if (!item || item.isRescueMeal === false) return;
+
         const qty = safeNumber(item.quantity, 0);
         mealsOrdered += qty;
-        restaurantSet.add(item.restaurant || "Unknown");
 
-        const pricePaid = safeNumber(item.price, 0) * qty;
-        const original =
-          safeNumber(item.originalPrice, pricePaid) * qty;
-        moneySaved += Math.max(original - pricePaid, 0);
-
-        foodWastePrevented += qty * 2.5;
-        carbonReduced += qty * 2.0;
+        const restaurantName =
+          item.restaurant ||
+          (item.meal &&
+            item.meal.restaurant &&
+            item.meal.restaurant.name) ||
+          "Unknown";
+        restaurantSet.add(restaurantName);
       });
+
+      if (order.totals && typeof order.totals.totalSavings !== "undefined") {
+        moneySaved += safeNumber(order.totals.totalSavings, 0);
+      }
     });
+
+    foodWastePrevented = mealsOrdered * 2.5;
+    carbonReduced = mealsOrdered * 2.0;
 
     let impactLevel = "New Rescuer";
     if (mealsOrdered >= 20) impactLevel = "Impact Hero";
@@ -253,93 +369,36 @@ router.get("/dashboard/user-impact", (req, res) => {
   }
 });
 
-// ---------- restaurant-points (simple lat/lng demo) ----------
+// ---------- GET /api/restaurant-points (leaderboard) ----------
+//
+// Simple wrapper around backend/data/restaurant_points.json.
+// Frontend LeaderboardPanel supports:
+//   - Object map: { "Eastside Deli": 60, ... }
+//   - Array: [{ name: "Eastside Deli", points: 60 }, ...]
+// We return the object map here.
 
 router.get("/api/restaurant-points", (req, res) => {
   try {
-    const metaRows = fs.existsSync(RESTAURANT_META_CSV)
-      ? fs.readFileSync(RESTAURANT_META_CSV, "utf8")
-      : "";
-
-    if (!metaRows) {
-      return res.json([]);
+    if (!fs.existsSync(RESTAURANT_POINTS_JSON)) {
+      return res.json({});
     }
 
-    const points = [];
-    fs.createReadStream(RESTAURANT_META_CSV)
-      .pipe(csv())
-      .on("data", (row) => {
-        const lat = safeNumber(row.lat, null);
-        const lng = safeNumber(row.lng, null);
-        if (lat === null || lng === null) return;
+    const raw = fs.readFileSync(RESTAURANT_POINTS_JSON, "utf8");
+    if (!raw) {
+      return res.json({});
+    }
 
-        points.push({
-          id: row.id || row.ID || row.restaurant_id || row.RestaurantID,
-          name: row.name || row.restaurant_name || "",
-          lat,
-          lng,
-        });
-      })
-      .on("end", () => res.json(points))
-      .on("error", (err) => {
-        // eslint-disable-next-line no-console
-        console.error("Error reading Restaurant_Metadata.csv:", err);
-        res.status(500).json({
-          error: "Failed to load restaurant points.",
-        });
-      });
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return res.json({});
+    }
+
+    return res.json(parsed);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("Error in /api/restaurant-points:", err);
     return res.status(500).json({
       error: "Failed to load restaurant points.",
-    });
-  }
-});
-
-// ---------- cart checkout (mirror of routes/cart.js) ----------
-
-router.post("/cart/checkout", (req, res) => {
-  try {
-    const body = req.body || {};
-    const items = Array.isArray(body.items) ? body.items : [];
-    const userEmail =
-      typeof body.userEmail === "string" ? body.userEmail : null;
-    const totals = body.totals || null;
-    const pickupPreference =
-      typeof body.pickupPreference === "string" ? body.pickupPreference : null;
-
-    if (items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Cart is empty. Please add at least one rescue meal.",
-      });
-    }
-
-    const existingOrders = loadOrders();
-
-    const newOrder = {
-      id: `order_${Date.now()}`,
-      userEmail,
-      items,
-      totals,
-      pickupPreference,
-      timestamp: new Date().toISOString(),
-    };
-
-    existingOrders.push(newOrder);
-    writeOrders(existingOrders);
-
-    return res.json({
-      success: true,
-      order: newOrder,
-    });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("Error in /cart/checkout dashboard route:", err);
-    return res.status(500).json({
-      success: false,
-      error: "An unexpected error occurred during checkout.",
     });
   }
 });
