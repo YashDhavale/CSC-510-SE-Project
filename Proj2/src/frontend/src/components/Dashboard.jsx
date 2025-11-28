@@ -1023,7 +1023,10 @@ const Dashboard = ({ user, onLogout }) => {
           <Cart
             cart={cart}
             setCart={setCart}
-            onBack={() => setCurrentView('browse')}
+            onBack={() => {
+              setCurrentView('browse');
+              setSelectedRestaurantDetail(null);
+            }}
             onOrderPlaced={(order) => {
               setOrdersError(null);
 
