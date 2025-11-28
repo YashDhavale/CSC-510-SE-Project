@@ -69,7 +69,6 @@ const summarizeRescueInventory = (restaurant) => {
   }, 0);
 
   const allSoldOut = totalAvailable === 0;
-
   const lowInventory = !allSoldOut && totalAvailable <= 5;
 
   return { totalAvailable, allSoldOut, lowInventory };
@@ -108,7 +107,6 @@ const Dashboard = ({ user, onLogout }) => {
     const meals = Number(communityStats.mealsRescued || 0);
     const safeMeals = Number.isFinite(meals) && meals > 0 ? meals : 0;
 
-    // Simple rule-of-thumb goal: at least 10, or ~1.5x current progress
     const target =
       safeMeals > 0 ? Math.max(10, Math.ceil(safeMeals * 1.5)) : 10;
 
@@ -150,9 +148,7 @@ const Dashboard = ({ user, onLogout }) => {
 
   // Fetch user impact + order history if we have a user
   useEffect(() => {
-    if (!user || !user.email) {
-      return;
-    }
+    if (!user || !user.email) return;
 
     const emailParam = encodeURIComponent(user.email);
 
@@ -303,7 +299,7 @@ const Dashboard = ({ user, onLogout }) => {
     });
 
     setShowCartToast(true);
-    // Do not auto-switch to cart; user can open cart manually
+    // 保持在 browse，不自動跳轉到 cart
   };
 
   const handleFavoriteToggle = (restaurantId) => {
@@ -334,11 +330,8 @@ const Dashboard = ({ user, onLogout }) => {
         (m) => m.id === item.mealId
       );
 
-      if (!restaurant || !meal) {
-        return;
-      }
+      if (!restaurant || !meal) return;
 
-      // Rebuild in Cart.jsx format
       rebuiltCart.push({
         restaurant: restaurant.name,
         meal: { ...meal },
@@ -346,9 +339,7 @@ const Dashboard = ({ user, onLogout }) => {
       });
     });
 
-    if (rebuiltCart.length === 0) {
-      return;
-    }
+    if (rebuiltCart.length === 0) return;
 
     setCart(rebuiltCart);
     setCurrentView('cart');
@@ -357,7 +348,7 @@ const Dashboard = ({ user, onLogout }) => {
   const filteredRestaurants = useMemo(() => {
     const term = searchQuery.toLowerCase().trim();
 
-    return restaurants
+    const filtered = restaurants
       .filter((restaurant) => {
         const matchesCuisine =
           filterCuisine === 'all' ||
@@ -380,14 +371,47 @@ const Dashboard = ({ user, onLogout }) => {
         return nameMatch || cuisineMatch || neighborhoodMatch;
       })
       .map((restaurant) => {
-        const inventorySummary =
-          summarizeRescueInventory(restaurant);
+        const inventorySummary = summarizeRescueInventory(restaurant);
         return {
           ...restaurant,
           inventorySummary,
         };
       });
-  }, [restaurants, searchQuery, filterCuisine]);
+
+    // sort by:
+    // 1) favorited restaurants first
+    // 2) restaurants with available rescue meals
+    // 3) name alphabetical
+    const score = (r) => {
+      const isFav = favorites.has(r.id) ? 2 : 0;
+      const hasRescue =
+        Array.isArray(r.menus) &&
+        r.menus.some((meal) => {
+          const available =
+            typeof meal.availableQuantity === 'number'
+              ? meal.availableQuantity
+              : meal.quantityAvailable || 0;
+          const isSoldOut = available <= 0 || meal.isSoldOut;
+          return !isSoldOut;
+        })
+          ? 1
+          : 0;
+      return isFav + hasRescue;
+    };
+
+    filtered.sort((a, b) => {
+      const sa = score(a);
+      const sb = score(b);
+      if (sa !== sb) return sb - sa;
+      const nameA = (a.name || '').toLowerCase();
+      const nameB = (b.name || '').toLowerCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
+
+    return filtered;
+  }, [restaurants, searchQuery, filterCuisine, favorites]);
 
   const restaurantLookup = useMemo(() => {
     const map = new Map();
@@ -651,7 +675,6 @@ const Dashboard = ({ user, onLogout }) => {
                     reducing food waste in your neighborhood.
                   </p>
                 </div>
-                {/* stats row：放大數字＋半透明卡片 */}
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center justify-between">
                     <div>
@@ -1083,7 +1106,6 @@ const Dashboard = ({ user, onLogout }) => {
                 See how neighbors are rescuing surplus food together in Raleigh.
               </p>
 
-              {/* High-level community stats */}
               <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-green-50 rounded-lg px-4 py-3 flex items-center">
                   <Leaf className="w-5 h-5 text-green-600 mr-3" />
@@ -1122,7 +1144,6 @@ const Dashboard = ({ user, onLogout }) => {
                 </div>
               </div>
 
-              {/* Weekly community challenge */}
               <div className="mt-6">
                 <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1">
                   This week&apos;s community challenge
