@@ -345,6 +345,77 @@ const Dashboard = ({ user, onLogout }) => {
     setCurrentView('cart');
   };
 
+  // 被 Cart 在下單成功時呼叫：更新 Impact 的 history + 重新抓 impact 指標
+  const handleOrderPlacedFromCart = (orderFromServer, payload) => {
+    if (!payload || !Array.isArray(payload.items)) {
+      setOrdersError(null);
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+
+    const items = payload.items.map((item) => ({
+      restaurantName:
+        item.restaurant ||
+        item.meal?.restaurantName ||
+        'Rescue partner',
+      name: item.meal?.name || 'Rescue meal',
+      quantity: item.quantity || 1,
+    }));
+
+    const clientOrder = {
+      id:
+        (orderFromServer &&
+          (orderFromServer.id ||
+            orderFromServer._id ||
+            orderFromServer.orderId)) ||
+        `local-${Date.now()}`,
+      createdAt:
+        (orderFromServer &&
+          (orderFromServer.createdAt || orderFromServer.date)) ||
+        nowIso,
+      date:
+        (orderFromServer &&
+          (orderFromServer.createdAt || orderFromServer.date)) ||
+        nowIso,
+      items,
+      totalPrice:
+        (orderFromServer &&
+          (orderFromServer.totalPrice || orderFromServer.total)) ||
+        (payload.totals && payload.totals.subtotal) ||
+        0,
+      points: (orderFromServer && orderFromServer.points) || 0,
+    };
+
+    setUserOrders((prev) => {
+      const base = Array.isArray(prev) ? prev : [];
+      return [clientOrder, ...base];
+    });
+
+    // 成功有本地訂單後就不要再顯示 error banner
+    setOrdersError(null);
+
+    // 順便重新抓一次 impact 指標（不改 UI，只更新數字）
+    if (user && user.email) {
+      const emailParam = encodeURIComponent(user.email);
+      fetch(`/dashboard/user-impact?email=${emailParam}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setUserImpact((prev) => ({
+            ...prev,
+            ...data,
+          }));
+        })
+        .catch((err) => {
+          // eslint-disable-next-line no-console
+          console.error(
+            'Error refreshing user impact after order:',
+            err
+          );
+        });
+    }
+  };
+
   const filteredRestaurants = useMemo(() => {
     const term = searchQuery.toLowerCase().trim();
 
@@ -1041,7 +1112,7 @@ const Dashboard = ({ user, onLogout }) => {
 
               {userOrders && userOrders.length > 0 && (
                 <div className="mt-8">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items中心 justify-between mb-4">
                     <h3 className="text-base font-semibold text-gray-900">
                       Your recent rescues
                     </h3>
@@ -1165,7 +1236,8 @@ const Dashboard = ({ user, onLogout }) => {
                     style={{
                       width: `${Math.min(
                         100,
-                        (communityGoal.progress / (communityGoal.target || 1)) * 100
+                        (communityGoal.progress / (communityGoal.target || 1)) *
+                          100
                       )}%`,
                     }}
                   />
@@ -1187,7 +1259,7 @@ const Dashboard = ({ user, onLogout }) => {
               cart={cart}
               setCart={setCart}
               onBack={() => setCurrentView('browse')}
-              onOrderPlaced={null}
+              onOrderPlaced={handleOrderPlacedFromCart}
               user={user}
             />
           </section>

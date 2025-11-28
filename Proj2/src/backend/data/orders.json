@@ -1749,5 +1749,133 @@
     },
     "pickupPreference": "any",
     "timestamp": "2025-11-28T06:07:13.140Z"
+  },
+  {
+    "id": "order_1764324290586",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": {
+          "id": "greenbite-cafe-veggie-thali",
+          "name": "Veggie Thali",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 13.99,
+          "rescuePrice": 8.99,
+          "pickupWindow": "Pickup within 2 hours",
+          "quantity": 5,
+          "availableQuantity": 5,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "isRescueMeal": true,
+        "price": 8.99,
+        "originalPrice": 13.99
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 8.99,
+      "youSave": 5
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-28T10:04:50.586Z"
+  },
+  {
+    "id": "order_1764324545022",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": {
+          "id": "greenbite-cafe-paneer-tikka-bowl",
+          "name": "Paneer Tikka Bowl",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 14.99,
+          "rescuePrice": 9.99,
+          "pickupWindow": "Pickup within 1.5 hours",
+          "quantity": 2,
+          "availableQuantity": 2,
+          "maxPerOrder": 2,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "isRescueMeal": true,
+        "price": 9.99,
+        "originalPrice": 14.99
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 9.99,
+      "youSave": 5
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-28T10:09:05.022Z"
+  },
+  {
+    "id": "order_1764325327435",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "Village Noodle Bar",
+        "meal": {
+          "id": "village-noodle-bar-veggie-ramen",
+          "name": "Veggie Ramen",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 12.49,
+          "rescuePrice": 7.49,
+          "pickupWindow": "Pickup within 1 hour",
+          "quantity": 4,
+          "availableQuantity": 4,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "isRescueMeal": true,
+        "price": 7.49,
+        "originalPrice": 12.49
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 7.49,
+      "youSave": 5
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-28T10:22:07.435Z"
+  },
+  {
+    "id": "order_1764325404837",
+    "userEmail": "123@gmail.com",
+    "items": [
+      {
+        "restaurant": "Oak Street Bistro",
+        "meal": {
+          "id": "oak-street-bistro-biscuits-gravy",
+          "name": "Biscuits & Gravy",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 9.99,
+          "rescuePrice": 5.99,
+          "pickupWindow": "Pickup within 3 hours",
+          "quantity": 4,
+          "availableQuantity": 4,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "isRescueMeal": true,
+        "price": 5.99,
+        "originalPrice": 9.99
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 5.99,
+      "youSave": 4
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-28T10:23:24.837Z"
   }
 ]

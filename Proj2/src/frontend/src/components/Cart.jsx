@@ -1,4 +1,3 @@
-// Proj2/src/frontend/src/components/Cart.jsx
 // Cart page with client-side inventory guard.
 // - Quantity "+" button will not exceed the available inventory
 //   reported on each meal (availableQuantity or quantity).
@@ -115,33 +114,34 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
 
     setIsPlacingOrder(true);
 
+    // Build payload once so we can also pass it back to Dashboard
+    const payload = {
+      items: safeCart.map((item) => {
+        const unitPrice = getUnitPrice(item);
+        const originalPrice = getOriginalPrice(item);
+
+        return {
+          restaurant: item.restaurant,
+          meal: item.meal,
+          quantity: Number(item.quantity) || 1,
+          isRescueMeal: true,
+          price: unitPrice,
+          originalPrice:
+            Number.isFinite(originalPrice) && originalPrice > 0
+              ? originalPrice
+              : unitPrice,
+        };
+      }),
+      userEmail: user && user.email ? user.email : null,
+      totals: {
+        rescueMealCount,
+        subtotal: Number(subtotal.toFixed(2)),
+        youSave: Number(youSave.toFixed(2)),
+      },
+      pickupPreference,
+    };
+
     try {
-      const payload = {
-        items: safeCart.map((item) => {
-          const unitPrice = getUnitPrice(item);
-          const originalPrice = getOriginalPrice(item);
-
-          return {
-            restaurant: item.restaurant,
-            meal: item.meal,
-            quantity: Number(item.quantity) || 1,
-            isRescueMeal: true,
-            price: unitPrice,
-            originalPrice:
-              Number.isFinite(originalPrice) && originalPrice > 0
-                ? originalPrice
-                : unitPrice,
-          };
-        }),
-        userEmail: user && user.email ? user.email : null,
-        totals: {
-          rescueMealCount,
-          subtotal: Number(subtotal.toFixed(2)),
-          youSave: Number(youSave.toFixed(2)),
-        },
-        pickupPreference,
-      };
-
       // Backend checkout route (proxied to http://localhost:5000/checkout)
       const response = await fetch('/checkout', {
         method: 'POST',
@@ -192,7 +192,8 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
 
       // Let parent Dashboard know an order was placed (for impact, orders list, etc.)
       if (typeof onOrderPlaced === 'function') {
-        onOrderPlaced(order);
+        // Pass both backend order (may be null/partial) and the payload we sent
+        onOrderPlaced(order, payload);
       }
     } catch (err) {
       // eslint-disable-next-line no-console
