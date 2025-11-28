@@ -1,4 +1,3 @@
-// Proj2/src/frontend/src/components/Dashboard.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import Cart from './Cart';
 import LeaderboardPanel from './LeaderboardPanel';
@@ -85,6 +84,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [favorites, setFavorites] = useState(new Set());
   const [showCartToast, setShowCartToast] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [lastAddedInfo, setLastAddedInfo] = useState(null);
 
   const [restaurants, setRestaurants] = useState([]);
   const [userImpact, setUserImpact] = useState({
@@ -212,107 +212,98 @@ const Dashboard = ({ user, onLogout }) => {
     setShowMobileMenu(false);
   };
 
+  // Add to cart in the data shape expected by Cart.jsx: { restaurant, meal, quantity }
   const handleAddToCart = (restaurant, meal) => {
-    if (!meal || meal.isSoldOut) return;
+    if (!restaurant || !meal || meal.isSoldOut) return;
 
-    const available =
-      typeof meal.availableQuantity === 'number'
-        ? meal.availableQuantity
-        : meal.quantityAvailable || 0;
-
-    const existing = cart.find(
-      (item) =>
-        item.mealId === meal.id &&
-        item.restaurantId === restaurant.id
-    );
-
-    const existingQty = existing ? existing.quantity : 0;
-
-    if (available > 0 && existingQty >= available) {
-      return;
+    // Normalize inventory info onto meal so Cart's getMaxQuantityForItem works
+    let mealForCart = { ...meal };
+    if (
+      typeof mealForCart.availableQuantity !== 'number' &&
+      typeof meal.quantityAvailable === 'number'
+    ) {
+      mealForCart.availableQuantity = meal.quantityAvailable;
+    }
+    if (
+      typeof mealForCart.quantity !== 'number' &&
+      typeof mealForCart.availableQuantity === 'number'
+    ) {
+      mealForCart.quantity = mealForCart.availableQuantity;
     }
 
-    const newItem = {
-      // generic id so Cart.jsx can safely key on it if needed
-      id: meal.id || `${restaurant.id || 'rest'}-${meal.name}`,
-      restaurantId: restaurant.id,
-      restaurantName: restaurant.name,
-      mealId: meal.id,
-      name: meal.name,
-      price: meal.price,
-      quantity: 1,
-      pickupWindow: meal.pickupWindow || restaurant.pickupWindow || '5–7pm',
-    };
+    const available =
+      typeof mealForCart.availableQuantity === 'number'
+        ? mealForCart.availableQuantity
+        : typeof mealForCart.quantity === 'number'
+        ? mealForCart.quantity
+        : Infinity;
+
+    const perOrderCap =
+      typeof mealForCart.maxPerOrder === 'number' &&
+      Number.isFinite(mealForCart.maxPerOrder)
+        ? mealForCart.maxPerOrder
+        : Infinity;
+
+    const maxQty =
+      available === Infinity && perOrderCap === Infinity
+        ? Infinity
+        : Math.min(available, perOrderCap);
 
     setCart((prev) => {
-      const idx = prev.findIndex(
+      const current = Array.isArray(prev) ? [...prev] : [];
+
+      const idx = current.findIndex(
         (item) =>
-          item.mealId === newItem.mealId &&
-          item.restaurantId === newItem.restaurantId
+          item.restaurant === restaurant.name &&
+          item.meal &&
+          (item.meal.id === mealForCart.id ||
+            item.meal.name === mealForCart.name)
       );
+
+      // new line item
       if (idx === -1) {
-        return [...prev, newItem];
+        if (maxQty === 0) {
+          return current;
+        }
+        const newItem = {
+          restaurant: restaurant.name,
+          meal: mealForCart,
+          quantity: 1,
+        };
+        const next = [...current, newItem];
+
+        setLastAddedInfo({
+          name: mealForCart.name || 'Rescue meal',
+          quantity: 1,
+        });
+
+        return next;
       }
-      const updated = [...prev];
-      const target = updated[idx];
-      const nextQty = target.quantity + 1;
-      if (available > 0 && nextQty > available) {
-        return prev;
+
+      // existing line, just bump quantity
+      const existing = current[idx];
+      const existingQty = Number(existing.quantity) || 0;
+      let nextQty = existingQty + 1;
+
+      if (maxQty !== Infinity && nextQty > maxQty) {
+        nextQty = maxQty;
       }
-      updated[idx] = {
-        ...target,
+
+      current[idx] = {
+        ...existing,
         quantity: nextQty,
       };
-      return updated;
+
+      setLastAddedInfo({
+        name: mealForCart.name || 'Rescue meal',
+        quantity: nextQty,
+      });
+
+      return current;
     });
 
     setShowCartToast(true);
-    // navigate to cart so user immediately sees the added items
-    setCurrentView('cart');
-  };
-
-  const handleRemoveFromCart = (index) => {
-    setCart((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleUpdateQuantity = (index, newQty) => {
-    if (newQty <= 0) {
-      handleRemoveFromCart(index);
-      return;
-    }
-
-    setCart((prev) => {
-      const updated = [...prev];
-      const target = updated[index];
-
-      if (!target) return prev;
-
-      const restaurant = restaurants.find(
-        (r) => r.id === target.restaurantId
-      );
-      const meal = restaurant?.menus?.find(
-        (m) => m.id === target.mealId
-      );
-
-      const available =
-        typeof meal?.availableQuantity === 'number'
-          ? meal.availableQuantity
-          : meal?.quantityAvailable || 0;
-
-      if (available > 0 && newQty > available) {
-        return prev;
-      }
-
-      updated[index] = {
-        ...target,
-        quantity: newQty,
-      };
-      return updated;
-    });
-  };
-
-  const handleClearCart = () => {
-    setCart([]);
+    // Do not auto-switch to cart; user can open cart manually
   };
 
   const handleFavoriteToggle = (restaurantId) => {
@@ -347,16 +338,11 @@ const Dashboard = ({ user, onLogout }) => {
         return;
       }
 
+      // Rebuild in Cart.jsx format
       rebuiltCart.push({
-        id: meal.id || `${restaurant.id || 'rest'}-${meal.name}`,
-        restaurantId: restaurant.id,
-        restaurantName: restaurant.name,
-        mealId: meal.id,
-        name: meal.name,
-        price: meal.price,
+        restaurant: restaurant.name,
+        meal: { ...meal },
         quantity: item.quantity || 1,
-        pickupWindow:
-          meal.pickupWindow || restaurant.pickupWindow || '5–7pm',
       });
     });
 
@@ -366,79 +352,6 @@ const Dashboard = ({ user, onLogout }) => {
 
     setCart(rebuiltCart);
     setCurrentView('cart');
-  };
-
-  const handlePlaceOrder = (orderPayload) => {
-    return fetch('/dashboard/place-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderPayload),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Order failed with ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((order) => {
-        // eslint-disable-next-line no-console
-        console.log('Order placed:', order);
-
-        if (!order) {
-          return;
-        }
-
-        if (user && user.email) {
-          const emailParam = encodeURIComponent(user.email);
-          fetch(`/dashboard/user-impact?email=${emailParam}`)
-            .then((res) => res.json())
-            .then((data) => {
-              setUserImpact((prev) => ({
-                ...prev,
-                ...data,
-              }));
-            })
-            .catch((err) => {
-              // eslint-disable-next-line no-console
-              console.error(
-                'Error refreshing user impact after order:',
-                err
-              );
-            });
-
-          fetch(`/dashboard/orders?email=${emailParam}`)
-            .then((res) => {
-              if (!res.ok) {
-                throw new Error(
-                  `Failed to refresh orders: ${res.status}`
-                );
-              }
-              return res.json();
-            })
-            .then((orders) => {
-              const sorted = Array.isArray(orders)
-                ? [...orders].sort(
-                    (a, b) =>
-                      new Date(b.createdAt || b.date) -
-                      new Date(a.createdAt || a.date)
-                  )
-                : [];
-              setUserOrders(sorted);
-            })
-            .catch((err) => {
-              // eslint-disable-next-line no-console
-              console.error(
-                'Error refreshing orders after place order:',
-                err
-              );
-            });
-        }
-      })
-      .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error('Error placing order:', err);
-        throw err;
-      });
   };
 
   const filteredRestaurants = useMemo(() => {
@@ -531,6 +444,10 @@ const Dashboard = ({ user, onLogout }) => {
   const closeCartToast = () => {
     setShowCartToast(false);
   };
+
+  const toastMessage = lastAddedInfo
+    ? `Added ${lastAddedInfo.name} (x${lastAddedInfo.quantity}) to cart. You can review items before placing your rescue.`
+    : 'Added to cart. You can review items before placing your rescue.';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -851,7 +768,7 @@ const Dashboard = ({ user, onLogout }) => {
         {currentView === 'browse' && (
           <section className="space-y-4">
             <header className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900">
+              <h2 className="text-base font-semibold text-gray-900 mr-2">
                 Available tonight near you
               </h2>
               <p className="text-xs text-gray-500">
@@ -902,10 +819,9 @@ const Dashboard = ({ user, onLogout }) => {
                         >
                           <Heart
                             className={`w-5 h-5 ${
-                              isFavorite
-                                ? 'text-red-500 fill-red-100'
-                                : 'text-gray-400'
+                              isFavorite ? 'text-red-500' : 'text-gray-400'
                             }`}
+                            fill={isFavorite ? 'currentColor' : 'none'}
                           />
                         </button>
                       </div>
@@ -938,7 +854,8 @@ const Dashboard = ({ user, onLogout }) => {
                                   : meal.quantityAvailable || 0;
                               const isSoldOut =
                                 available <= 0 || meal.isSoldOut;
-                              const unitPrice = meal.price || 5;
+                              const unitPrice =
+                                meal.price ?? meal.rescuePrice ?? 5;
 
                               return (
                                 <div
@@ -1246,16 +1163,16 @@ const Dashboard = ({ user, onLogout }) => {
         {currentView === 'cart' && (
           <section className="space-y-4">
             <Cart
-              cartItems={cart}
-              onRemove={handleRemoveFromCart}
-              onUpdateQuantity={handleUpdateQuantity}
-              onClearCart={handleClearCart}
-              onPlaceOrder={handlePlaceOrder}
+              cart={cart}
+              setCart={setCart}
+              onBack={() => setCurrentView('browse')}
+              onOrderPlaced={null}
+              user={user}
             />
           </section>
         )}
 
-        {/* restaurant detail view (if you are using it anywhere else) */}
+        {/* restaurant detail view */}
         {currentView === 'restaurant-detail' && (
           <section className="space-y-4">
             <RestaurantDetail
@@ -1275,8 +1192,7 @@ const Dashboard = ({ user, onLogout }) => {
           <div className="bg-gray-900 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-3">
             <ShoppingCart className="w-4 h-4 text-green-300" />
             <span className="text-sm">
-              Added to cart. You can review items before placing your
-              rescue.
+              {toastMessage}
             </span>
             <button
               type="button"
