@@ -10,9 +10,12 @@ import { ArrowLeft, Plus, Minus, Trash2 } from 'lucide-react';
 const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [pickupPreference, setPickupPreference] = useState('any');
+  // Local state for post-checkout thank-you screen
+  const [orderSuccess, setOrderSuccess] = useState(null);
 
   const safeCart = Array.isArray(cart) ? cart : [];
 
+  // Get rescue price for a cart item
   const getUnitPrice = (item) => {
     if (!item || !item.meal) return 0;
     const meal = item.meal;
@@ -21,6 +24,7 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
     return Number(meal.rescuePrice || meal.rescue_price || 5.0) || 5.0;
   };
 
+  // Get original (non-rescue) price for a cart item
   const getOriginalPrice = (item) => {
     if (!item || !item.meal) return 0;
     const meal = item.meal;
@@ -29,6 +33,7 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
     return Number(meal.originalPrice || meal.original_price || 12.0) || 12.0;
   };
 
+  // Compute maximum allowed quantity for a single cart line
   const getMaxQuantityForItem = (item) => {
     if (!item || !item.meal) return Infinity;
 
@@ -53,27 +58,25 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
     return Math.min(inventoryCap, perOrderCap);
   };
 
+  // Update quantity with guard for min=1 and max inventory/per-order cap
   const handleQuantityChange = (index, delta) => {
     setCart((prev) => {
       const current = Array.isArray(prev) ? [...prev] : [];
-      const entry = current[index];
-      if (!entry) return prev;
+      if (!current[index]) return current;
 
-      const maxQty = getMaxQuantityForItem(entry);
-      const currentQty = Number(entry.quantity) || 1;
-      const nextQty = currentQty + delta;
+      const item = current[index];
+      const maxQty = getMaxQuantityForItem(item);
 
-      if (nextQty <= 0) {
-        current.splice(index, 1);
-        return current;
-      }
+      const existingQty = Number(item.quantity) || 1;
+      let nextQty = existingQty + delta;
 
-      if (maxQty !== Infinity && nextQty > maxQty) {
-        entry.quantity = maxQty;
-        return current;
-      }
+      if (nextQty < 1) nextQty = 1;
+      if (maxQty !== Infinity && nextQty > maxQty) nextQty = maxQty;
 
-      entry.quantity = nextQty;
+      current[index] = {
+        ...item,
+        quantity: nextQty,
+      };
       return current;
     });
   };
@@ -86,16 +89,19 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
     });
   };
 
+  // Total rescued meal count (sum of quantities)
   const rescueMealCount = safeCart.reduce(
     (sum, item) => sum + (Number(item.quantity) || 0),
     0
   );
 
+  // Subtotal (rescue price)
   const subtotal = safeCart.reduce((sum, item) => {
     const qty = Number(item.quantity) || 0;
     return sum + getUnitPrice(item) * qty;
   }, 0);
 
+  // Original total before rescue discount
   const totalOriginal = safeCart.reduce((sum, item) => {
     const qty = Number(item.quantity) || 0;
     return sum + getOriginalPrice(item) * qty;
@@ -103,6 +109,7 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
 
   const youSave = Math.max(totalOriginal - subtotal, 0);
 
+  // Place order via backend and show thank-you screen instead of blank page
   const handlePlaceOrder = async () => {
     if (safeCart.length === 0 || isPlacingOrder) return;
 
@@ -135,7 +142,8 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
         pickupPreference,
       };
 
-      const response = await fetch('/cart/checkout', {
+      // Backend checkout route (proxied to http://localhost:5000/checkout)
+      const response = await fetch('/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,32 +158,93 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
         // ignore json parse error, data stays {}
       }
 
-      if (!response.ok || !data.success) {
-        // eslint-disable-next-line no-console
-        console.error('Checkout failed:', data.error || 'Unknown error');
+      // Non-OK HTTP response (e.g., 500)
+      if (!response.ok) {
+        window.alert(
+          data.error ||
+            data.message ||
+            'Failed to place order. Please try again.'
+        );
+        setIsPlacingOrder(false);
+        return;
+      }
+
+      // Backend responded but did not accept the order
+      if (!data.success) {
+        window.alert(
+          data.error ||
+            data.message ||
+            'Order was not accepted. Please double-check your cart and try again.'
+        );
         setIsPlacingOrder(false);
         return;
       }
 
       const order = data.order || null;
 
+      // Clear cart and show local thank-you screen
       setCart([]);
+      setOrderSuccess({
+        rescuedMeals: rescueMealCount,
+        youSave: Number(youSave.toFixed(2)),
+      });
       setIsPlacingOrder(false);
 
+      // Let parent Dashboard know an order was placed (for impact, orders list, etc.)
       if (typeof onOrderPlaced === 'function') {
         onOrderPlaced(order);
-      }
-
-      if (typeof onBack === 'function') {
-        onBack();
       }
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Error during checkout:', err);
+      window.alert(
+        'A network error occurred while placing your order. Please try again.'
+      );
       setIsPlacingOrder(false);
     }
   };
 
+  // After successful checkout: full-screen thank-you message instead of blank page
+  if (orderSuccess) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow">
+          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="w-6" />
+            <h1 className="text-lg font-semibold text-gray-900">
+              Thank you for rescuing food!
+            </h1>
+            <div className="w-6" />
+          </div>
+        </header>
+
+        <main className="max-w-3xl mx-auto px-4 py-10 text-center">
+          <p className="text-gray-700 mb-4">
+            You just rescued {orderSuccess.rescuedMeals} meals and saved $
+            {orderSuccess.youSave.toFixed(2)}.
+          </p>
+          <p className="text-gray-500 mb-8">
+            Your choices help local restaurants reduce waste and support your
+            community.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setOrderSuccess(null);
+              if (typeof onBack === 'function') {
+                onBack();
+              }
+            }}
+            className="inline-flex items-center px-4 py-2 rounded-full bg-green-600 text-white text-sm font-medium hover:bg-green-700"
+          >
+            Continue rescuing meals
+          </button>
+        </main>
+      </div>
+    );
+  }
+
+  // Empty cart view
   if (safeCart.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -201,7 +270,7 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700"
+            className="inline-flex items-center px-4 py-2 rounded-full bg-green-600 text-white text-sm font-medium hover:bg-green-700"
           >
             Browse Restaurants
           </button>
@@ -210,6 +279,7 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
     );
   }
 
+  // Normal cart view with items and order summary
   return (
     <div className="min-h-screen bg-gray-50">
       {/* header */}
@@ -223,160 +293,170 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Browse
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">
-            Your Cart ({rescueMealCount} meals)
-          </h1>
+          <h1 className="text-lg font-semibold text-gray-900">Your Cart</h1>
           <div className="w-6" />
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: cart items */}
-        <div className="lg:col-span-2 space-y-4">
-          {safeCart.map((item, index) => {
-            const unitPrice = getUnitPrice(item);
-            const originalPrice = getOriginalPrice(item);
-            const qty = Number(item.quantity) || 1;
-            const maxQty = getMaxQuantityForItem(item);
+      {/* main */}
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left: cart items */}
+          <div className="lg:col-span-2 space-y-4">
+            {safeCart.map((item, index) => {
+              const meal = item.meal || {};
+              const unitPrice = getUnitPrice(item);
+              const originalPrice = getOriginalPrice(item);
+              const qty = Number(item.quantity) || 1;
+              const lineTotal = unitPrice * qty;
+              const maxQty = getMaxQuantityForItem(item);
 
-            return (
-              <div
-                key={`${item.restaurant}-${index}`}
-                className="bg-white rounded-xl shadow p-4 flex"
-              >
-                <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    {item.meal?.name || 'Rescue Meal'}
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {item.restaurant}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Pickup:{' '}
-                    {item.meal?.pickupWindow || 'Pickup within today'}
-                  </p>
-                </div>
-
-                <div className="flex flex-col items-end ml-4">
-                  <div className="text-right mb-2">
-                    <p className="text-sm font-semibold text-gray-900">
-                      ${unitPrice.toFixed(2)}
+              return (
+                <div
+                  key={`${meal.id || index}-${index}`}
+                  className="bg-white rounded-xl shadow p-4 flex items-start justify-between"
+                >
+                  <div className="flex-1">
+                    <h2 className="text-base font-semibold text-gray-900">
+                      {meal.name || 'Rescue Meal'}
+                    </h2>
+                    <p className="text-xs text-gray-500 mb-2">
+                      {item.restaurant || 'Selected restaurant'}
                     </p>
-                    {Number.isFinite(originalPrice) && originalPrice > 0 && (
-                      <p className="text-xs text-gray-400 line-through">
-                        ${originalPrice.toFixed(2)}
+                    <p className="text-xs text-gray-600">
+                      {meal.description || 'Surprise rescue meal box.'}
+                    </p>
+
+                    <div className="mt-3 flex items-center space-x-3">
+                      <p className="text-sm font-semibold text-green-700">
+                        ${unitPrice.toFixed(2)} rescue
                       </p>
-                    )}
-                  </div>
+                      {Number.isFinite(originalPrice) &&
+                        originalPrice > unitPrice && (
+                          <p className="text-xs text-gray-400 line-through">
+                            ${originalPrice.toFixed(2)}
+                          </p>
+                        )}
+                    </div>
 
-                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 mt-3">
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(index, -1)}
+                        className="p-1 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="text-sm font-medium text-gray-900">
+                        {qty}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(index, 1)}
+                        className={`p-1 rounded-full border text-gray-600 hover:bg-gray-100 ${
+                          maxQty !== Infinity && qty >= maxQty
+                            ? 'opacity-40 cursor-not-allowed'
+                            : 'border-gray-300'
+                        }`}
+                        disabled={maxQty !== Infinity && qty >= maxQty}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                      {maxQty !== Infinity && (
+                        <span className="ml-2 text-[11px] text-gray-400">
+                          Max {maxQty} per order (based on inventory)
+                        </span>
+                      )}
+                    </div>
+
                     <button
                       type="button"
-                      onClick={() => handleQuantityChange(index, -1)}
-                      className="p-1 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100"
+                      onClick={() => handleRemoveItem(index)}
+                      className="mt-2 flex items-center text-xs text-red-500 hover:text-red-600"
                     >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="text-sm font-medium text-gray-900">
-                      {qty}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleQuantityChange(index, 1)}
-                      disabled={maxQty !== Infinity && qty >= maxQty}
-                      className={`p-1 rounded-full border border-gray-300 ${
-                        maxQty !== Infinity && qty >= maxQty
-                          ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Plus className="w-4 h-4" />
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Remove
                     </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveItem(index)}
-                    className="mt-2 flex items-center text-xs text-red-500 hover:text-red-600"
-                  >
-                    <Trash2 className="w-3 h-3 mr-1" />
-                    Remove
-                  </button>
-
-                  {maxQty !== Infinity && (
-                    <p className="mt-1 text-[11px] text-gray-400">
-                      Max {maxQty} per order (based on inventory)
+                  <div className="ml-4 text-right">
+                    <p className="text-sm font-semibold text-gray-900">
+                      ${lineTotal.toFixed(2)}
                     </p>
-                  )}
+                    <p className="text-[11px] text-gray-400">Rescue total</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Right: summary */}
+          <div>
+            <div className="bg-white rounded-xl shadow p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Order Summary
+              </h2>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Subtotal</span>
+                  <span className="text-gray-900">
+                    ${subtotal.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Original value</span>
+                  <span className="text-gray-900">
+                    ${totalOriginal.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">You save</span>
+                  <span className="text-green-700 font-semibold">
+                    -${youSave.toFixed(2)}
+                  </span>
+                </div>
+                <hr className="my-2" />
+                <div className="flex justify-between text-base font-semibold">
+                  <span className="text-gray-900">Total</span>
+                  <span className="text-gray-900">
+                    ${subtotal.toFixed(2)}
+                  </span>
                 </div>
               </div>
-            );
-          })}
-        </div>
 
-        {/* Right: summary */}
-        <div>
-          <div className="bg-white rounded-xl shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Order Summary
-            </h2>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="text-gray-900">
-                  ${subtotal.toFixed(2)}
-                </span>
+              <div className="mt-4">
+                <p className="text-xs text-gray-500 mb-2 text-left">
+                  Meals rescued: {rescueMealCount}
+                </p>
+                <label className="block text-xs text-gray-600 mb-1 text-left">
+                  Pickup preference
+                </label>
+                <select
+                  value={pickupPreference}
+                  onChange={(e) => setPickupPreference(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="any">Any available time</option>
+                  <option value="lunch">Prefer lunchtime pickup</option>
+                  <option value="dinner">Prefer dinnertime pickup</option>
+                </select>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">You Save</span>
-                <span className="text-green-600">
-                  ${youSave.toFixed(2)}
-                </span>
-              </div>
-              <hr className="my-3" />
-              <div className="flex justify-between font-semibold">
-                <span className="text-gray-900">Total</span>
-                <span className="text-gray-900">
-                  ${subtotal.toFixed(2)}
-                </span>
-              </div>
-            </div>
 
-            <div className="mt-4 space-y-1">
-              <label className="block text-xs font-semibold text-gray-700">
-                Pickup preference
-              </label>
-              <select
-                value={pickupPreference}
-                onChange={(e) => setPickupPreference(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-green-500 focus:border-green-500"
+              <button
+                type="button"
+                onClick={handlePlaceOrder}
+                disabled={isPlacingOrder || safeCart.length === 0}
+                className={`mt-6 w-full inline-flex justify-center items-center px-4 py-2 rounded-full text-sm font-semibold ${
+                  isPlacingOrder || safeCart.length === 0
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
               >
-                <option value="any">
-                  Any time within the listed pickup window
-                </option>
-                <option value="early">Prefer earlier in the window</option>
-                <option value="middle">Prefer middle of the window</option>
-                <option value="late">Prefer closer to closing time</option>
-              </select>
-              <p className="mt-1 text-[11px] text-gray-500">
-                This note is saved with your order to help partners plan pickups.
-              </p>
+                {isPlacingOrder
+                  ? 'Placing Order...'
+                  : 'Place Order & Rescue Food'}
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={handlePlaceOrder}
-              disabled={safeCart.length === 0 || isPlacingOrder}
-              className={`mt-6 w-full inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold ${
-                safeCart.length === 0 || isPlacingOrder
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
-            >
-              {isPlacingOrder
-                ? 'Placing Order...'
-                : 'Place Order & Rescue Food'}
-            </button>
           </div>
         </div>
       </main>

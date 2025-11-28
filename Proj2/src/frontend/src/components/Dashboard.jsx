@@ -1030,9 +1030,9 @@ const Dashboard = ({ user, onLogout }) => {
               // eslint-disable-next-line no-console
               console.log('Order placed:', order);
 
-              // if order is missing / malformed, just go to impact safely
+              // If backend did not return an order object, do nothing special.
+              // Cart will still show the local thank-you screen.
               if (!order) {
-                setCurrentView('impact');
                 return;
               }
 
@@ -1179,7 +1179,8 @@ const Dashboard = ({ user, onLogout }) => {
                 });
               }
 
-              setCurrentView('impact');
+              // NOTE: do NOT change currentView here.
+              // Cart will stay mounted and show the thank-you screen.
             }}
             user={user}
           />
