@@ -23,6 +23,38 @@ import {
 
 import { restaurants as staticRestaurants } from '../data/staticdata';
 
+/**
+ * Render a small impact level badge using the user's current impact level.
+ * This is a pure function so it can be reused in multiple places.
+ */
+function renderImpactLevelBadge(userImpact) {
+  if (!userImpact) {
+    return null;
+  }
+
+  const level = userImpact.impactLevel || 'New Rescuer';
+  const meals = Number(userImpact.mealsOrdered || 0);
+
+  let badgeClasses =
+    'border-gray-200 text-gray-700 bg-gray-50';
+  if (meals >= 20) {
+    badgeClasses =
+      'border-yellow-300 text-yellow-800 bg-yellow-50';
+  } else if (meals >= 5) {
+    badgeClasses =
+      'border-green-300 text-green-800 bg-green-50';
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${badgeClasses}`}
+    >
+      <Award className="w-3 h-3 mr-1" />
+      <span>{level}</span>
+    </span>
+  );
+}
+
 // Small helper to summarize rescue inventory for a restaurant
 const summarizeRescueInventory = (restaurant) => {
   if (!restaurant || !Array.isArray(restaurant.menus)) {
@@ -33,27 +65,15 @@ const summarizeRescueInventory = (restaurant) => {
     const qty =
       typeof meal.availableQuantity === 'number'
         ? meal.availableQuantity
-        : typeof meal.quantity === 'number'
-        ? meal.quantity
-        : 0;
-
-    if (!Number.isFinite(qty) || qty <= 0) {
-      return sum;
-    }
-    return sum + qty;
+        : meal.quantityAvailable || 0;
+    return sum + (qty > 0 ? qty : 0);
   }, 0);
 
-  const lowInventory =
-    typeof totalAvailable === 'number' &&
-    Number.isFinite(totalAvailable) &&
-    totalAvailable > 0 &&
-    totalAvailable <= 5;
+  const allSoldOut = totalAvailable === 0;
 
-  return {
-    totalAvailable,
-    allSoldOut: totalAvailable === 0,
-    lowInventory,
-  };
+  const lowInventory = !allSoldOut && totalAvailable <= 5;
+
+  return { totalAvailable, allSoldOut, lowInventory };
 };
 
 const Dashboard = ({ user, onLogout }) => {
@@ -83,6 +103,20 @@ const Dashboard = ({ user, onLogout }) => {
   const [userOrders, setUserOrders] = useState([]);
   const [ordersError, setOrdersError] = useState(null);
 
+  // Lightweight derived community weekly goal based on current stats
+  const communityGoal = useMemo(() => {
+    const meals = Number(communityStats.mealsRescued || 0);
+    const safeMeals = Number.isFinite(meals) && meals > 0 ? meals : 0;
+
+    // Simple rule-of-thumb goal: at least 10, or ~1.5x current progress
+    const target =
+      safeMeals > 0 ? Math.max(10, Math.ceil(safeMeals * 1.5)) : 10;
+
+    const progress = Math.min(safeMeals, target);
+
+    return { target, progress };
+  }, [communityStats]);
+
   // Fetch restaurants + community stats (with static fallback)
   useEffect(() => {
     fetch('/dashboard/restaurants-with-meals')
@@ -91,13 +125,8 @@ const Dashboard = ({ user, onLogout }) => {
         if (Array.isArray(data) && data.length > 0) {
           setRestaurants(data);
         } else {
-          // eslint-disable-next-line no-console
-          console.warn(
-            'restaurants-with-meals returned empty, falling back to static data'
-          );
           setRestaurants(staticRestaurants);
         }
-        setShowCartToast(false);
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
@@ -107,27 +136,21 @@ const Dashboard = ({ user, onLogout }) => {
 
     fetch('/dashboard/community-stats')
       .then((res) => res.json())
-      .then((data) => setCommunityStats(data))
+      .then((data) => {
+        setCommunityStats((prev) => ({
+          ...prev,
+          ...data,
+        }));
+      })
       .catch((err) => {
         // eslint-disable-next-line no-console
         console.error('Error fetching community stats:', err);
       });
   }, []);
 
-  // Fetch user-specific impact + order history
+  // Fetch user impact + order history if we have a user
   useEffect(() => {
     if (!user || !user.email) {
-      setUserImpact((prev) => ({
-        ...prev,
-        mealsOrdered: 0,
-        moneySaved: 0,
-        foodWastePrevented: 0,
-        carbonReduced: 0,
-        localRestaurantsSupported: 0,
-        impactLevel: 'New Rescuer',
-      }));
-      setUserOrders([]);
-      setOrdersError(null);
       return;
     }
 
@@ -149,222 +172,191 @@ const Dashboard = ({ user, onLogout }) => {
     fetch(`/dashboard/orders?email=${emailParam}`)
       .then((res) => {
         if (!res.ok) {
-          throw new Error('Failed to load orders');
+          throw new Error(`Failed to fetch orders: ${res.status}`);
         }
         return res.json();
       })
-      .then((data) => {
-        const filtered = Array.isArray(data)
-          ? data.filter((o) => o && o.userEmail === user.email)
+      .then((orders) => {
+        const sorted = Array.isArray(orders)
+          ? [...orders].sort(
+              (a, b) =>
+                new Date(b.createdAt || b.date) -
+                new Date(a.createdAt || a.date)
+            )
           : [];
-        setUserOrders(filtered);
+        setUserOrders(sorted);
         setOrdersError(null);
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
-        console.error('Error fetching orders:', err);
-        setUserOrders([]);
-        setOrdersError('Unable to load your orders right now.');
+        console.error('Error fetching user orders:', err);
+        setOrdersError('We could not load your order history right now.');
       });
   }, [user]);
 
-  // Personalized: how many meals has this user rescued at each restaurant?
-  const rescuedMealsByRestaurant = useMemo(() => {
-    const counts = new Map();
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
 
-    if (!Array.isArray(userOrders)) {
-      return counts;
-    }
+  const confirmLogout = () => {
+    setShowLogoutConfirm(false);
+    onLogout();
+  };
 
-    userOrders.forEach((order) => {
-      if (!order || !Array.isArray(order.items)) {
-        return;
-      }
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
 
-      order.items.forEach((item) => {
-        if (!item || !item.restaurant) {
-          return;
-        }
-
-        const qty = Number(item.quantity) || 0;
-        if (!Number.isFinite(qty) || qty <= 0) {
-          return;
-        }
-
-        const prev = counts.get(item.restaurant) || 0;
-        counts.set(item.restaurant, prev + qty);
-      });
-    });
-
-    return counts;
-  }, [userOrders]);
-
-  const cuisineTypes = useMemo(() => {
-    const set = new Set(['all']);
-    restaurants.forEach((r) => {
-      if (r.cuisine) {
-        set.add(r.cuisine);
-      }
-    });
-    return Array.from(set);
-  }, [restaurants]);
-
-  const filteredRestaurants = useMemo(() => {
-    let list = Array.isArray(restaurants) ? restaurants : [];
-
-    const query = (searchQuery || '').trim().toLowerCase();
-    if (query) {
-      list = list.filter((r) => {
-        const name = (r.name || '').toLowerCase();
-        const cuisine = (r.cuisine || '').toLowerCase();
-        return name.includes(query) || cuisine.includes(query);
-      });
-    }
-
-    if (filterCuisine !== 'all') {
-      list = list.filter((r) => r.cuisine === filterCuisine);
-    }
-
-    return list;
-  }, [restaurants, searchQuery, filterCuisine]);
-
-  const [selectedRestaurantDetail, setSelectedRestaurantDetail] =
-    useState(null);
-
-  const handleOpenRestaurantDetail = (restaurant) => {
-    setSelectedRestaurantDetail(restaurant);
-    setCurrentView('detail');
+  const handleNavClick = (view) => {
+    setCurrentView(view);
+    setShowMobileMenu(false);
   };
 
   const handleAddToCart = (restaurant, meal) => {
-    if (!restaurant || !meal) return;
-    
-    setCart((prevCart) => {
-      const existing = Array.isArray(prevCart) ? [...prevCart] : [];
-      const mealId =
-        meal.id ||
-        `${restaurant.name}-${meal.name || ''}-${meal.pickupWindow || ''}`;
-    
-      const existingIndex = existing.findIndex((item) => {
-        if (!item || item.restaurant !== restaurant.name || !item.meal) {
-          return false;
-        }
-        const existingMealId =
-          item.meal.id ||
-          `${item.restaurant}-${item.meal.name || ''}-${
-            item.meal.pickupWindow || ''
-          }`;
-        return existingMealId === mealId;
-      });
-    
-      const getMaxQty = () => {
-        const inventoryCapRaw =
-          typeof meal.availableQuantity === 'number' &&
-          Number.isFinite(meal.availableQuantity)
-            ? meal.availableQuantity
-            : typeof meal.quantity === 'number' && Number.isFinite(meal.quantity)
-            ? meal.quantity
-            : Infinity;
-      
-        const perOrderCapRaw =
-          typeof meal.maxPerOrder === 'number' &&
-          Number.isFinite(meal.maxPerOrder)
-            ? meal.maxPerOrder
-            : Infinity;
-      
-        const inventoryCap =
-          Number.isFinite(inventoryCapRaw) && inventoryCapRaw >= 0
-            ? inventoryCapRaw
-            : Infinity;
-        const perOrderCap =
-          Number.isFinite(perOrderCapRaw) && perOrderCapRaw > 0
-            ? perOrderCapRaw
-            : Infinity;
-      
-        if (inventoryCap === Infinity && perOrderCap === Infinity) {
-          return Infinity;
-        }
-        if (inventoryCap === Infinity) {
-          return perOrderCap;
-        }
-        if (perOrderCap === Infinity) {
-          return inventoryCap;
-        }
-        return Math.max(0, Math.min(inventoryCap, perOrderCap));
+    if (!meal || meal.isSoldOut) return;
+
+    const available =
+      typeof meal.availableQuantity === 'number'
+        ? meal.availableQuantity
+        : meal.quantityAvailable || 0;
+
+    const existing = cart.find(
+      (item) =>
+        item.mealId === meal.id &&
+        item.restaurantId === restaurant.id
+    );
+
+    const existingQty = existing ? existing.quantity : 0;
+
+    if (available > 0 && existingQty >= available) {
+      return;
+    }
+
+    const newItem = {
+      // generic id so Cart.jsx can safely key on it if needed
+      id: meal.id || `${restaurant.id || 'rest'}-${meal.name}`,
+      restaurantId: restaurant.id,
+      restaurantName: restaurant.name,
+      mealId: meal.id,
+      name: meal.name,
+      price: meal.price,
+      quantity: 1,
+      pickupWindow: meal.pickupWindow || restaurant.pickupWindow || '5–7pm',
+    };
+
+    setCart((prev) => {
+      const idx = prev.findIndex(
+        (item) =>
+          item.mealId === newItem.mealId &&
+          item.restaurantId === newItem.restaurantId
+      );
+      if (idx === -1) {
+        return [...prev, newItem];
+      }
+      const updated = [...prev];
+      const target = updated[idx];
+      const nextQty = target.quantity + 1;
+      if (available > 0 && nextQty > available) {
+        return prev;
+      }
+      updated[idx] = {
+        ...target,
+        quantity: nextQty,
       };
-    
-      const maxQty = getMaxQty();
-    
-      // no stock at all → do nothing
-      if (maxQty === 0) {
-        return existing;
-      }
-    
-      if (existingIndex === -1) {
-        const initialQty = maxQty === Infinity ? 1 : Math.min(1, maxQty);
-        if (initialQty <= 0) {
-          return existing;
-        }
-        existing.push({
-          restaurant: restaurant.name,
-          meal,
-          quantity: initialQty,
-        });
-      } else {
-        const entry = existing[existingIndex];
-        const currentQtyRaw = Number(entry.quantity);
-        const currentQty =
-          Number.isFinite(currentQtyRaw) && currentQtyRaw > 0
-            ? currentQtyRaw
-            : 1;
-      
-        if (maxQty !== Infinity && currentQty >= maxQty) {
-          // already at cap, no further increment
-          return existing;
-        }
-      
-        const nextQty =
-          maxQty === Infinity
-            ? currentQty + 1
-            : Math.min(currentQty + 1, maxQty);
-      
-        entry.quantity = nextQty;
-      }
-    
-      return existing;
+      return updated;
     });
-  
+
     setShowCartToast(true);
-    setTimeout(() => setShowCartToast(false), 2000);
+    // navigate to cart so user immediately sees the added items
+    setCurrentView('cart');
   };
 
+  const handleRemoveFromCart = (index) => {
+    setCart((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateQuantity = (index, newQty) => {
+    if (newQty <= 0) {
+      handleRemoveFromCart(index);
+      return;
+    }
+
+    setCart((prev) => {
+      const updated = [...prev];
+      const target = updated[index];
+
+      if (!target) return prev;
+
+      const restaurant = restaurants.find(
+        (r) => r.id === target.restaurantId
+      );
+      const meal = restaurant?.menus?.find(
+        (m) => m.id === target.mealId
+      );
+
+      const available =
+        typeof meal?.availableQuantity === 'number'
+          ? meal.availableQuantity
+          : meal?.quantityAvailable || 0;
+
+      if (available > 0 && newQty > available) {
+        return prev;
+      }
+
+      updated[index] = {
+        ...target,
+        quantity: newQty,
+      };
+      return updated;
+    });
+  };
+
+  const handleClearCart = () => {
+    setCart([]);
+  };
+
+  const handleFavoriteToggle = (restaurantId) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(restaurantId)) {
+        next.delete(restaurantId);
+      } else {
+        next.add(restaurantId);
+      }
+      return next;
+    });
+  };
 
   const handleRescueAgain = () => {
-    if (!Array.isArray(userOrders) || userOrders.length === 0) {
-      return;
-    }
+    if (!userOrders || userOrders.length === 0) return;
 
     const lastOrder = userOrders[0];
-    if (!lastOrder || !Array.isArray(lastOrder.items)) {
-      return;
-    }
+    if (!lastOrder || !Array.isArray(lastOrder.items)) return;
 
     const rebuiltCart = [];
 
     lastOrder.items.forEach((item) => {
-      if (!item || !item.meal || !item.restaurant) {
-        return;
-      }
+      const restaurant = restaurants.find(
+        (r) => r.id === item.restaurantId
+      );
+      const meal = restaurant?.menus?.find(
+        (m) => m.id === item.mealId
+      );
 
-      const qty = Number(item.quantity) || 0;
-      if (!Number.isFinite(qty) || qty <= 0) {
+      if (!restaurant || !meal) {
         return;
       }
 
       rebuiltCart.push({
-        restaurant: item.restaurant,
-        meal: item.meal,
-        quantity: qty,
+        id: meal.id || `${restaurant.id || 'rest'}-${meal.name}`,
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+        mealId: meal.id,
+        name: meal.name,
+        price: meal.price,
+        quantity: item.quantity || 1,
+        pickupWindow:
+          meal.pickupWindow || restaurant.pickupWindow || '5–7pm',
       });
     });
 
@@ -376,162 +368,283 @@ const Dashboard = ({ user, onLogout }) => {
     setCurrentView('cart');
   };
 
-  const toggleFavorite = (restaurantId) => {
-    const newFavorites = new Set(favorites);
+  const handlePlaceOrder = (orderPayload) => {
+    return fetch('/dashboard/place-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderPayload),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Order failed with ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((order) => {
+        // eslint-disable-next-line no-console
+        console.log('Order placed:', order);
 
-    if (newFavorites.has(restaurantId)) {
-      newFavorites.delete(restaurantId);
-    } else {
-      newFavorites.add(restaurantId);
-    }
+        if (!order) {
+          return;
+        }
 
-    setFavorites(newFavorites);
+        if (user && user.email) {
+          const emailParam = encodeURIComponent(user.email);
+          fetch(`/dashboard/user-impact?email=${emailParam}`)
+            .then((res) => res.json())
+            .then((data) => {
+              setUserImpact((prev) => ({
+                ...prev,
+                ...data,
+              }));
+            })
+            .catch((err) => {
+              // eslint-disable-next-line no-console
+              console.error(
+                'Error refreshing user impact after order:',
+                err
+              );
+            });
+
+          fetch(`/dashboard/orders?email=${emailParam}`)
+            .then((res) => {
+              if (!res.ok) {
+                throw new Error(
+                  `Failed to refresh orders: ${res.status}`
+                );
+              }
+              return res.json();
+            })
+            .then((orders) => {
+              const sorted = Array.isArray(orders)
+                ? [...orders].sort(
+                    (a, b) =>
+                      new Date(b.createdAt || b.date) -
+                      new Date(a.createdAt || a.date)
+                  )
+                : [];
+              setUserOrders(sorted);
+            })
+            .catch((err) => {
+              // eslint-disable-next-line no-console
+              console.error(
+                'Error refreshing orders after place order:',
+                err
+              );
+            });
+        }
+      })
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.error('Error placing order:', err);
+        throw err;
+      });
   };
 
-  const handleNavClick = (view) => {
-    setCurrentView(view);
-    setShowMobileMenu(false);
-    if (view === 'browse') {
-      setSelectedRestaurantDetail(null);
-    }
+  const filteredRestaurants = useMemo(() => {
+    const term = searchQuery.toLowerCase().trim();
+
+    return restaurants
+      .filter((restaurant) => {
+        const matchesCuisine =
+          filterCuisine === 'all' ||
+          (restaurant.cuisine &&
+            restaurant.cuisine.toLowerCase() ===
+              filterCuisine.toLowerCase());
+        if (!matchesCuisine) return false;
+
+        if (!term) return true;
+        const nameMatch = restaurant.name
+          ?.toLowerCase()
+          .includes(term);
+        const cuisineMatch = restaurant.cuisine
+          ?.toLowerCase()
+          .includes(term);
+        const neighborhoodMatch = restaurant.neighborhood
+          ?.toLowerCase()
+          .includes(term);
+
+        return nameMatch || cuisineMatch || neighborhoodMatch;
+      })
+      .map((restaurant) => {
+        const inventorySummary =
+          summarizeRescueInventory(restaurant);
+        return {
+          ...restaurant,
+          inventorySummary,
+        };
+      });
+  }, [restaurants, searchQuery, filterCuisine]);
+
+  const restaurantLookup = useMemo(() => {
+    const map = new Map();
+    restaurants.forEach((r) => {
+      map.set(r.id, r);
+    });
+    return map;
+  }, [restaurants]);
+
+  const rescuedMealsByRestaurant = useMemo(() => {
+    const tally = new Map();
+    if (!Array.isArray(userOrders)) return tally;
+
+    userOrders.forEach((order) => {
+      if (!Array.isArray(order.items)) return;
+      order.items.forEach((item) => {
+        const nameKey =
+          item.restaurantName ||
+          restaurantLookup.get(item.restaurantId)?.name;
+        if (!nameKey) return;
+        const prev = tally.get(nameKey) || 0;
+        tally.set(nameKey, prev + (item.quantity || 1));
+      });
+    });
+
+    return tally;
+  }, [userOrders, restaurantLookup]);
+
+  const statsCards = [
+    {
+      label: 'Meals Rescued',
+      value: userImpact.mealsOrdered || 0,
+      icon: Leaf,
+      detail: 'from Raleigh kitchens this month',
+    },
+    {
+      label: 'Food Waste Prevented',
+      value: `${userImpact.foodWastePrevented || 0} lbs`,
+      icon: Package,
+      detail: 'of surplus food saved from landfill',
+    },
+    {
+      label: 'Your Lifetime Impact',
+      value: `${userImpact.carbonReduced || 0} kg CO₂e`,
+      icon: TrendingUp,
+      detail: 'estimated emissions prevented by your rescues',
+    },
+  ];
+
+  const handleInventoryDemoUpdate = (updatedRestaurants) => {
+    setRestaurants(updatedRestaurants);
   };
 
-  const handleLogoutClick = () => {
-    setShowLogoutConfirm(true);
-  };
-
-  const confirmLogout = () => {
-    setShowLogoutConfirm(false);
-    if (typeof onLogout === 'function') {
-      onLogout();
-    }
-  };
-
-  const cancelLogout = () => {
-    setShowLogoutConfirm(false);
-  };
-
-  const renderImpactLevelBadge = () => {
-    const level = userImpact.impactLevel || 'New Rescuer';
-
-    let bg = 'bg-gray-100';
-    let text = 'text-gray-800';
-
-    if (level === 'Impact Hero') {
-      bg = 'bg-yellow-100';
-      text = 'text-yellow-800';
-    } else if (level === 'Rescue Champion') {
-      bg = 'bg-purple-100';
-      text = 'text-purple-800';
-    } else if (level === 'Rising Rescuer') {
-      bg = 'bg-green-100';
-      text = 'text-green-800';
-    }
-
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bg} ${text}`}
-      >
-        <Zap className="w-3 h-3 mr-1" />
-        {level}
-      </span>
-    );
+  const closeCartToast = () => {
+    setShowCartToast(false);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* top nav */}
+      {/* top navigation */}
       <header className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Truck className="w-6 h-6 text-green-600" />
-            <span className="text-lg font-bold text-gray-900">
-              Tiffin Trails
-            </span>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-100">
+              <Leaf className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">
+                Tiffin Trails
+              </h1>
+              <p className="text-xs text-gray-500">
+                Rescue surplus meals from Raleigh restaurants
+              </p>
+            </div>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-6">
-            <button
-              type="button"
-              onClick={() => handleNavClick('browse')}
-              className={`text-sm font-medium ${
-                currentView === 'browse'
-                  ? 'text-green-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Browse
-            </button>
-            <button
-              type="button"
-              onClick={() => handleNavClick('impact')}
-              className={`text-sm font-medium ${
-                currentView === 'impact'
-                  ? 'text-green-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              My Impact
-            </button>
-            <button
-              type="button"
-              onClick={() => handleNavClick('community')}
-              className={`text-sm font-medium ${
-                currentView === 'community'
-                  ? 'text-green-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Community
-            </button>
-            <button
-              type="button"
-              onClick={() => handleNavClick('leaderboard')}
-              className={`text-sm font-medium ${
-                currentView === 'leaderboard'
-                  ? 'text-green-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Leaderboard
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentView('cart')}
-              className="relative flex items-center text-gray-600 hover:text-gray-900"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {cart.length > 0 && (
-                <span className="ml-1 bg-green-600 text-white text-xs rounded-full px-2 py-0.5">
-                  {cart.length}
-                </span>
-              )}
-            </button>
-            <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-6">
+            {/* desktop nav */}
+            <nav className="hidden md:flex items-center space-x-4">
+              <button
+                type="button"
+                onClick={() => handleNavClick('browse')}
+                className={`text-sm font-medium ${
+                  currentView === 'browse'
+                    ? 'text-green-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Browse
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNavClick('impact')}
+                className={`text-sm font-medium ${
+                  currentView === 'impact'
+                    ? 'text-green-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                My Impact
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNavClick('community')}
+                className={`text-sm font-medium ${
+                  currentView === 'community'
+                    ? 'text-green-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Community
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNavClick('leaderboard')}
+                className={`text-sm font-medium ${
+                  currentView === 'leaderboard'
+                    ? 'text-green-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Leaderboard
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNavClick('cart')}
+                className={`relative flex items-center text-sm font-medium ${
+                  currentView === 'cart'
+                    ? 'text-green-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <ShoppingCart className="w-5 h-5 mr-1" />
+                Cart
+                {cart.length > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center text-xs font-semibold bg-green-600 text-white rounded-full w-5 h-5">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
+            </nav>
+
+            {/* user + logout */}
+            <div className="hidden md:flex items-center space-x-3">
               <div className="text-right">
-                <p className="text-xs text-gray-500">Signed in as</p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {user?.name || user?.email || 'Guest Rescuer'}
-                </p>
+                <div className="text-xs text-gray-500">
+                  Signed in as
+                </div>
+                <div className="text-sm font-medium text-gray-900">
+                  {user?.name || 'Guest Rescuer'}
+                </div>
               </div>
               <button
                 type="button"
                 onClick={handleLogoutClick}
-                className="text-xs font-medium text-red-500 hover:text-red-600"
+                className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 Log out
               </button>
             </div>
-          </nav>
 
-          {/* mobile nav toggle */}
-          <button
-            type="button"
-            className="md:hidden flex items-center text-gray-600 hover:text-gray-900"
-            onClick={() => setShowMobileMenu((prev) => !prev)}
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+            {/* mobile nav toggle */}
+            <button
+              type="button"
+              className="md:hidden flex items-center text-gray-600 hover:text-gray-900"
+              onClick={() => setShowMobileMenu((prev) => !prev)}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* mobile dropdown nav */}
@@ -584,45 +697,34 @@ const Dashboard = ({ user, onLogout }) => {
               </button>
               <button
                 type="button"
-                onClick={() => setCurrentView('cart')}
-                className="flex items-center text-sm text-gray-700 hover:text-gray-900"
+                onClick={() => handleNavClick('cart')}
+                className={`block w-full text-left text-sm py-1 ${
+                  currentView === 'cart'
+                    ? 'text-green-600'
+                    : 'text-gray-700 hover:text-gray-900'
+                }`}
               >
-                <ShoppingCart className="w-4 h-4 mr-1" />
                 Cart
-                {cart.length > 0 && (
-                  <span className="ml-1 bg-green-600 text-white text-xs rounded-full px-2 py-0.5">
-                    {cart.length}
-                  </span>
-                )}
               </button>
-              <div className="pt-2 border-t border-gray-100 mt-2 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500">Signed in as</p>
-                  <p className="text-sm font-semibold text-gray-900">
-                    {user?.name || user?.email || 'Guest Rescuer'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleLogoutClick}
-                  className="text-xs font-medium text-red-500 hover:text-red-600"
-                >
-                  Log out
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleLogoutClick}
+                className="block w-full text-left text-sm py-1 text-red-600 hover:text-red-700"
+              >
+                Log out
+              </button>
             </nav>
           </div>
         )}
       </header>
 
-      {/* main content */}
       <main className="max-w-6xl mx-auto px-4 py-6">
-        {/* Browse view */}
-        {currentView === 'browse' && !selectedRestaurantDetail && (
-          <div className="space-y-6">
+        {/* top hero & quick stats always visible on browse view */}
+        {currentView === 'browse' && (
+          <section className="mb-6 space-y-4">
             {/* hero + quick stats */}
             <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl p-5 flex flex-col justify-between">
+              <div className="md:col-span-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl p-5 flex flex-col justify-between">
                 <div>
                   <h2 className="text-xl font-bold mb-2">
                     Rescue surplus meals from local kitchens
@@ -634,37 +736,43 @@ const Dashboard = ({ user, onLogout }) => {
                 </div>
                 {/* stats row：放大數字＋半透明卡片 */}
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center">
-                    <Leaf className="w-5 h-5 text-green-100 mr-2" />
+                  <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center justify-between">
                     <div>
-                      <p className="text-3xl font-bold leading-tight">
-                        {communityStats.mealsRescued || 0}+
+                      <p className="text-xs uppercase tracking-wide text-green-100">
+                        Meals you&apos;ve rescued
                       </p>
-                      <p className="text-[11px] text-green-50 uppercase tracking-wide">
-                        meals rescued this week
+                      <p className="text-xl font-semibold">
+                        {userImpact.mealsOrdered || 0}
                       </p>
                     </div>
-                  </div>
-                  <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center">
-                    <Users className="w-5 h-5 text-green-100 mr-2" />
-                    <div>
-                      <p className="text-3xl font-bold leading-tight">
-                        {communityStats.activeUsers || 0}
-                      </p>
-                      <p className="text-[11px] text-green-50 uppercase tracking-wide">
-                        neighbors already rescuing
-                      </p>
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-700/60">
+                      <Leaf className="w-4 h-4 text-green-100" />
                     </div>
                   </div>
-                  <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center">
-                    <TrendingUp className="w-5 h-5 text-green-100 mr-2" />
+                  <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center justify-between">
                     <div>
-                      <p className="text-3xl font-bold leading-tight">
-                        {communityStats.wastePreventedTons || 0}
+                      <p className="text-xs uppercase tracking-wide text-green-100">
+                        Local partners
                       </p>
-                      <p className="text-[11px] text-green-50 uppercase tracking-wide">
-                        tons of food waste prevented
+                      <p className="text-xl font-semibold">
+                        {userImpact.localRestaurantsSupported || 0}
                       </p>
+                    </div>
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-700/60">
+                      <Users className="w-4 h-4 text-green-100" />
+                    </div>
+                  </div>
+                  <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-green-100">
+                        Impact level
+                      </p>
+                      <p className="text-xl font-semibold">
+                        {userImpact.impactLevel}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-700/60">
+                      <Star className="w-4 h-4 text-yellow-300" />
                     </div>
                   </div>
                 </div>
@@ -675,7 +783,7 @@ const Dashboard = ({ user, onLogout }) => {
                   <h3 className="text-sm font-semibold text-gray-800">
                     Your Impact Snapshot
                   </h3>
-                  {renderImpactLevelBadge()}
+                  {renderImpactLevelBadge(userImpact)}
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
@@ -699,250 +807,211 @@ const Dashboard = ({ user, onLogout }) => {
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Carbon reduced</span>
                     <span className="font-semibold text-gray-900">
-                      {userImpact.carbonReduced || 0} kg
+                      {userImpact.carbonReduced || 0} kg CO₂e
                     </span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleRescueAgain}
-                  className="mt-3 w-full inline-flex items-center justify-center px-3 py-2 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100"
+              </div>
+            </section>
+
+            {/* search & filters row */}
+            <section className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="flex-1 flex items-center bg-white rounded-lg shadow-sm border border-gray-200 px-3 py-2">
+                <Search className="w-4 h-4 text-gray-400 mr-2" />
+                <input
+                  type="text"
+                  placeholder="Search by restaurant, cuisine, or neighborhood..."
+                  className="w-full border-none outline-none text-sm text-gray-800 placeholder-gray-400"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <label className="text-xs text-gray-600">Cuisine</label>
+                <select
+                  className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-800"
+                  value={filterCuisine}
+                  onChange={(e) => setFilterCuisine(e.target.value)}
                 >
-                  Rescue Again from Last Order
-                </button>
+                  <option value="all">All</option>
+                  <option value="Indian">Indian</option>
+                  <option value="Indian Fusion">Indian Fusion</option>
+                  <option value="American">American</option>
+                  <option value="Mexican">Mexican</option>
+                  <option value="Italian">Italian</option>
+                  <option value="Mediterranean">Mediterranean</option>
+                  <option value="Asian">Asian</option>
+                </select>
               </div>
             </section>
-
-            {/* search + filters */}
-            <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-100 p-4">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
-                <div className="flex items-center w-full md:w-1/2 bg-white border border-gray-200 rounded-lg px-3 py-2">
-                  <Search className="w-4 h-4 text-gray-400 mr-2" />
-                  <input
-                    type="text"
-                    placeholder="Search by restaurant or cuisine..."
-                    className="flex-1 border-none focus:ring-0 text-sm"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setFilterCuisine('all')}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                      filterCuisine === 'all'
-                        ? 'bg-green-600 text-white border-green-600'
-                        : 'bg-white text-gray-600 border-gray-200'
-                    } mb-2`}
-                  >
-                    All Cuisines
-                  </button>
-                  {cuisineTypes
-                    .filter((c) => c !== 'all')
-                    .map((cuisine) => (
-                      <button
-                        type="button"
-                        key={cuisine}
-                        onClick={() => setFilterCuisine(cuisine)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                          filterCuisine === cuisine
-                            ? 'bg-green-600 text-white border-green-600'
-                            : 'bg-white text-gray-600 border-gray-200'
-                        } mb-2`}
-                      >
-                        {cuisine}
-                      </button>
-                    ))}
-                </div>
-              </div>
-            </section>
-
-            {/* restaurant cards */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-800">
-                  Restaurants with rescue meals
-                </h3>
-                <p className="text-xs text-gray-500">
-                  Showing {filteredRestaurants.length} partners
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredRestaurants.map((restaurant) => {
-                  const restaurantId = restaurant.id || restaurant.name;
-
-                  const inventorySummary =
-                    summarizeRescueInventory(restaurant);
-                  const {
-                    totalAvailable,
-                    allSoldOut,
-                    lowInventory,
-                  } = inventorySummary;
-
-                  const userRescueCount =
-                    rescuedMealsByRestaurant.get(restaurant.name) || 0;
-
-                  return (
-                    <div
-                      key={restaurantId}
-                      className="bg-white rounded-xl shadow hover:shadow-md transition p-4 flex"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <h4 className="text-sm font-semibold text-gray-900">
-                                {restaurant.name}
-                              </h4>
-                              {favorites.has(restaurantId) && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-pink-50 text-pink-600 text-[11px] font-medium">
-                                  <Heart className="w-3 h-3 mr-1" />
-                                  Favorite
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {restaurant.cuisine || 'Rescue-friendly cuisine'}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => toggleFavorite(restaurantId)}
-                            className="text-gray-400 hover:text-pink-500"
-                            aria-label="Toggle favorite"
-                          >
-                            <Heart
-                              className={`w-4 h-4 ${
-                                favorites.has(restaurantId)
-                                  ? 'fill-pink-500 text-pink-500'
-                                  : ''
-                              }`}
-                            />
-                          </button>
-                        </div>
-
-                        <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                          <div className="flex items-center space-x-3">
-                            <span className="flex items-center">
-                              <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                              {restaurant.rating || 4.5}{' '}
-                              <span className="text-gray-400">
-                                ({restaurant.numReviews || 120})
-                              </span>
-                            </span>
-                            <span className="flex items-center">
-                              <MapPin className="w-4 h-4 mr-1" />
-                              {restaurant.address || 'Address not available'}
-                            </span>
-                            <span className="flex items-center">
-                              <Clock className="w-4 h-4 mr-1" />
-                              {restaurant.hours || 'Hours not listed'}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 text-xs text-gray-600">
-                          {Array.isArray(restaurant.menus) &&
-                          restaurant.menus.length > 0 ? (
-                            (() => {
-                              const rescueCount = restaurant.menus.length;
-                              const hasMenus = rescueCount > 0;
-                              if (!hasMenus) {
-                                return (
-                                  <span>
-                                    No rescue meals listed yet. Check back
-                                    later today.
-                                  </span>
-                                );
-                              }
-                              return (
-                                <span>
-                                  {rescueCount}{' '}
-                                  {rescueCount === 1
-                                    ? 'rescue meal listed'
-                                    : 'rescue meals listed'}
-                                  {allSoldOut && ' (sold out today)'}
-                                  {!allSoldOut &&
-                                    lowInventory &&
-                                    ' • Almost gone today'}
-                                </span>
-                              );
-                            })()
-                          ) : (
-                            <span>
-                              No rescue meals listed yet. Check back later
-                              today.
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="mt-2 text-[11px] text-gray-500">
-                          {typeof totalAvailable === 'number' &&
-                          Number.isFinite(totalAvailable) ? (
-                            <span>
-                              Approx.{' '}
-                              <span className="font-semibold">
-                                {totalAvailable}
-                              </span>{' '}
-                              boxes still available today.
-                            </span>
-                          ) : (
-                            <span>
-                              This partner lists rescue boxes each afternoon.
-                            </span>
-                          )}
-                        </div>
-
-                        {userRescueCount > 0 && (
-                          <p className="mt-1 text-[11px] text-green-700">
-                            You&apos;ve rescued{' '}
-                            <span className="font-semibold">
-                              {userRescueCount}
-                            </span>{' '}
-                            meals from this restaurant.
-                          </p>
-                        )}
-
-                        {userRescueCount === 0 && (
-                          <p className="mt-1 text-[11px] text-gray-400">
-                            Be the first to rescue here.
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="ml-4 flex flex-col justify-between items-end">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleOpenRestaurantDetail(restaurant)
-                          }
-                          className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-green-600 text-white hover:bg-green-700"
-                        >
-                          View Rescue Meals
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
+          </section>
         )}
 
-        {/* Restaurant detail view */}
-        {currentView === 'detail' && selectedRestaurantDetail && (
-          <RestaurantDetail
-            restaurant={selectedRestaurantDetail}
-            cart={cart}
-            onBack={() => {
-              setCurrentView('browse');
-              setSelectedRestaurantDetail(null);
-            }}
-            onAddToCart={handleAddToCart}
-          />
+        {/* browse view */}
+        {currentView === 'browse' && (
+          <section className="space-y-4">
+            <header className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-gray-900">
+                Available tonight near you
+              </h2>
+              <p className="text-xs text-gray-500">
+                Real-time availability from Raleigh partners
+              </p>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredRestaurants.map((restaurant) => {
+                const restaurantId = restaurant.id;
+                const isFavorite = favorites.has(restaurantId);
+
+                const userRescueCount =
+                  rescuedMealsByRestaurant.get(restaurant.name) || 0;
+
+                return (
+                  <div
+                    key={restaurantId}
+                    className="bg-white rounded-xl shadow hover:shadow-md transition p-4 flex"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <h3 className="text-base font-semibold text-gray-900">
+                              {restaurant.name}
+                            </h3>
+                            {userRescueCount > 0 && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">
+                                <Zap className="w-3 h-3 mr-1" />
+                                Rescued {userRescueCount}x
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2 mt-1 text-xs text-gray-500">
+                            <span>{restaurant.cuisine}</span>
+                            <span>•</span>
+                            <span className="inline-flex items-center">
+                              <MapPin className="w-3 h-3 mr-1" />
+                              {restaurant.neighborhood || 'Raleigh'}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleFavoriteToggle(restaurant.id)}
+                          className="p-1 rounded-full hover:bg-gray-100"
+                        >
+                          <Heart
+                            className={`w-5 h-5 ${
+                              isFavorite
+                                ? 'text-red-500 fill-red-100'
+                                : 'text-gray-400'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      <div className="mt-3 flex items-center space-x-3 text-xs text-gray-600">
+                        <span className="inline-flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          Pickup{' '}
+                          {restaurant.pickupWindow ||
+                            restaurant.menus?.[0]?.pickupWindow ||
+                            '5–7pm'}
+                        </span>
+                        <span className="inline-flex items-center">
+                          <Truck className="w-3 h-3 mr-1" />
+                          {restaurant.pickupLocation || 'Curbside pickup'}
+                        </span>
+                      </div>
+
+                      <div className="mt-3">
+                        <p className="text-xs font-medium text-gray-700 mb-1">
+                          Tonight&apos;s rescue boxes
+                        </p>
+                        <div className="space-y-2">
+                          {Array.isArray(restaurant.menus) &&
+                          restaurant.menus.length > 0 ? (
+                            restaurant.menus.map((meal) => {
+                              const available =
+                                typeof meal.availableQuantity === 'number'
+                                  ? meal.availableQuantity
+                                  : meal.quantityAvailable || 0;
+                              const isSoldOut =
+                                available <= 0 || meal.isSoldOut;
+                              const unitPrice = meal.price || 5;
+
+                              return (
+                                <div
+                                  key={meal.id}
+                                  className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
+                                >
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {meal.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {meal.description ||
+                                        'Chef-selected surplus portions from tonight.'}
+                                    </p>
+                                    <div className="mt-1 flex items-center space-x-2 text-xs text-gray-500">
+                                      <span>
+                                        ${unitPrice.toFixed(2)} rescue price
+                                      </span>
+                                      {available > 0 && (
+                                        <>
+                                          <span>•</span>
+                                          <span>{available} left</span>
+                                        </>
+                                      )}
+                                      {isSoldOut && (
+                                        <>
+                                          <span>•</span>
+                                          <span className="text-red-500 font-semibold">
+                                            Sold out
+                                          </span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col items-end space-y-1">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        !isSoldOut &&
+                                        handleAddToCart(restaurant, {
+                                          ...meal,
+                                          isSoldOut,
+                                        })
+                                      }
+                                      disabled={isSoldOut}
+                                      className={`px-3 py-1 text-xs font-medium rounded-full border ${
+                                        isSoldOut
+                                          ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-100'
+                                          : 'border-green-600 text-green-700 hover:bg-green-50'
+                                      }`}
+                                    >
+                                      {isSoldOut
+                                        ? 'Sold Out'
+                                        : 'Add to cart'}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <p className="text-xs text-gray-500">
+                              No rescue boxes listed yet — check back
+                              later tonight.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         )}
 
         {/* My Impact view */}
@@ -956,49 +1025,50 @@ const Dashboard = ({ user, onLogout }) => {
                   </h2>
                   <p className="text-xs text-gray-500">
                     See how your rescues add up over time.
+                    {typeof userImpact.localRestaurantsSupported === 'number' && (
+                      <>
+                        {' '}
+                        You&apos;ve supported{' '}
+                        <span className="font-semibold text-gray-700">
+                          {userImpact.localRestaurantsSupported}
+                        </span>{' '}
+                        local restaurants so far.
+                      </>
+                    )}
                   </p>
                 </div>
-                {renderImpactLevelBadge()}
+                {renderImpactLevelBadge(userImpact)}
               </div>
 
               {ordersError && (
-                <p className="mb-4 text-xs text-red-500">
+                <div className="mb-4 rounded-lg bg-red-50 border border-red-100 p-3 text-xs text-red-700">
                   {ordersError}
-                </p>
+                </div>
               )}
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <Package className="w-12 h-12 text-green-600 mx-auto mb-3" />
-                  <p className="text-gray-600 mb-2">Meals Rescued</p>
-                  <p className="text-4xl font-bold text-green-600">
-                    {userImpact.mealsOrdered || 0}
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <Leaf className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                  <p className="text-gray-600 mb-2">Waste Prevented</p>
-                  <p className="text-4xl font-bold text-blue-600">
-                    {userImpact.foodWastePrevented || 0} lbs
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <TrendingUp className="w-12 h-12 text-purple-600 mx-auto mb-3" />
-                  <p className="text-gray-600 mb-2">Carbon Reduced</p>
-                  <p className="text-4xl font-bold text-purple-600">
-                    {userImpact.carbonReduced || 0} kg
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <Award className="w-12 h-12 text-orange-500 mx-auto mb-3" />
-                  <p className="text-gray-600 mb-2">Money Saved</p>
-                  <p className="text-4xl font-bold text-orange-600">
-                    ${userImpact.moneySaved || 0}
-                  </p>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                {statsCards.map((stat) => {
+                  const Icon = stat.icon;
+                  return (
+                    <div
+                      key={stat.label}
+                      className="bg-gradient-to-br from-green-50 via-white to-sky-50 rounded-xl shadow-sm border border-green-100 p-4 flex flex-col justify-between"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-gray-700">
+                          {stat.label}
+                        </p>
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                          <Icon className="w-4 h-4 text-green-700" />
+                        </div>
+                      </div>
+                      <p className="text-2xl font-bold text-gray-900 mb-1">
+                        {stat.value}
+                      </p>
+                      <p className="text-xs text-gray-500">{stat.detail}</p>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-8 mt-8">
@@ -1013,21 +1083,74 @@ const Dashboard = ({ user, onLogout }) => {
                     helps a local restaurant recoup costs on surplus food.
                   </li>
                   <li>
-                    <span className="font-semibold text-gray-800">
-                      Prevent food waste
-                    </span>{' '}
-                    by giving meals a second chance instead of heading to
-                    landfill.
+                    You&apos;re reducing the amount of perfectly good food that
+                    might otherwise end up in landfills, which also cuts down on
+                    greenhouse gas emissions from decomposition.
                   </li>
                   <li>
-                    <span className="font-semibold text-gray-800">
-                      Reduce emissions
-                    </span>{' '}
-                    from food production and disposal by rescuing what&apos;s
-                    already been cooked.
+                    By choosing rescue meals, you&apos;re also supporting more
+                    affordable access to prepared food in your community.
+                  </li>
+                  <li>
+                    Over time, regular rescuers like you create enough demand
+                    that restaurants can plan more sustainable inventory and
+                    portioning.
                   </li>
                 </ul>
               </div>
+
+              {userOrders && userOrders.length > 0 && (
+                <div className="mt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-base font-semibold text-gray-900">
+                      Your recent rescues
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={handleRescueAgain}
+                      className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-green-600 text-white hover:bg-green-700"
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-1" />
+                      Rescue Again
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {userOrders.slice(0, 5).map((order) => (
+                      <div
+                        key={order.id}
+                        className="bg-gray-50 rounded-lg px-4 py-3 flex justify-between items-center"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {order.items
+                              ?.map((item) => item.restaurantName)
+                              .filter(Boolean)
+                              .join(', ') || 'Rescue order'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(
+                              order.createdAt || order.date
+                            ).toLocaleString()}{' '}
+                            •{' '}
+                            {order.items
+                              ?.map((item) => item.name)
+                              .filter(Boolean)
+                              .join(', ')}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-gray-900">
+                            ${order.totalPrice || order.total || 0}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {order.points || 0} pts earned
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -1040,8 +1163,76 @@ const Dashboard = ({ user, onLogout }) => {
                 Community
               </h2>
               <p className="text-sm text-gray-600">
-                Community features are coming soon in this prototype.
+                See how neighbors are rescuing surplus food together in Raleigh.
               </p>
+
+              {/* High-level community stats */}
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-green-50 rounded-lg px-4 py-3 flex items-center">
+                  <Leaf className="w-5 h-5 text-green-600 mr-3" />
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {communityStats.mealsRescued || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      meals rescued this week
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 rounded-lg px-4 py-3 flex items-center">
+                  <Users className="w-5 h-5 text-blue-600 mr-3" />
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {communityStats.activeUsers || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      neighbors already rescuing
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 rounded-lg px-4 py-3 flex items-center">
+                  <TrendingUp className="w-5 h-5 text-amber-600 mr-3" />
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {communityStats.wastePreventedTons || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      tons of food waste prevented
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Weekly community challenge */}
+              <div className="mt-6">
+                <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1">
+                  This week&apos;s community challenge
+                </p>
+                <p className="text-sm text-gray-600">
+                  Help the community rescue{' '}
+                  <span className="font-semibold">
+                    {communityGoal.target}
+                  </span>{' '}
+                  meals this week. We&apos;re currently at{' '}
+                  <span className="font-semibold">
+                    {communityGoal.progress}
+                  </span>
+                  .
+                </p>
+                <div className="mt-2 w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-2 bg-green-500"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        (communityGoal.progress / (communityGoal.target || 1)) * 100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </section>
         )}
@@ -1051,207 +1242,72 @@ const Dashboard = ({ user, onLogout }) => {
           <LeaderboardPanel communityStats={communityStats} />
         )}
 
-        {/* Cart view */}
+        {/* cart view */}
         {currentView === 'cart' && (
-          <Cart
-            cart={cart}
-            setCart={setCart}
-            onBack={() => {
-              setCurrentView('browse');
-              setSelectedRestaurantDetail(null);
-            }}
-            onOrderPlaced={(order) => {
-              setOrdersError(null);
-
-              // eslint-disable-next-line no-console
-              console.log('Order placed:', order);
-
-              // If backend did not return an order object, do nothing special.
-              // Cart will still show the local thank-you screen.
-              if (!order) {
-                return;
-              }
-
-              // refresh user impact if we know user email
-              if (user && user.email) {
-                const emailParam = encodeURIComponent(user.email);
-                fetch(`/dashboard/user-impact?email=${emailParam}`)
-                  .then((res) => res.json())
-                  .then((data) => {
-                    setUserImpact((prev) => ({
-                      ...prev,
-                      ...data,
-                    }));
-                  })
-                  .catch((err) => {
-                    // eslint-disable-next-line no-console
-                    console.error(
-                      'Error refreshing user impact after order:',
-                      err
-                    );
-                  });
-              }
-
-              // update userOrders list with this new order (if email matches)
-              if (user && user.email && order.userEmail === user.email) {
-                setUserOrders((prev) => {
-                  const prevList = Array.isArray(prev) ? [...prev] : [];
-                  const updated = [order, ...prevList];
-                  updated.sort((a, b) => {
-                    const at = new Date(a?.timestamp || 0).getTime();
-                    const bt = new Date(b?.timestamp || 0).getTime();
-                    return bt - at;
-                  });
-                  return updated;
-                });
-              }
-
-              // refresh community stats
-              fetch('/dashboard/community-stats')
-                .then((res) => res.json())
-                .then((data) => {
-                  setCommunityStats(data);
-                })
-                .catch((err) => {
-                  // eslint-disable-next-line no-console
-                  console.error(
-                    'Error refreshing community stats after order:',
-                    err
-                  );
-                });
-
-              // Update in-memory restaurant inventory so Browse / detail views
-              // reflect the latest remaining rescue boxes after this order.
-              if (Array.isArray(order.items) && order.items.length > 0) {
-                setRestaurants((prevRestaurants) => {
-                  if (!Array.isArray(prevRestaurants) || prevRestaurants.length === 0) {
-                    return prevRestaurants;
-                  }
-
-                  const nextRestaurants = prevRestaurants.map((rest) => {
-                    if (!rest || rest.name == null) {
-                      return rest;
-                    }
-
-                    if (!Array.isArray(rest.menus) || rest.menus.length === 0) {
-                      return rest;
-                    }
-
-                    const updatedMenus = rest.menus.map((meal) => ({ ...meal }));
-                    let changed = false;
-
-                    order.items.forEach((item) => {
-                      if (
-                        !item ||
-                        !item.meal ||
-                        typeof item.quantity === 'undefined' ||
-                        item.restaurant !== rest.name
-                      ) {
-                        return;
-                      }
-
-                      const qty = Number(item.quantity) || 0;
-                      if (qty <= 0) {
-                        return;
-                      }
-
-                      const orderedMealId =
-                        item.meal.id ||
-                        `${rest.name}-${item.meal.name || ''}-${
-                          item.meal.pickupWindow || ''
-                        }`;
-
-                      updatedMenus.forEach((m) => {
-                        const candidateId =
-                          m.id ||
-                          `${rest.name}-${m.name || ''}-${m.pickupWindow || ''}`;
-
-                        if (candidateId !== orderedMealId) {
-                          return;
-                        }
-
-                        const currentAvail =
-                          typeof m.availableQuantity === 'number' &&
-                          Number.isFinite(m.availableQuantity)
-                            ? m.availableQuantity
-                            : typeof m.quantity === 'number' &&
-                              Number.isFinite(m.quantity)
-                            ? m.quantity
-                            : null;
-
-                        if (currentAvail === null) {
-                          return;
-                        }
-
-                        const nextAvail = Math.max(0, currentAvail - qty);
-
-                        if (
-                          typeof m.availableQuantity === 'number' &&
-                          Number.isFinite(m.availableQuantity)
-                        ) {
-                          m.availableQuantity = nextAvail;
-                        } else if (
-                          typeof m.quantity === 'number' &&
-                          Number.isFinite(m.quantity)
-                        ) {
-                          m.quantity = nextAvail;
-                        }
-
-                        changed = true;
-                      });
-                    });
-
-                    if (!changed) {
-                      return rest;
-                    }
-
-                    return {
-                      ...rest,
-                      menus: updatedMenus,
-                    };
-                  });
-
-                  return nextRestaurants;
-                });
-              }
-
-              // NOTE: do NOT change currentView here.
-              // Cart will stay mounted and show the thank-you screen.
-            }}
-            user={user}
-          />
+          <section className="space-y-4">
+            <Cart
+              cartItems={cart}
+              onRemove={handleRemoveFromCart}
+              onUpdateQuantity={handleUpdateQuantity}
+              onClearCart={handleClearCart}
+              onPlaceOrder={handlePlaceOrder}
+            />
+          </section>
         )}
 
-        {showCartToast && (
-          <div className="fixed bottom-6 right-6 z-50">
-            <div className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2">
-              <ShoppingCart className="w-4 h-4" />
-              <span className="text-sm">Added to cart</span>
-            </div>
-          </div>
+        {/* restaurant detail view (if you are using it anywhere else) */}
+        {currentView === 'restaurant-detail' && (
+          <section className="space-y-4">
+            <RestaurantDetail
+              restaurants={restaurants}
+              onAddToCart={handleAddToCart}
+              cart={cart}
+              onBackToBrowse={() => setCurrentView('browse')}
+              onInventoryDemoUpdate={handleInventoryDemoUpdate}
+            />
+          </section>
         )}
       </main>
 
+      {/* toast for add-to-cart */}
+      {showCartToast && (
+        <div className="fixed bottom-4 right-4 z-40">
+          <div className="bg-gray-900 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-3">
+            <ShoppingCart className="w-4 h-4 text-green-300" />
+            <span className="text-sm">
+              Added to cart. You can review items before placing your
+              rescue.
+            </span>
+            <button
+              type="button"
+              onClick={closeCartToast}
+              className="text-gray-300 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* logout confirmation modal */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-gray-900">
-                Confirm logout
-              </h2>
-              <button
-                type="button"
-                onClick={cancelLogout}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-sm w-full mx-4 p-5">
+            <div className="flex items-start mb-4">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 mr-3">
+                <X className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">
+                  Log out?
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  You&apos;ll be signed out of your Tiffin Trails session.
+                  You can log in again anytime to continue rescuing meals.
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to log out of Tiffin Trails?
-            </p>
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-2 mt-3">
               <button
                 type="button"
                 onClick={cancelLogout}
