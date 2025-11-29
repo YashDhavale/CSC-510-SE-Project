@@ -4,7 +4,9 @@ import Home from './components/Home';
 import Footer from './components/Footer';
 import LoginChoice from './components/LoginChoice';
 import CustomerLogin from './components/CustomerLogin';
+import RestaurantLogin from './components/RestaurantLogin';
 import Dashboard from './components/Dashboard';
+import RestaurantDashboard from './components/RestaurantDashboard';
 import './index.css';
 
 function App() {
@@ -15,7 +17,12 @@ function App() {
   const handleLogin = (userData) => {
     setUser(userData);
     setLoggedIn(true);
-    setPage('dashboard');
+
+    if (userData && userData.accountType === 'restaurant') {
+      setPage('restaurantDashboard');
+    } else {
+      setPage('dashboard');
+    }
   };
 
   const handleLogout = () => {
@@ -26,8 +33,8 @@ function App() {
 
   return (
     <div>
-      {/* Navbar is shown on all pages except dashboard, to keep their custom header */}
-      {page !== 'dashboard' && (
+      {/* Hide global navbar only when on dashboards, to keep their custom headers clean */}
+      {page !== 'dashboard' && page !== 'restaurantDashboard' && (
         <Navbar onNavigate={setPage} loggedIn={loggedIn} />
       )}
 
@@ -39,9 +46,22 @@ function App() {
         <CustomerLogin onLogin={handleLogin} onBack={() => setPage('login')} />
       )}
 
-      {page === 'dashboard' && loggedIn && (
+      {page === 'restaurant' && (
+        <RestaurantLogin onLogin={handleLogin} onBack={() => setPage('login')} />
+      )}
+
+      {page === 'dashboard' && loggedIn && user?.accountType !== 'restaurant' && (
         <Dashboard user={user} onLogout={handleLogout} />
       )}
+
+      {page === 'restaurantDashboard' &&
+        loggedIn &&
+        user?.accountType === 'restaurant' && (
+          <RestaurantDashboard
+            restaurantName={user.restaurantName}
+            onLogout={handleLogout}
+          />
+        )}
 
       <Footer />
     </div>

@@ -26,7 +26,10 @@ function loadUsers() {
       if (Array.isArray(loaded)) {
         users = loaded;
       } else {
-        console.warn("users.js did not export an array. Resetting to empty array.");
+        // eslint-disable-next-line no-console
+        console.warn(
+          "users.js did not export an array. Resetting to empty array."
+        );
         users = [];
       }
     } else {
@@ -36,7 +39,11 @@ function loadUsers() {
       users = [];
     }
   } catch (err) {
-    console.error("Error loading users.js. Falling back to empty users array:", err);
+    // eslint-disable-next-line no-console
+    console.error(
+      "Error loading users.js. Falling back to empty users array:",
+      err
+    );
     users = [];
   }
 }
@@ -53,6 +60,7 @@ function saveUsers() {
     );
     return true;
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("Error writing users.js:", err);
     return false;
   }
@@ -88,9 +96,18 @@ app.post("/login", (req, res) => {
   );
 
   if (user) {
+    const accountType = user.accountType || "customer";
+    const restaurantName =
+      accountType === "restaurant" ? user.restaurantName || null : null;
+
     return res.json({
       success: true,
-      user: { name: user.name, email: user.email },
+      user: {
+        name: user.name,
+        email: user.email,
+        accountType,
+        restaurantName,
+      },
     });
   }
 
@@ -122,7 +139,8 @@ app.post("/register", (req, res) => {
     });
   }
 
-  const newUser = { name, email, password };
+  // Default newly registered users to customer accounts.
+  const newUser = { name, email, password, accountType: "customer" };
   users.push(newUser);
 
   const ok = saveUsers();
@@ -146,11 +164,13 @@ app.post("/register", (req, res) => {
 const homeRoutes = require("./routes/home");
 const cartRoutes = require("./routes/cart");
 const dashboardRoutes = require("./routes/dashboard");
+const restaurantRoutes = require("./routes/restaurant");
 
 // Mount feature routes after auth routes so auth endpoints are not shadowed
 app.use("/", homeRoutes);
 app.use("/", cartRoutes);
 app.use("/", dashboardRoutes);
+app.use("/", restaurantRoutes);
 
 /* ------------------------------
  * Root & 404 handlers
@@ -173,6 +193,7 @@ app.use((req, res) => {
 // Only start the server if this file is run directly (not in tests)
 if (require.main === module) {
   app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
