@@ -6,13 +6,13 @@
     "sold": 4
   },
   "eastside-deli-veggie-grain-bowl": {
-    "sold": 1
-  },
-  "greenbite-cafe-veggie-thali": {
     "sold": 2
   },
+  "greenbite-cafe-veggie-thali": {
+    "sold": 3
+  },
   "greenbite-cafe-paneer-tikka-bowl": {
-    "sold": 1
+    "sold": 2
   },
   "village-noodle-bar-veggie-ramen": {
     "sold": 3
@@ -21,6 +21,6 @@
     "sold": 2
   },
   "triangle-bbq-co-pulled-pork-sandwich": {
-    "sold": 1
+    "sold": 2
   }
 }

@@ -5,8 +5,9 @@
 // customer browsing experience.
 //
 // Exposes:
-//   GET /restaurant/menu?restaurant=Name
-//   GET /restaurant/overview?restaurant=Name
+//   GET  /restaurant/menu?restaurant=Name
+//   GET  /restaurant/overview?restaurant=Name
+//   PATCH /restaurant/order-status
 
 const express = require("express");
 const fs = require("fs");
@@ -15,15 +16,20 @@ const csv = require("csv-parser");
 
 const router = express.Router();
 
+// ---------- paths to data ----------
+
 // CSV data lives in Proj2/data
 // JSON data for backend lives in Proj2/src/backend/data
 const CSV_DATA_DIR = path.join(__dirname, "../../../data");
 const BACKEND_DATA_DIR = path.join(__dirname, "../data");
 
-const RESTAURANT_META_CSV = path.join(CSV_DATA_DIR, "Restaurant_Metadata.csv");
+const RESTAURANT_META_CSV = path.join(
+  CSV_DATA_DIR,
+  "Restaurant_Metadata.csv"
+);
 const RESCUE_MEALS_CSV = path.join(CSV_DATA_DIR, "rescue_meals.csv");
-const ORDERS_JSON = path.join(BACKEND_DATA_DIR, "orders.json");
 const INVENTORY_JSON = path.join(BACKEND_DATA_DIR, "inventory.json");
+const ORDERS_JSON = path.join(BACKEND_DATA_DIR, "orders.json");
 
 // ---------- helpers ----------
 
@@ -55,7 +61,7 @@ function loadCsvRows(csvPath) {
     stream.on("error", (err) => {
       // eslint-disable-next-line no-console
       console.error(`Error opening CSV file ${csvPath}:`, err);
-      return resolve([]);
+      resolve([]);
     });
 
     stream
@@ -70,6 +76,25 @@ function loadCsvRows(csvPath) {
         resolve([]);
       });
   });
+}
+
+function loadInventory() {
+  try {
+    if (!fs.existsSync(INVENTORY_JSON)) {
+      return {};
+    }
+    const raw = fs.readFileSync(INVENTORY_JSON, "utf8");
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed;
+    }
+    return {};
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("Error reading inventory.json:", err);
+    return {};
+  }
 }
 
 function loadOrders() {
@@ -91,22 +116,17 @@ function loadOrders() {
   }
 }
 
-function loadInventory() {
+function saveOrders(orders) {
   try {
-    if (!fs.existsSync(INVENTORY_JSON)) {
-      return {};
+    if (!Array.isArray(orders)) {
+      return false;
     }
-    const raw = fs.readFileSync(INVENTORY_JSON, "utf8");
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed;
-    }
-    return {};
+    fs.writeFileSync(ORDERS_JSON, JSON.stringify(orders, null, 2), "utf8");
+    return true;
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error("Error reading inventory.json:", err);
-    return {};
+    console.error("Error writing orders.json:", err);
+    return false;
   }
 }
 
@@ -166,6 +186,8 @@ router.get("/restaurant/menu", async (req, res) => {
           availableQuantity,
           status,
           expiresIn: row.expires_in || null,
+          pickupWindow: row.pickup_window || null,
+          maxPerOrder: safeNumber(row.max_per_order, null),
         };
       });
 
@@ -192,12 +214,64 @@ router.get("/restaurant/menu", async (req, res) => {
   }
 });
 
-// ---------- GET /restaurant/overview ----------
+// ---------- PATCH /restaurant/order-status ----------
 //
-// Aggregates per-restaurant metrics and recent orders.
+// Allows a restaurant dashboard to update the status for a single order.
+// This is a lightweight operational endpoint used by the "Today" view.
 //
 
-router.get("/restaurant/overview", async (req, res) => {
+router.patch("/restaurant/order-status", (req, res) => {
+  const body = req.body || {};
+  const orderId = String(body.orderId || "").trim();
+  const statusRaw = String(body.status || "").trim().toUpperCase();
+
+  const allowed = ["PENDING", "READY", "PICKED_UP", "NO_SHOW"];
+
+  if (!orderId || !allowed.includes(statusRaw)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Both "orderId" and a valid "status" are required.',
+    });
+  }
+
+  const orders = loadOrders();
+  const idx = orders.findIndex((order) => String(order.id) === orderId);
+
+  if (idx === -1) {
+    return res.status(404).json({
+      success: false,
+      error: "Order not found.",
+    });
+  }
+
+  const updated = {
+    ...orders[idx],
+    status: statusRaw,
+  };
+
+  orders[idx] = updated;
+
+  const ok = saveOrders(orders);
+
+  if (!ok) {
+    return res.status(500).json({
+      success: false,
+      error: "Failed to persist updated order status.",
+    });
+  }
+
+  return res.json({
+    success: true,
+    order: updated,
+  });
+});
+
+// ---------- GET /restaurant/overview ----------
+//
+// Returns high-level metrics + recent orders for a single restaurant.
+//
+
+router.get("/restaurant/overview", (req, res) => {
   const restaurantName = (req.query.restaurant || "").trim();
 
   if (!restaurantName) {
@@ -217,17 +291,17 @@ router.get("/restaurant/overview", async (req, res) => {
     const recentOrders = [];
 
     orders.forEach((order) => {
-      if (!order || !Array.isArray(order.items)) {
-        return;
-      }
+      if (!order || !Array.isArray(order.items)) return;
 
-      const itemsForRestaurant = order.items.filter(
-        (item) =>
-          item &&
+      // Items that belong to this restaurant
+      const itemsForRestaurant = order.items.filter((item) => {
+        if (!item) return false;
+        if (!item.restaurant) return false;
+        return (
           String(item.restaurant || "").trim().toLowerCase() ===
-            restaurantName.toLowerCase() &&
-          item.isRescueMeal !== false
-      );
+          restaurantName.toLowerCase()
+        );
+      });
 
       if (itemsForRestaurant.length === 0) {
         return;
@@ -247,18 +321,33 @@ router.get("/restaurant/overview", async (req, res) => {
 
       totalMealsRescued += orderMealCount;
       totalRevenue += orderRevenue;
-      // Same heuristic as community stats: ~2.5 lbs per meal
-      estimatedWastePreventedLbs += orderMealCount * 2.5;
+
+      // Simple heuristic: assume each rescued meal prevents ~1 lb of waste.
+      estimatedWastePreventedLbs += orderMealCount;
+
+      // For recentOrders we normalise meal field to a displayable string
+      const itemsForView = itemsForRestaurant.map((item) => {
+        const mealName =
+          typeof item.meal === "string"
+            ? item.meal
+            : item.meal && item.meal.name
+            ? item.meal.name
+            : "Rescue meal";
+
+        return {
+          meal: mealName,
+          quantity: safeNumber(item.quantity, 0),
+          price: safeNumber(item.price, 0),
+        };
+      });
 
       recentOrders.push({
         id: order.id,
         timestamp: order.timestamp,
         userEmail: order.userEmail || null,
-        items: itemsForRestaurant.map((item) => ({
-          meal: item.meal,
-          quantity: safeNumber(item.quantity, 0),
-          price: safeNumber(item.price, 0),
-        })),
+        status: order.status || "PENDING",
+        pickupPreference: order.pickupPreference || null,
+        items: itemsForView,
       });
     });
 
