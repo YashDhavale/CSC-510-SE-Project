@@ -22,21 +22,16 @@ function formatCurrency(value) {
 function formatCount(value) {
   const num = Number(value);
   if (!Number.isFinite(num)) {
-    return '0';
+    return 0;
   }
-  if (num >= 1000) {
-    return `${(num / 1000).toFixed(1)}k`;
-  }
-  return String(num);
+  return num;
 }
 
-function formatDateTime(isoString) {
-  if (!isoString) {
-    return 'Unknown time';
-  }
-  const date = new Date(isoString);
+function formatDateTime(value) {
+  if (!value) return 'Unknown time';
+  const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return isoString;
+    return 'Unknown time';
   }
   return date.toLocaleString();
 }
@@ -137,109 +132,111 @@ export default function RestaurantDashboard({ restaurantName, onLogout }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* local header, similar styling to customer dashboard */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-100">
-              <Leaf className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">
-                Tiffin Trails – Restaurant Console
-              </h1>
-              <p className="text-xs text-gray-500">
-                Monitoring rescue meals and impact for
-                {' '}
-                <span className="font-semibold">{safeRestaurantName}</span>
-                .
-              </p>
-            </div>
+      <header className="bg-white shadow">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-gray-500">Restaurant dashboard</p>
+            <h1 className="text-lg font-semibold text-gray-900">
+              {safeRestaurantName}
+            </h1>
           </div>
-
           <button
             type="button"
+            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
             onClick={onLogout}
-            className="inline-flex items-center text-xs font-medium text-gray-600 hover:text-gray-900"
           >
             <LogOut className="w-4 h-4 mr-1" />
-            Logout
+            Log out
           </button>
         </div>
       </header>
 
-      {/* main content */}
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        {!restaurantName && (
-          <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 mb-4 text-sm text-yellow-800">
-            No restaurant is associated with this account. Please contact the
-            team to link a restaurant name.
-          </div>
-        )}
-
-        {/* view switcher */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex space-x-4">
-            <button
-              type="button"
-              onClick={() => setActiveView('today')}
-              className={`text-sm font-medium ${
-                activeView === 'today'
-                  ? 'text-green-600 border-b-2 border-green-600 pb-1'
-                  : 'text-gray-600 hover:text-gray-900 pb-1'
-              }`}
-            >
-              Today
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveView('menu')}
-              className={`text-sm font-medium ${
-                activeView === 'menu'
-                  ? 'text-green-600 border-b-2 border-green-600 pb-1'
-                  : 'text-gray-600 hover:text-gray-900 pb-1'
-              }`}
-            >
-              Menu &amp; Inventory
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveView('insights')}
-              className={`text-sm font-medium ${
-                activeView === 'insights'
-                  ? 'text-green-600 border-b-2 border-green-600 pb-1'
-                  : 'text-gray-600 hover:text-gray-900 pb-1'
-              }`}
-            >
-              Insights
-            </button>
-          </div>
-
-          {loading && (
-            <span className="text-xs text-gray-500 animate-pulse">
-              Loading latest data…
-            </span>
-          )}
-        </div>
-
+      <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
         {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 flex items-start space-x-2">
-            <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5" />
-            <div>
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
+          <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {error}
           </div>
         )}
 
-        {/* views */}
-        {activeView === 'today' && (
-          <TodayView metrics={metrics} overview={overview} allSoldOut={allSoldOut} />
+        {/* Top-level summary and tabs */}
+        <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Today&apos;s rescue impact
+            </p>
+            <p className="text-xl font-semibold text-gray-900 mt-1">
+              {formatCount(metrics.totalMealsRescued)}
+              {' '}
+              meals rescued
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Estimated
+              {' '}
+              {formatCurrency(metrics.totalRevenue)}
+              {' '}
+              in extra revenue and
+              {' '}
+              {formatCount(metrics.estimatedWastePreventedLbs)}
+              {' '}
+              lbs of food saved from landfill.
+            </p>
+          </div>
+          <div className="flex items-center space-x-2 text-xs bg-green-50 px-3 py-2 rounded-full text-green-700">
+            <Leaf className="w-4 h-4 mr-1" />
+            <span>Powered by the same data your customers see</span>
+          </div>
+        </section>
+
+        {/* Tabs */}
+        <section className="flex items-center space-x-4 text-sm">
+          <button
+            type="button"
+            onClick={() => setActiveView('today')}
+            className={`pb-1 border-b-2 ${
+              activeView === 'today'
+                ? 'border-green-600 text-green-700 font-semibold'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('menu')}
+            className={`pb-1 border-b-2 ${
+              activeView === 'menu'
+                ? 'border-green-600 text-green-700 font-semibold'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            Menu &amp; inventory
+          </button>
+        </section>
+
+        {/* Loading state */}
+        {loading && (
+          <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-sm text-gray-500">
+            Loading restaurant data...
+          </section>
         )}
 
-        {activeView === 'menu' && <MenuView meals={meals} />}
+        {!loading && (
+          <>
+            {activeView === 'today' && (
+              <TodayView
+                metrics={metrics}
+                overview={overview}
+                allSoldOut={allSoldOut}
+              />
+            )}
+            {activeView === 'menu' && <MenuView meals={meals} />}
 
-        {activeView === 'insights' && (
-          <InsightsView metrics={metrics} lowInventoryMeals={lowInventoryMeals} />
+            {/* Inventory alerts */}
+            <InventoryAlerts
+              lowInventoryMeals={lowInventoryMeals}
+              allSoldOut={allSoldOut}
+            />
+          </>
         )}
       </main>
     </div>
@@ -276,13 +273,13 @@ function TodayView({ metrics, overview, allSoldOut }) {
             <span className="text-xs font-medium text-gray-500">
               Meals Rescued
             </span>
-            <Clock className="w-4 h-4 text-green-500" />
+            <Leaf className="w-4 h-4 text-green-500" />
           </div>
           <p className="text-2xl font-semibold text-gray-900">
             {formatCount(metrics.totalMealsRescued)}
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            Portions saved from surplus
+            Additional meals sold through Tiffin Trails
           </p>
         </div>
 
@@ -297,26 +294,10 @@ function TodayView({ metrics, overview, allSoldOut }) {
             {formatCurrency(metrics.totalRevenue)}
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            From selling rescue meals instead of wasting them
+            From surplus that would otherwise go unsold
           </p>
         </div>
       </div>
-
-      {/* stock status alert */}
-      {allSoldOut && (
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 flex items-start space-x-2">
-          <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5" />
-          <div>
-            <p className="text-sm text-yellow-800 font-medium">
-              All rescue meals are currently sold out.
-            </p>
-            <p className="text-xs text-yellow-800 mt-1">
-              Consider planning a new rescue batch so customers can keep
-              rescuing food from your restaurant.
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* recent orders */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -366,17 +347,13 @@ function TodayView({ metrics, overview, allSoldOut }) {
                     {formatCurrency(
                       order.items.reduce(
                         (sum, item) =>
-                          sum +
-                          Number(item.price || 0) *
-                            Number(item.quantity || 0),
+                          sum + formatCount(item.quantity) * item.price,
                         0
                       )
                     )}
                   </p>
                   {order.userEmail && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Customer:
-                      {' '}
                       {order.userEmail}
                     </p>
                   )}
@@ -384,6 +361,37 @@ function TodayView({ metrics, overview, allSoldOut }) {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* sustainability card */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center">
+            <Leaf className="w-4 h-4 text-green-600" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">
+              Sustainability impact
+            </p>
+            <p className="text-xs text-gray-500">
+              Estimated
+              {' '}
+              {formatCount(metrics.estimatedWastePreventedLbs)}
+              {' '}
+              lbs of food kept out of landfill.
+            </p>
+          </div>
+        </div>
+        {allSoldOut ? (
+          <p className="text-xs text-green-700 bg-green-50 px-3 py-2 rounded-full">
+            All listed rescue meals are sold out today — nice work!
+          </p>
+        ) : (
+          <p className="text-xs text-gray-600">
+            Consider increasing tomorrow&apos;s rescue meal quantity if you
+            consistently sell out.
+          </p>
         )}
       </div>
     </div>
@@ -418,56 +426,80 @@ function MenuView({ meals }) {
         {meals.map((meal) => {
           const available = Number(meal.availableQuantity || 0);
           const base = Number(meal.baseQuantity || 0);
-          const sold = Number(meal.sold || 0);
-          const soldOut = available <= 0;
-          const low = available > 0 && available <= 2;
+          const sold = Number(meal.sold || (base - available));
+
+          const isSoldOut = available <= 0;
+          const lowInventory = !isSoldOut && available <= 2;
 
           return (
             <div
               key={meal.id}
-              className="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between"
+              className="px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between"
             >
-              <div className="mb-2 sm:mb-0">
+              <div className="mb-2 md:mb-0">
                 <p className="text-sm font-semibold text-gray-900">
                   {meal.mealName}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {meal.expiresIn ? `Expires in ${meal.expiresIn}` : 'Expires soon'}
+                  {formatCurrency(meal.rescuePrice)}
+                  {' '}
+                  rescue price
+                  {Number.isFinite(meal.originalPrice) &&
+                    meal.originalPrice > 0 && (
+                      <>
+                        {' '}
+                        <span className="line-through text-gray-400 text-[11px]">
+                          {formatCurrency(meal.originalPrice)}
+                        </span>
+                      </>
+                    )}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Base quantity:
-                  {' '}
-                  {formatCount(base)}
-                  {' '}
-                  · Sold:
-                  {' '}
-                  {formatCount(sold)}
-                </p>
+                {meal.expiresIn && (
+                  <p className="text-xs text-gray-500">
+                    Pickup window:
+                    {' '}
+                    {meal.expiresIn}
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold text-gray-900">
-                  {formatCurrency(meal.rescuePrice)}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Original:
+                  {available}
                   {' '}
-                  {formatCurrency(meal.originalPrice)}
+                  remaining
+                  {base > 0 && (
+                    <>
+                      {' '}
+                      <span className="text-xs text-gray-500">
+                        /
+                        {base}
+                        {' '}
+                        listed
+                      </span>
+                    </>
+                  )}
                 </p>
-
-                <div className="mt-1 inline-flex items-center text-xs">
-                  <span
-                    className={`px-2 py-0.5 rounded-full font-medium ${
-                      soldOut
-                        ? 'bg-gray-100 text-gray-600'
-                        : low
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-green-100 text-green-700'
-                    }`}
-                  >
-                    {soldOut
-                      ? 'Sold out'
-                      : `Available: ${formatCount(available)}`}
-                  </span>
+                {sold > 0 && (
+                  <p className="text-xs text-gray-500">
+                    {sold}
+                    {' '}
+                    already rescued
+                  </p>
+                )}
+                <div className="mt-1">
+                  {isSoldOut ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
+                      Sold out today
+                    </span>
+                  ) : lowInventory ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-yellow-50 text-yellow-700">
+                      Low inventory — almost gone
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-50 text-green-700">
+                      Available
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -479,51 +511,50 @@ function MenuView({ meals }) {
 }
 
 /**
- * Insights view: simple stats + low inventory signals.
+ * Inventory alerts: highlight low inventory or sold-out state.
  */
-function InsightsView({ metrics, lowInventoryMeals }) {
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <h2 className="text-sm font-semibold text-gray-800 mb-3">
-          Sustainability Impact
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <p className="text-xs text-gray-500 mb-1">Total rescue orders</p>
-            <p className="text-xl font-semibold text-gray-900">
-              {formatCount(metrics.totalOrders)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-1">Meals rescued</p>
-            <p className="text-xl font-semibold text-gray-900">
-              {formatCount(metrics.totalMealsRescued)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-1">Waste prevented</p>
-            <p className="text-xl font-semibold text-gray-900">
-              {formatCount(metrics.estimatedWastePreventedLbs)}
-              {' '}
-              lbs
-            </p>
-          </div>
+function InventoryAlerts({ lowInventoryMeals, allSoldOut }) {
+  if (allSoldOut) {
+    return (
+      <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 flex items-start space-x-2 text-xs text-green-800">
+        <Leaf className="w-4 h-4 mt-0.5" />
+        <div>
+          <p className="font-semibold">All listed rescue meals are sold out.</p>
+          <p>
+            Consider whether you want to increase tomorrow&apos;s rescue meal
+            quantity or add a second time window.
+          </p>
         </div>
       </div>
+    );
+  }
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <h2 className="text-sm font-semibold text-gray-800 mb-3">
-          Low Inventory Alerts
-        </h2>
-        {(!lowInventoryMeals || lowInventoryMeals.length === 0) && (
-          <p className="text-sm text-gray-500">
-            No rescue meals are currently in the low-stock range (≤ 2 units).
+  if (!lowInventoryMeals || lowInventoryMeals.length === 0) {
+    return (
+      <div className="bg-white border border-gray-100 rounded-xl px-4 py-3 flex items-start space-x-2 text-xs text-gray-700">
+        <Clock className="w-4 h-4 mt-0.5 text-gray-500" />
+        <div>
+          <p className="font-semibold">Inventory looks healthy.</p>
+          <p>
+            Rescue meals still have available units. Monitor this section as you
+            get closer to peak times.
           </p>
-        )}
+        </div>
+      </div>
+    );
+  }
 
-        {lowInventoryMeals && lowInventoryMeals.length > 0 && (
-          <ul className="space-y-2">
+  return (
+    <div className="bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-3 flex items-start space-x-2 text-xs text-yellow-800">
+      <AlertTriangle className="w-4 h-4 mt-0.5" />
+      <div>
+        <p className="font-semibold">Some meals are almost sold out.</p>
+        <p>
+          Consider pausing standard menu promos on these items or increasing
+          tomorrow&apos;s rescue quantity if they consistently sell fast.
+        </p>
+        {lowInventoryMeals.length > 0 && (
+          <ul className="mt-2 list-disc list-inside text-[11px]">
             {lowInventoryMeals.map((meal) => (
               <li
                 key={meal.id}

@@ -2101,5 +2101,67 @@
     },
     "pickupPreference": "any",
     "timestamp": "2025-11-28T11:42:51.984Z"
+  },
+  {
+    "id": "order_1764391317695",
+    "userEmail": "test@gmail.com",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": {
+          "id": "eastside-deli-chicken-salad-sandwich",
+          "name": "Chicken Salad Sandwich",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 10.99,
+          "rescuePrice": 6.99,
+          "pickupWindow": "2 hours",
+          "quantity": 4,
+          "availableQuantity": 2,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "price": 6.99,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 6.99,
+      "youSave": 4
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-29T04:41:57.695Z"
+  },
+  {
+    "id": "order_1764391422733",
+    "userEmail": "test@gmail.com",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": {
+          "id": "eastside-deli-chicken-salad-sandwich",
+          "name": "Chicken Salad Sandwich",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 10.99,
+          "rescuePrice": 6.99,
+          "pickupWindow": "2 hours",
+          "quantity": 4,
+          "availableQuantity": 2,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "price": 6.99,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 6.99,
+      "youSave": 4
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-11-29T04:43:42.733Z"
   }
 ]

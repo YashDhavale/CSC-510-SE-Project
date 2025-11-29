@@ -5,137 +5,207 @@
 // - Performs a server-side inventory check so that we never
 //   oversell beyond the base quantity defined for each rescue meal.
 
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
 
-const ORDERS_PATH = path.join(__dirname, '../data', 'orders.json');
-const INVENTORY_PATH = path.join(__dirname, '../data', 'inventory.json');
+const DATA_DIR = path.join(__dirname, "../data");
+const ORDERS_PATH = path.join(DATA_DIR, "orders.json");
+const INVENTORY_PATH = path.join(DATA_DIR, "inventory.json");
 
-function readOrdersSafe() {
+// ---------- helpers ----------
+
+function safeNumber(value, fallback = 0) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
+
+function readJsonFileSafe(filePath, fallback) {
   try {
-    if (!fs.existsSync(ORDERS_PATH)) {
-      return [];
+    if (!fs.existsSync(filePath)) {
+      return fallback;
     }
-    const raw = fs.readFileSync(ORDERS_PATH, 'utf8');
-    if (!raw) return [];
+    const raw = fs.readFileSync(filePath, "utf8");
+    if (!raw) return fallback;
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
+    if (parsed === null || typeof parsed !== "object") {
+      return fallback;
+    }
     return parsed;
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error('Error reading orders.json:', err);
-    return [];
+    console.error(`Error reading ${filePath}:`, err);
+    return fallback;
   }
 }
 
-function readInventorySafe() {
+function writeJsonFileSafe(filePath, data) {
   try {
-    if (!fs.existsSync(INVENTORY_PATH)) {
-      return {};
-    }
-    const raw = fs.readFileSync(INVENTORY_PATH, 'utf8');
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return parsed;
-    }
-    return {};
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error('Error reading inventory.json:', err);
-    return {};
+    console.error(`Error writing ${filePath}:`, err);
   }
 }
 
-function writeInventorySafe(inventory) {
-  try {
-    fs.writeFileSync(
-      INVENTORY_PATH,
-      JSON.stringify(inventory, null, 2),
-      'utf8'
-    );
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('Error writing inventory.json:', err);
-  }
+function readOrdersSafe() {
+  const data = readJsonFileSafe(ORDERS_PATH, []);
+  return Array.isArray(data) ? data : [];
 }
 
 function writeOrdersSafe(orders) {
-  try {
-    fs.writeFileSync(ORDERS_PATH, JSON.stringify(orders, null, 2), 'utf8');
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('Error writing orders.json:', err);
-  }
+  if (!Array.isArray(orders)) return;
+  writeJsonFileSafe(ORDERS_PATH, orders);
 }
 
-// POST /checkout
-router.post('/checkout', (req, res) => {
-  try {
-    const body = req.body || {};
-    const items = Array.isArray(body.items) ? body.items : [];
-    const userEmail = typeof body.userEmail === 'string' ? body.userEmail : null;
-    const totals = body.totals || null;
-    const pickupPreference =
-      typeof body.pickupPreference === 'string' ? body.pickupPreference : null;
+function readInventorySafe() {
+  const data = readJsonFileSafe(INVENTORY_PATH, {});
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return {};
+  }
+  return data;
+}
 
-    if (items.length === 0) {
+function writeInventorySafe(inventory) {
+  if (!inventory || typeof inventory !== "object" || Array.isArray(inventory)) {
+    return;
+  }
+  writeJsonFileSafe(INVENTORY_PATH, inventory);
+}
+
+// ---------- POST /checkout ----------
+//
+// Expects a body of shape:
+// {
+//   cart: [{ restaurant, meal, quantity }, ...],
+//   userEmail: "user@example.com" | null,
+//   totals: { rescueMealCount, subtotal, youSave },
+//   pickupPreference: "any" | "lunch" | "dinner" | ...
+// }
+//
+// This route is intentionally tolerant:
+// - If req.body 是字串，會先 JSON.parse 一次再處理
+// - 如果後端 middleware 沒有正確 parse JSON，也能正常運作
+//
+
+router.post("/checkout", (req, res) => {
+  try {
+    let body = req.body ?? {};
+
+    // Some setups may deliver raw string body even with JSON header.
+    if (typeof body === "string") {
+      try {
+        body = JSON.parse(body);
+      } catch (parseErr) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to parse JSON body for /checkout:", parseErr);
+        body = {};
+      }
+    }
+
+    if (!body || typeof body !== "object") {
+      body = {};
+    }
+
+    let cart = [];
+
+    if (Array.isArray(body.cart)) {
+      cart = body.cart;
+    } else if (Array.isArray(body.items)) {
+      // Fallback: some older clients might send `items` instead of `cart`
+      cart = body.items;
+    } else if (Array.isArray(body)) {
+      // Extreme fallback: body itself is the cart
+      cart = body;
+    }
+
+    if (!cart.length) {
       return res.status(400).json({
         success: false,
-        error: 'Cart is empty. Please add at least one rescue meal.',
+        error: "Cart is empty. Please add at least one rescue meal.",
       });
     }
 
-    // Load current inventory snapshot
-    const inventory = readInventorySafe();
+    const userEmail =
+      typeof body.userEmail === "string" && body.userEmail.trim()
+        ? body.userEmail.trim()
+        : null;
+    const totals = body.totals || null;
+    const pickupPreference =
+      typeof body.pickupPreference === "string" && body.pickupPreference.trim()
+        ? body.pickupPreference.trim()
+        : null;
 
-    // Normalize quantities once so both validation and persistence use the same values
-    const normalizedItems = items.map((item) => {
-      const quantity = Number(item.quantity) || 0;
+    // Normalise items
+    const items = cart.map((item) => {
+      const meal = item.meal || {};
+      const quantity = safeNumber(item.quantity, 0);
+
+      const price =
+        typeof meal.rescuePrice === "number" && Number.isFinite(meal.rescuePrice)
+          ? meal.rescuePrice
+          : typeof meal.price === "number" && Number.isFinite(meal.price)
+          ? meal.price
+          : 0;
+
       return {
-        ...item,
+        restaurant: item.restaurant || null,
+        meal,
         quantity,
+        price,
+        isRescueMeal:
+          meal && meal.isRescueMeal !== false
+            ? true
+            : false,
       };
     });
 
-    // Server-side guard: ensure requested quantity does not exceed remaining inventory.
-    // We use the meal.quantity field (base quantity for the day) minus the
-    // existing inventory.sold count to compute remaining availability.
+    const nonZeroItems = items.filter((it) => safeNumber(it.quantity, 0) > 0);
+    if (!nonZeroItems.length) {
+      return res.status(400).json({
+        success: false,
+        error: "Cart is empty. Please add at least one rescue meal.",
+      });
+    }
+
+    const inventory = readInventorySafe();
+
+    // ----- inventory validation -----
     const inventoryErrors = [];
 
-    normalizedItems.forEach((item) => {
+    nonZeroItems.forEach((item) => {
       const meal = item.meal || {};
       const mealId = meal.id;
-      const quantity = Number(item.quantity) || 0;
+      const qty = safeNumber(item.quantity, 0);
 
-      if (!mealId || quantity <= 0) {
-        return;
-      }
+      if (!mealId || qty <= 0) return;
 
       const baseQty =
-        typeof meal.quantity === 'number' && Number.isFinite(meal.quantity)
+        typeof meal.quantity === "number" && Number.isFinite(meal.quantity)
           ? meal.quantity
+          : typeof meal.baseQuantity === "number" &&
+            Number.isFinite(meal.baseQuantity)
+          ? meal.baseQuantity
           : null;
 
       const existingEntry =
-        inventory && Object.prototype.hasOwnProperty.call(inventory, mealId)
+        mealId in inventory && inventory[mealId] && typeof inventory[mealId] === "object"
           ? inventory[mealId]
           : {};
       const soldSoFar =
-        existingEntry && typeof existingEntry.sold === 'number'
+        typeof existingEntry.sold === "number" && Number.isFinite(existingEntry.sold)
           ? existingEntry.sold
           : 0;
 
       if (baseQty !== null) {
         const available = baseQty - soldSoFar;
-        if (available <= 0 || quantity > available) {
+        if (available <= 0 || qty > available) {
           inventoryErrors.push({
             mealId,
-            mealName: meal.name || 'Rescue meal',
-            requested: quantity,
+            mealName: meal.name || "Rescue meal",
+            requested: qty,
             available: available > 0 ? available : 0,
           });
         }
@@ -143,46 +213,43 @@ router.post('/checkout', (req, res) => {
     });
 
     if (inventoryErrors.length > 0) {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
-        error:
-          'One or more rescue meals are no longer available in the requested quantity.',
+        error: "Some items are no longer available in the requested quantity.",
         inventoryErrors,
       });
     }
 
-    // At this point the requested quantities are valid, so we can safely
-    // increment the sold counters in inventory.json.
-    normalizedItems.forEach((item) => {
+    // ----- apply inventory change -----
+    nonZeroItems.forEach((item) => {
       const meal = item.meal || {};
       const mealId = meal.id;
-      const quantity = Number(item.quantity) || 0;
+      const qty = safeNumber(item.quantity, 0);
 
-      if (!mealId || quantity <= 0) {
-        return;
-      }
+      if (!mealId || qty <= 0) return;
 
       const existingEntry =
-        inventory && Object.prototype.hasOwnProperty.call(inventory, mealId)
+        mealId in inventory && inventory[mealId] && typeof inventory[mealId] === "object"
           ? inventory[mealId]
           : {};
       const soldSoFar =
-        existingEntry && typeof existingEntry.sold === 'number'
+        typeof existingEntry.sold === "number" && Number.isFinite(existingEntry.sold)
           ? existingEntry.sold
           : 0;
 
       inventory[mealId] = {
         ...existingEntry,
-        sold: soldSoFar + quantity,
+        sold: soldSoFar + qty,
       };
     });
 
+    // ----- persist order -----
     const existingOrders = readOrdersSafe();
 
     const newOrder = {
       id: `order_${Date.now()}`,
       userEmail,
-      items: normalizedItems,
+      items: nonZeroItems,
       totals,
       pickupPreference,
       timestamp: new Date().toISOString(),
@@ -198,10 +265,10 @@ router.post('/checkout', (req, res) => {
     });
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error('Error in /cart/checkout:', err);
+    console.error("Error in /checkout:", err);
     return res.status(500).json({
       success: false,
-      error: 'An unexpected error occurred during checkout.',
+      error: "An unexpected error occurred during checkout.",
     });
   }
 });

@@ -18,26 +18,24 @@ const csv = require("csv-parser");
 
 const router = express.Router();
 
-// ---------- paths ----------
-//
-// CSV data for restaurants / meals lives in Proj2/data.
-// JSON data for backend (orders, inventory, points) lives in Proj2/src/backend/data.
+// ---------- paths to data ----------
 
-// __dirname = Proj2/src/backend/routes
-// ../../../data => Proj2/data
+// CSV data lives in Proj2/data
+// JSON data for backend lives in Proj2/src/backend/data
 const CSV_DATA_DIR = path.join(__dirname, "../../../data");
 const BACKEND_DATA_DIR = path.join(__dirname, "../data");
 
 const RESTAURANT_META_CSV = path.join(CSV_DATA_DIR, "Restaurant_Metadata.csv");
 const RESCUE_MEALS_CSV = path.join(CSV_DATA_DIR, "rescue_meals.csv");
-const ORDERS_JSON = path.join(BACKEND_DATA_DIR, "orders.json");
+
 const INVENTORY_JSON = path.join(BACKEND_DATA_DIR, "inventory.json");
+const ORDERS_JSON = path.join(BACKEND_DATA_DIR, "orders.json");
 const RESTAURANT_POINTS_JSON = path.join(
   BACKEND_DATA_DIR,
   "restaurant_points.json"
 );
 
-// ---------- helpers: generic ----------
+// ---------- helpers ----------
 
 function safeNumber(value, fallback = 0) {
   const num = Number(value);
@@ -52,68 +50,36 @@ function slugify(str) {
 }
 
 function loadCsvRows(csvPath) {
-  // Robust CSV loader:
-  // - If file missing, resolves to [].
-  // - Any stream error resolves to [] instead of crashing the server.
   return new Promise((resolve) => {
-    try {
-      if (!fs.existsSync(csvPath)) {
-        // eslint-disable-next-line no-console
-        console.warn(`CSV file not found, returning []: ${csvPath}`);
-        return resolve([]);
-      }
+    const rows = [];
 
-      const rows = [];
-      const stream = fs.createReadStream(csvPath);
-
-      stream.on("error", (err) => {
-        // eslint-disable-next-line no-console
-        console.error(`Error opening CSV file ${csvPath}:`, err);
-        return resolve([]);
-      });
-
-      stream
-        .pipe(csv())
-        .on("data", (row) => {
-          rows.push(row);
-        })
-        .on("end", () => resolve(rows))
-        .on("error", (err) => {
-          // eslint-disable-next-line no-console
-          console.error(`Error parsing CSV file ${csvPath}:`, err);
-          resolve([]);
-        });
-    } catch (err) {
+    if (!fs.existsSync(csvPath)) {
       // eslint-disable-next-line no-console
-      console.error(`Unexpected error in loadCsvRows(${csvPath}):`, err);
-      resolve([]);
+      console.error(`CSV file not found: ${csvPath}`);
+      resolve(rows);
+      return;
     }
+
+    const stream = fs.createReadStream(csvPath);
+
+    stream.on("error", (err) => {
+      // eslint-disable-next-line no-console
+      console.error(`Error opening CSV file ${csvPath}:`, err);
+      return resolve([]);
+    });
+
+    stream
+      .pipe(csv())
+      .on("data", (row) => {
+        rows.push(row);
+      })
+      .on("end", () => resolve(rows))
+      .on("error", (err) => {
+        // eslint-disable-next-line no-console
+        console.error(`Error parsing CSV file ${csvPath}:`, err);
+        resolve([]);
+      });
   });
-}
-
-function loadOrders() {
-  try {
-    if (!fs.existsSync(ORDERS_JSON)) {
-      return [];
-    }
-    const raw = fs.readFileSync(ORDERS_JSON, "utf8");
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("Error loading orders.json:", err);
-    return [];
-  }
-}
-
-function writeOrders(orders) {
-  try {
-    fs.writeFileSync(ORDERS_JSON, JSON.stringify(orders, null, 2), "utf8");
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("Error writing orders.json:", err);
-  }
 }
 
 function loadInventory() {
@@ -130,21 +96,46 @@ function loadInventory() {
     return {};
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error("Error loading inventory.json:", err);
+    console.error("Error reading inventory.json:", err);
     return {};
   }
 }
 
-function writeInventory(inventory) {
+function loadOrders() {
   try {
-    fs.writeFileSync(
-      INVENTORY_JSON,
-      JSON.stringify(inventory, null, 2),
-      "utf8"
-    );
+    if (!fs.existsSync(ORDERS_JSON)) {
+      return [];
+    }
+    const raw = fs.readFileSync(ORDERS_JSON, "utf8");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    return [];
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error("Error writing inventory.json:", err);
+    console.error("Error reading orders.json:", err);
+    return [];
+  }
+}
+
+function loadRestaurantPoints() {
+  try {
+    if (!fs.existsSync(RESTAURANT_POINTS_JSON)) {
+      return {};
+    }
+    const raw = fs.readFileSync(RESTAURANT_POINTS_JSON, "utf8");
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed;
+    }
+    return {};
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("Error reading restaurant_points.json:", err);
+    return {};
   }
 }
 
@@ -153,6 +144,7 @@ function writeInventory(inventory) {
 // Builds restaurant objects from Restaurant_Metadata.csv,
 // then attaches rescue meals from rescue_meals.csv,
 // and adjusts availableQuantity using inventory.json (sold counts).
+//
 
 router.get("/dashboard/restaurants-with-meals", async (req, res) => {
   try {
@@ -177,22 +169,25 @@ router.get("/dashboard/restaurants-with-meals", async (req, res) => {
       const rating =
         avgOrders >= 300 ? 4.8 : avgOrders >= 200 ? 4.6 : avgOrders >= 100 ? 4.4 : 4.2;
       const numReviews =
-        avgOrders >= 300 ? 240 : avgOrders >= 200 ? 180 : avgOrders >= 100 ? 120 : 60;
+        avgOrders >= 300 ? 420 : avgOrders >= 200 ? 260 : avgOrders >= 100 ? 130 : 40;
+      const impactRank =
+        avgOrders >= 300 ? "Gold Partner" : avgOrders >= 200 ? "Silver Partner" : "Community Partner";
 
-      const zip = row.zip_code || "";
-      const address = zip ? `Raleigh, NC ${zip}` : "Raleigh, NC";
-      const hours = "Today · 11:00 AM – 8:00 PM";
-
-      restaurantsByName.set(name, {
+      const base = {
         id,
         name,
         cuisine,
+        distance: safeNumber(row.distance_miles, 1.2),
         rating,
         numReviews,
-        address,
-        hours,
+        impactRank,
+        address: row.address || null,
+        neighborhood: row.neighborhood || row.zip_code || null,
+        hours: row.hours || "Today · 11:00 AM – 8:00 PM",
         menus: [],
-      });
+      };
+
+      restaurantsByName.set(name, base);
     });
 
     // 2) Attach rescue meals from rescue_meals.csv
@@ -200,27 +195,36 @@ router.get("/dashboard/restaurants-with-meals", async (req, res) => {
       const restaurantName = (row.restaurant || "").trim();
       if (!restaurantName) return;
 
+      if (!restaurantsByName.has(restaurantName)) {
+        restaurantsByName.set(restaurantName, {
+          id: slugify(restaurantName),
+          name: restaurantName,
+          cuisine: "American",
+          distance: 1.2,
+          rating: 4.4,
+          numReviews: 50,
+          impactRank: "Community Partner",
+          address: null,
+          neighborhood: null,
+          hours: "Today · 11:00 AM – 8:00 PM",
+          menus: [],
+        });
+      }
+
       const restaurant = restaurantsByName.get(restaurantName);
-      if (!restaurant) return;
-
-      const mealName = row.meal_name || row.name || "Rescue Meal Box";
-      const baseQty = safeNumber(row.quantity, 0);
-
+      const mealName = row.meal_name || "Rescue Meal";
       const mealId = slugify(`${restaurantName}-${mealName}`);
 
-      const invEntry = inventory[mealId];
-      const soldCount =
-        invEntry && typeof invEntry.sold === "number" ? invEntry.sold : 0;
+      const originalPrice = safeNumber(row.original_price, null);
+      const rescuePrice = safeNumber(row.rescue_price, null);
+      const baseQty = safeNumber(row.quantity, 0);
 
-      const availableRaw = baseQty - soldCount;
-      const availableQuantity = availableRaw > 0 ? availableRaw : 0;
+      const invEntry = inventory[mealId] || {};
+      const sold = safeNumber(invEntry.sold, 0);
+      const remaining = Math.max(baseQty - sold, 0);
 
-      const originalPrice = safeNumber(row.original_price, 12.0);
-      const rescuePrice = safeNumber(row.rescue_price, 6.0);
-
-      const pickupWindow = row.expires_in
-        ? `Pickup within ${row.expires_in}`
-        : "Today, 5–8 PM";
+      const availableQuantity = remaining;
+      const pickupWindow = row.expires_in || "Pickup within today";
 
       const maxPerOrder =
         baseQty > 0 ? Math.min(baseQty, 3) : availableQuantity > 0 ? availableQuantity : 1;
@@ -252,153 +256,153 @@ router.get("/dashboard/restaurants-with-meals", async (req, res) => {
 
 // ---------- GET /dashboard/community-stats ----------
 //
-// Aggregates community-level stats from orders.json.
+// Aggregates community-wide stats from orders.json.
+//
 
 router.get("/dashboard/community-stats", (req, res) => {
   try {
     const orders = loadOrders();
 
-    const activeUsersSet = new Set();
     let totalMealsRescued = 0;
-    let totalWastePreventedLbs = 0;
+    let totalMoneySaved = 0;
+    const restaurantSet = new Set();
+    const userSet = new Set();
 
     orders.forEach((order) => {
       if (!order || !Array.isArray(order.items)) return;
 
       if (order.userEmail) {
-        activeUsersSet.add(order.userEmail);
+        userSet.add(order.userEmail);
       }
 
       order.items.forEach((item) => {
-        if (!item || item.isRescueMeal === false) return;
+        if (!item || !item.isRescueMeal) return;
+
         const qty = safeNumber(item.quantity, 0);
+        const price = safeNumber(item.price, 0);
+        const original = safeNumber(item.meal?.originalPrice, 0);
+
         totalMealsRescued += qty;
-        totalWastePreventedLbs += qty * 2.5; // simple heuristic
+        totalMoneySaved += qty * Math.max(original - price, 0);
+
+        if (item.restaurant) {
+          restaurantSet.add(item.restaurant);
+        }
       });
     });
 
-    const wastePreventedTons = totalWastePreventedLbs / 2000;
+    const foodWastePrevented = totalMealsRescued * 2.5;
+    const carbonReduced = totalMealsRescued * 4;
 
     return res.json({
-      activeUsers: activeUsersSet.size,
-      mealsRescued: totalMealsRescued,
-      wastePreventedTons: Number(wastePreventedTons.toFixed(2)),
+      totalMealsRescued,
+      totalMoneySaved,
+      foodWastePrevented,
+      carbonReduced,
+      participatingRestaurants: restaurantSet.size,
+      activeUsers: userSet.size,
     });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("Error in /dashboard/community-stats:", err);
     return res.status(500).json({
-      error: "Failed to load community stats.",
+      error: "Failed to compute community stats.",
     });
   }
 });
 
 // ---------- GET /dashboard/user-impact ----------
 //
-// Returns per-user impact summary, used by the "My Impact" panel in the dashboard.
+// Returns basic impact metrics for a specific user, based on past orders.
+//
 
 router.get("/dashboard/user-impact", (req, res) => {
-  try {
-    const emailRaw = (req.query.email || "").toString();
-    const email = emailRaw.toLowerCase().trim();
+  const email = (req.query.email || "").trim().toLowerCase();
 
-    if (!email) {
-      return res.status(400).json({
-        error: "Missing email parameter.",
-      });
-    }
-
-    const allOrders = loadOrders();
-
-    const orders = allOrders.filter((o) => {
-      if (!o || !o.userEmail) return false;
-      return o.userEmail.toString().toLowerCase().trim() === email;
+  if (!email) {
+    return res.status(400).json({
+      error: 'Query parameter "email" is required.',
     });
+  }
+
+  try {
+    const orders = loadOrders();
 
     let mealsOrdered = 0;
     let moneySaved = 0;
     let foodWastePrevented = 0;
     let carbonReduced = 0;
-    const restaurantSet = new Set();
+    const restaurantsSupported = new Set();
 
     orders.forEach((order) => {
-      const items = Array.isArray(order.items) ? order.items : [];
+      if (!order || !Array.isArray(order.items)) return;
+      if (!order.userEmail || order.userEmail.toLowerCase() !== email) return;
 
-      items.forEach((item) => {
-        if (!item || item.isRescueMeal === false) return;
+      order.items.forEach((item) => {
+        if (!item || !item.isRescueMeal) return;
 
         const qty = safeNumber(item.quantity, 0);
+        const price = safeNumber(item.price, 0);
+        const original = safeNumber(item.meal?.originalPrice, 0);
+
         mealsOrdered += qty;
+        moneySaved += qty * Math.max(original - price, 0);
+        foodWastePrevented += qty * 2.5;
+        carbonReduced += qty * 4;
 
-        const restaurantName =
-          item.restaurant ||
-          (item.meal &&
-            item.meal.restaurant &&
-            item.meal.restaurant.name) ||
-          "Unknown";
-        restaurantSet.add(restaurantName);
+        if (item.restaurant) {
+          restaurantsSupported.add(item.restaurant);
+        }
       });
-
-      if (order.totals && typeof order.totals.totalSavings !== "undefined") {
-        moneySaved += safeNumber(order.totals.totalSavings, 0);
-      }
     });
 
-    foodWastePrevented = mealsOrdered * 2.5;
-    carbonReduced = mealsOrdered * 2.0;
-
-    let impactLevel = "New Rescuer";
-    if (mealsOrdered >= 20) impactLevel = "Impact Hero";
-    else if (mealsOrdered >= 10) impactLevel = "Rescue Champion";
-    else if (mealsOrdered >= 5) impactLevel = "Rising Rescuer";
+    let impactLevel = "Getting Started";
+    if (mealsOrdered >= 20) {
+      impactLevel = "Food Hero";
+    } else if (mealsOrdered >= 10) {
+      impactLevel = "Food Saver";
+    } else if (mealsOrdered >= 5) {
+      impactLevel = "Rising Rescuer";
+    }
 
     return res.json({
       mealsOrdered,
-      moneySaved: Number(moneySaved.toFixed(2)),
-      foodWastePrevented: Number(foodWastePrevented.toFixed(1)),
-      carbonReduced: Number(carbonReduced.toFixed(1)),
-      localRestaurantsSupported: restaurantSet.size,
+      moneySaved,
+      foodWastePrevented,
+      carbonReduced,
+      localRestaurantsSupported: restaurantsSupported.size,
       impactLevel,
     });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("Error in /dashboard/user-impact:", err);
     return res.status(500).json({
-      error: "Failed to load user impact.",
+      error: "Failed to compute user impact.",
     });
   }
 });
 
-// ---------- GET /api/restaurant-points (leaderboard) ----------
+// ---------- GET /api/restaurant-points ----------
 //
-// Simple wrapper around backend/data/restaurant_points.json.
-// Frontend LeaderboardPanel supports:
-//   - Object map: { "Eastside Deli": 60, ... }
-//   - Array: [{ name: "Eastside Deli", points: 60 }, ...]
-// We return the object map here.
+// Simple leaderboard data per restaurant.
+//
 
 router.get("/api/restaurant-points", (req, res) => {
   try {
-    if (!fs.existsSync(RESTAURANT_POINTS_JSON)) {
-      return res.json({});
-    }
+    const points = loadRestaurantPoints();
+    const entries = Object.entries(points).map(([restaurant, score]) => ({
+      restaurant,
+      score: safeNumber(score, 0),
+    }));
 
-    const raw = fs.readFileSync(RESTAURANT_POINTS_JSON, "utf8");
-    if (!raw) {
-      return res.json({});
-    }
+    entries.sort((a, b) => b.score - a.score);
 
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return res.json({});
-    }
-
-    return res.json(parsed);
+    return res.json(entries);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("Error in /api/restaurant-points:", err);
     return res.status(500).json({
-      error: "Failed to load restaurant points.",
+      error: "Failed to load restaurant leaderboard.",
     });
   }
 });

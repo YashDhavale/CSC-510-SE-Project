@@ -1,13 +1,12 @@
 // Proj2/src/backend/routes/restaurant.js
 // Restaurant-facing API routes for Tiffin Trails.
-// Exposes read-only endpoints that reuse the same CSV / JSON
-// data sources as the customer dashboard:
+// These are read-only views built on top of the same CSV/JSON data as the
+// customer dashboard, so that restaurant dashboards never desync from the
+// customer browsing experience.
 //
-//   GET /restaurant/menu?restaurant=<Restaurant Name>
-//   GET /restaurant/overview?restaurant=<Restaurant Name>
-//
-// These are used by the Restaurant Dashboard to show per-restaurant
-// rescue meals, inventory status, and recent orders.
+// Exposes:
+//   GET /restaurant/menu?restaurant=Name
+//   GET /restaurant/overview?restaurant=Name
 
 const express = require("express");
 const fs = require("fs");
@@ -16,7 +15,6 @@ const csv = require("csv-parser");
 
 const router = express.Router();
 
-// __dirname => Proj2/src/backend/routes
 // CSV data lives in Proj2/data
 // JSON data for backend lives in Proj2/src/backend/data
 const CSV_DATA_DIR = path.join(__dirname, "../../../data");
@@ -43,36 +41,34 @@ function slugify(str) {
 
 function loadCsvRows(csvPath) {
   return new Promise((resolve) => {
-    try {
-      if (!fs.existsSync(csvPath)) {
-        return resolve([]);
-      }
+    const rows = [];
 
-      const rows = [];
-      const stream = fs.createReadStream(csvPath);
+    if (!fs.existsSync(csvPath)) {
+      // eslint-disable-next-line no-console
+      console.error(`CSV file not found: ${csvPath}`);
+      resolve(rows);
+      return;
+    }
 
-      stream.on("error", (err) => {
+    const stream = fs.createReadStream(csvPath);
+
+    stream.on("error", (err) => {
+      // eslint-disable-next-line no-console
+      console.error(`Error opening CSV file ${csvPath}:`, err);
+      return resolve([]);
+    });
+
+    stream
+      .pipe(csv())
+      .on("data", (row) => {
+        rows.push(row);
+      })
+      .on("end", () => resolve(rows))
+      .on("error", (err) => {
         // eslint-disable-next-line no-console
-        console.error(`Error opening CSV file ${csvPath}:`, err);
+        console.error(`Error parsing CSV file ${csvPath}:`, err);
         resolve([]);
       });
-
-      stream
-        .pipe(csv())
-        .on("data", (row) => {
-          rows.push(row);
-        })
-        .on("end", () => resolve(rows))
-        .on("error", (err) => {
-          // eslint-disable-next-line no-console
-          console.error(`Error parsing CSV file ${csvPath}:`, err);
-          resolve([]);
-        });
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(`Unexpected error in loadCsvRows(${csvPath}):`, err);
-      resolve([]);
-    }
   });
 }
 
@@ -82,14 +78,15 @@ function loadOrders() {
       return [];
     }
     const raw = fs.readFileSync(ORDERS_JSON, "utf8");
-    if (!raw) {
-      return [];
-    }
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    return [];
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error("Error loading orders.json:", err);
+    console.error("Error reading orders.json:", err);
     return [];
   }
 }
@@ -100,9 +97,7 @@ function loadInventory() {
       return {};
     }
     const raw = fs.readFileSync(INVENTORY_JSON, "utf8");
-    if (!raw) {
-      return {};
-    }
+    if (!raw) return {};
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
       return parsed;
@@ -110,14 +105,16 @@ function loadInventory() {
     return {};
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error("Error loading inventory.json:", err);
+    console.error("Error reading inventory.json:", err);
     return {};
   }
 }
 
 // ---------- GET /restaurant/menu ----------
 //
-// Returns a single restaurant's rescue meals with inventory status.
+// Returns the list of rescue meals for a single restaurant, including
+// real-time availability based on inventory.json and the base quantity
+// defined in rescue_meals.csv.
 //
 
 router.get("/restaurant/menu", async (req, res) => {
@@ -288,7 +285,7 @@ router.get("/restaurant/overview", async (req, res) => {
     // eslint-disable-next-line no-console
     console.error("Error in /restaurant/overview:", err);
     return res.status(500).json({
-      error: "Failed to load restaurant overview.",
+      error: "Failed to compute restaurant overview.",
     });
   }
 });
