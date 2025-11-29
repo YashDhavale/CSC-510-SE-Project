@@ -146,49 +146,92 @@ const Dashboard = ({ user, onLogout }) => {
       });
   }, []);
 
-  // Fetch user impact + order history if we have a user
-  useEffect(() => {
-    if (!user || !user.email) return;
+    // Fetch user impact + order history if we have a user
+    useEffect(() => {
+      if (!user || !user.email) return;
 
-    const emailParam = encodeURIComponent(user.email);
+      const emailParam = encodeURIComponent(user.email);
+      const storageKey = `tiffin_trails_orders_${user.email}`;
 
-    fetch(`/dashboard/user-impact?email=${emailParam}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setUserImpact((prev) => ({
-          ...prev,
-          ...data,
-        }));
-      })
-      .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching user impact:', err);
-      });
-
-    fetch(`/dashboard/orders?email=${emailParam}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Failed to fetch orders: ${res.status}`);
+      // 1) Load cached orders from localStorage first (per user), keep up to 5
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          const raw = window.localStorage.getItem(storageKey);
+          if (raw) {
+            const cached = JSON.parse(raw);
+            if (Array.isArray(cached) && cached.length > 0) {
+              const sortedCached = [...cached].sort(
+                (a, b) =>
+                  new Date(b.createdAt || b.date) -
+                  new Date(a.createdAt || a.date)
+              );
+              const limitedCached = sortedCached.slice(0, 5);
+              setUserOrders(limitedCached);
+            }
+          }
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error('Error reading cached orders from localStorage:', err);
         }
-        return res.json();
-      })
-      .then((orders) => {
-        const sorted = Array.isArray(orders)
-          ? [...orders].sort(
-              (a, b) =>
-                new Date(b.createdAt || b.date) -
-                new Date(a.createdAt || a.date)
-            )
-          : [];
-        setUserOrders(sorted);
-        setOrdersError(null);
-      })
-      .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching user orders:', err);
-        setOrdersError('We could not load your order history right now.');
-      });
-  }, [user]);
+      }
+
+      // 2) Always refresh impact numbers from backend
+      fetch(`/dashboard/user-impact?email=${emailParam}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setUserImpact((prev) => ({
+            ...prev,
+            ...data,
+          }));
+        })
+        .catch((err) => {
+          // eslint-disable-next-line no-console
+          console.error('Error fetching user impact:', err);
+        });
+
+      // 3) Try to fetch orders from backend; only override cache if server returns non-empty
+      fetch(`/dashboard/orders?email=${emailParam}`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`Failed to fetch orders: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((orders) => {
+          const sorted = Array.isArray(orders)
+            ? [...orders].sort(
+                (a, b) =>
+                  new Date(b.createdAt || b.date) -
+                  new Date(a.createdAt || a.date)
+              )
+            : [];
+
+          if (sorted.length > 0) {
+            const limited = sorted.slice(0, 5);
+            setUserOrders(limited);
+
+            if (typeof window !== 'undefined' && window.localStorage) {
+              try {
+                window.localStorage.setItem(
+                  storageKey,
+                  JSON.stringify(limited)
+                );
+              } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('Error writing orders to localStorage:', err);
+              }
+            }
+          }
+
+          setOrdersError(null);
+        })
+        .catch((err) => {
+          // eslint-disable-next-line no-console
+          console.error('Error fetching user orders:', err);
+          setOrdersError('We could not load your order history right now.');
+        });
+    }, [user]);
+
 
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
@@ -345,57 +388,80 @@ const Dashboard = ({ user, onLogout }) => {
     setCurrentView('cart');
   };
 
-  // 被 Cart 在下單成功時呼叫：更新 Impact 的 history + 重新抓 impact 指標
     const handleOrderPlacedFromCart = (orderFromServer, payload) => {
-    if (!payload || !Array.isArray(payload.items)) {
-      setOrdersError(null);
-      return;
-    }
+      if (!payload || !Array.isArray(payload.items)) {
+        setOrdersError(null);
+        return;
+      }
+    
+      const nowIso = new Date().toISOString();
+    
+      const items = payload.items.map((item) => ({
+        restaurantName:
+          item.restaurant ||
+          item.meal?.restaurantName ||
+          'Rescue partner',
+        name: item.meal?.name || 'Rescue meal',
+        quantity: item.quantity || 1,
+      }));
+    
+      const clientOrder = {
+        id:
+          (orderFromServer &&
+            (orderFromServer.id ||
+              orderFromServer._id ||
+              orderFromServer.orderId)) ||
+          `local-${Date.now()}`,
+        createdAt:
+          (orderFromServer &&
+            (orderFromServer.createdAt || orderFromServer.date)) ||
+          nowIso,
+        date:
+          (orderFromServer &&
+            (orderFromServer.createdAt || orderFromServer.date)) ||
+          nowIso,
+        items,
+        totalPrice:
+          (orderFromServer &&
+            (orderFromServer.totalPrice || orderFromServer.total)) ||
+          (payload.totals && payload.totals.subtotal) ||
+          0,
+        points: (orderFromServer && orderFromServer.points) || 0,
+      };
+    
+      setUserOrders((prev) => {
+        const base = Array.isArray(prev) ? prev : [];
+        const next = [clientOrder, ...base];
+        const limited = next.slice(0, 5);
+      
+        if (
+          user &&
+          user.email &&
+          typeof window !== 'undefined' &&
+          window.localStorage
+        ) {
+          try {
+            const storageKey = `tiffin_trails_orders_${user.email}`;
+            window.localStorage.setItem(
+              storageKey,
+              JSON.stringify(limited)
+            );
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error(
+              'Error writing orders to localStorage after checkout:',
+              err
+            );
+          }
+        }
 
-    const nowIso = new Date().toISOString();
-
-    const items = payload.items.map((item) => ({
-      restaurantName:
-        item.restaurant ||
-        item.meal?.restaurantName ||
-        'Rescue partner',
-      name: item.meal?.name || 'Rescue meal',
-      quantity: item.quantity || 1,
-    }));
-
-    const clientOrder = {
-      id:
-        (orderFromServer &&
-          (orderFromServer.id ||
-            orderFromServer._id ||
-            orderFromServer.orderId)) ||
-        `local-${Date.now()}`,
-      createdAt:
-        (orderFromServer &&
-          (orderFromServer.createdAt || orderFromServer.date)) ||
-        nowIso,
-      date:
-        (orderFromServer &&
-          (orderFromServer.createdAt || orderFromServer.date)) ||
-        nowIso,
-      items,
-      totalPrice:
-        (orderFromServer &&
-          (orderFromServer.totalPrice || orderFromServer.total)) ||
-        (payload.totals && payload.totals.subtotal) ||
-        0,
-      points: (orderFromServer && orderFromServer.points) || 0,
-    };
-
-    setUserOrders((prev) => {
-      const base = Array.isArray(prev) ? prev : [];
-      return [clientOrder, ...base];
+      return limited;
     });
 
     // 成功有本地訂單後就不要再顯示 error banner
     setOrdersError(null);
 
-    // ----- 前端同步扣減 availableQuantity（畫面上的庫存） -----
+    // 同步扣除前端 restaurants 裡的 availableQuantity（這段你前面已經有）
     const orderItems = Array.isArray(payload.items) ? payload.items : [];
 
     if (orderItems.length > 0) {
@@ -436,7 +502,6 @@ const Dashboard = ({ user, onLogout }) => {
                 : null;
 
             if (currentAvailable === null) {
-              // no inventory info, just return meal as-is
               return meal;
             }
 
@@ -461,7 +526,7 @@ const Dashboard = ({ user, onLogout }) => {
       });
     }
 
-    // ----- 重新抓一次 impact 指標（只更新數字，不改 UI 結構） -----
+    // 順便重新抓一次 impact 指標（不改 UI，只更新數字）
     if (user && user.email) {
       const emailParam = encodeURIComponent(user.email);
       fetch(`/dashboard/user-impact?email=${emailParam}`)
@@ -481,6 +546,7 @@ const Dashboard = ({ user, onLogout }) => {
         });
     }
   };
+
 
 
     const filteredRestaurants = useMemo(() => {
