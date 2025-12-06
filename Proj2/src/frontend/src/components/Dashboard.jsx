@@ -114,7 +114,7 @@ const Dashboard = ({ user, onLogout }) => {
 
   // Lightweight derived community weekly goal based on current stats
   const communityGoal = useMemo(() => {
-    const meals = Number(communityStats.mealsRescued || 0);
+    const meals = Number(communityStats.totalMealsRescued || 0);
     const safeMeals = Number.isFinite(meals) && meals > 0 ? meals : 0;
 
     const target =
