@@ -74,5 +74,17 @@ module.exports = [
     "email": "test@gmail.com",
     "password": "test",
     "accountType": "customer"
+  },
+  {
+    "name": "Jebediah Dingleberry",
+    "email": "123@gmail.com",
+    "password": "123",
+    "accountType": "customer"
+  },
+  {
+    "name": "Human Personman",
+    "email": "realperson@gmail.com",
+    "password": "password",
+    "accountType": "customer"
   }
 ];

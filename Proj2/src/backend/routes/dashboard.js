@@ -35,6 +35,8 @@ const RESTAURANT_POINTS_JSON = path.join(
   "restaurant_points.json"
 );
 
+const users = require("../secrets/users.js");
+
 // ---------- helpers ----------
 
 function safeNumber(value, fallback = 0) {
@@ -269,6 +271,10 @@ router.get("/dashboard/community-stats", (req, res) => {
 		const restaurantSet = new Set();
 		const userSet = new Set();
 
+    const emailToName = {};
+    users.forEach(u => { emailToName[u.email] = u.name; });
+
+
 		// Per-user stats
 		const userStats = {}; 
 		// userStats[email] = { meals, moneySaved, waste, carbon }
@@ -319,7 +325,8 @@ router.get("/dashboard/community-stats", (req, res) => {
 			Object.entries(userStats)
 				.sort((a, b) => b[1][metric] - a[1][metric])
 				.slice(0, 3)
-				.map(([email]) => email);
+				.map(([email]) => emailToName[email] || email);
+
 
 		// Top users for each category
 		const topUsers = {
