@@ -1422,25 +1422,25 @@ const Dashboard = ({ user, onLogout }) => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Meals Rescued
                   </h3>
-                  <Podium first={communityStats.topUsers.mealsRescued[0]} second={communityStats.topUsers.mealsRescued[1]} third={communityStats.topUsers.mealsRescued[2]}></Podium>
+                  <Podium medalists={communityStats.topUsers.mealsRescued}></Podium>
                 </div>
                 <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Waste Reduced
                   </h3>
-                  <Podium first={communityStats.topUsers.wastePrevented[0]} second={communityStats.topUsers.wastePrevented[1]} third={communityStats.topUsers.wastePrevented[2]}></Podium>
+                  <Podium medalists={communityStats.topUsers.wastePrevented}></Podium>
                 </div>
                 <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Carbon Reduced
                   </h3>
-                  <Podium first={communityStats.topUsers.carbonReduced[0]} second={communityStats.topUsers.carbonReduced[1]} third={communityStats.topUsers.carbonReduced[2]}></Podium>
+                  <Podium medalists={communityStats.topUsers.carbonReduced}></Podium>
                 </div>
                 <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Money Saved
                   </h3>
-                  <Podium first={communityStats.topUsers.moneySaved[0]} second={communityStats.topUsers.moneySaved[1]} third={communityStats.topUsers.moneySaved[2]}></Podium>
+                  <Podium medalists={communityStats.topUsers.moneySaved}></Podium>
                 </div>
               </div>
             </div>

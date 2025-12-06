@@ -271,13 +271,14 @@ router.get("/dashboard/community-stats", (req, res) => {
 		const restaurantSet = new Set();
 		const userSet = new Set();
 
-    const emailToName = {};
-    users.forEach(u => { emailToName[u.email] = u.name; });
-
+		// Build email → name map
+		const emailToName = {};
+		users.forEach(u => {
+			emailToName[u.email] = u.name;
+		});
 
 		// Per-user stats
-		const userStats = {}; 
-		// userStats[email] = { meals, moneySaved, waste, carbon }
+		const userStats = {};
 
 		orders.forEach((order) => {
 			if (!order || !Array.isArray(order.items)) return;
@@ -286,12 +287,7 @@ router.get("/dashboard/community-stats", (req, res) => {
 			if (email) {
 				userSet.add(email);
 				if (!userStats[email]) {
-					userStats[email] = {
-						meals: 0,
-						moneySaved: 0,
-						waste: 0,
-						carbon: 0,
-					};
+					userStats[email] = { meals: 0, moneySaved: 0, waste: 0, carbon: 0 };
 				}
 			}
 
@@ -303,11 +299,11 @@ router.get("/dashboard/community-stats", (req, res) => {
 				const original = safeNumber(item.meal?.originalPrice, 0);
 
 				totalMealsRescued += qty;
-				totalMoneySaved += qty * Math.max(original - price, 0);
+				const saved = qty * Math.max(original - price, 0);
+				totalMoneySaved += saved;
 
 				if (email) {
 					userStats[email].meals += qty;
-					const saved = qty * Math.max(original - price, 0);
 					userStats[email].moneySaved += saved;
 					userStats[email].waste += qty * 2.5;
 					userStats[email].carbon += qty * 4;
@@ -320,20 +316,21 @@ router.get("/dashboard/community-stats", (req, res) => {
 		const foodWastePrevented = totalMealsRescued * 2.5;
 		const carbonReduced = totalMealsRescued * 4;
 
-		// Helper function for generating top 3 lists
-		const top3 = (metric) =>
+		// Helper to get top 3 with name + value
+		const top3WithValues = (metric) =>
 			Object.entries(userStats)
 				.sort((a, b) => b[1][metric] - a[1][metric])
 				.slice(0, 3)
-				.map(([email]) => emailToName[email] || email);
+				.map(([email, stats]) => ({
+					name: emailToName[email] || email,
+					value: stats[metric],
+				}));
 
-
-		// Top users for each category
 		const topUsers = {
-			mealsRescued: top3("meals"),
-			wastePrevented: top3("waste"),
-			moneySaved: top3("moneySaved"),
-			carbonReduced: top3("carbon"),
+			mealsRescued: top3WithValues("meals"),
+			wastePrevented: top3WithValues("waste"),
+			moneySaved: top3WithValues("moneySaved"),
+			carbonReduced: top3WithValues("carbon"),
 		};
 
 		return res.json({
@@ -343,13 +340,11 @@ router.get("/dashboard/community-stats", (req, res) => {
 			carbonReduced,
 			participatingRestaurants: restaurantSet.size,
 			activeUsers: userSet.size,
-			topUsers, // NEW
+			topUsers,
 		});
 	} catch (err) {
 		console.error("Error in /dashboard/community-stats:", err);
-		return res.status(500).json({
-			error: "Failed to compute community stats.",
-		});
+		return res.status(500).json({ error: "Failed to compute community stats." });
 	}
 });
 
