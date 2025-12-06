@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+const reviewRoutes = require("./routes/reviews");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -71,6 +72,7 @@ loadUsers();
 
 app.use(cors());
 app.use(express.json());
+app.use("/reviews", reviewRoutes);
 
 /* ------------------------------
  * Auth routes: Login / Register
