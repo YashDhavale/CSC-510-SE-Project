@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Cart from './Cart';
 import LeaderboardPanel from './LeaderboardPanel';
 import RestaurantDetail from './RestaurantDetail';
+import Podium from './Podium';
 import {
   ShoppingCart,
   Heart,
@@ -18,6 +19,9 @@ import {
   Menu,
   X,
   Zap,
+  Store,
+  CircleDollarSign,
+  Cloud
 } from 'lucide-react';
 
 import { restaurants as staticRestaurants } from '../data/staticdata';
@@ -93,21 +97,32 @@ const Dashboard = ({ user, onLogout }) => {
   });
   const [communityStats, setCommunityStats] = useState({
     activeUsers: 0,
-    mealsRescued: 0,
-    wastePreventedTons: 0,
+    totalMealsRescued: 0,
+    foodWastePrevented: 0,
+    totalMoneySaved: 0,
+    carbonReduced: 0,
+    participatingRestaurants: 0,
+    topUsers: {
+      mealsRescued: ['', '', ''],
+      wastePrevented: ['', '', ''],
+      carbonReduced: ['', '', ''],
+      moneySaved: ['', '', ''],
+    }
   });
   const [userOrders, setUserOrders] = useState([]);
   const [ordersError, setOrdersError] = useState(null);
 
   // Lightweight derived community weekly goal based on current stats
   const communityGoal = useMemo(() => {
-    const meals = Number(communityStats.mealsRescued || 0);
+    const meals = Number(communityStats.totalMealsRescued || 0);
     const safeMeals = Number.isFinite(meals) && meals > 0 ? meals : 0;
 
     const target =
       safeMeals > 0 ? Math.max(10, Math.ceil(safeMeals * 1.5)) : 10;
 
     const progress = Math.min(safeMeals, target);
+
+    console.log(communityStats);
 
     return { target, progress };
   }, [communityStats]);
@@ -136,6 +151,7 @@ const Dashboard = ({ user, onLogout }) => {
           ...prev,
           ...data,
         }));
+        console.log(data);
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
@@ -1292,7 +1308,7 @@ const Dashboard = ({ user, onLogout }) => {
                   <Leaf className="w-5 h-5 text-green-600 mr-3" />
                   <div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {communityStats.mealsRescued || 0}
+                      {communityStats.totalMealsRescued || 0}
                     </p>
                     <p className="text-xs text-gray-600">
                       meals rescued this week
@@ -1313,13 +1329,51 @@ const Dashboard = ({ user, onLogout }) => {
                 </div>
 
                 <div className="bg-amber-50 rounded-lg px-4 py-3 flex items-center">
-                  <TrendingUp className="w-5 h-5 text-amber-600 mr-3" />
+                  <Store className="w-5 h-5 text-amber-600 mr-3" />
                   <div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {communityStats.wastePreventedTons || 0}
+                      {communityStats.participatingRestaurants || 0}
                     </p>
                     <p className="text-xs text-gray-600">
-                      tons of food waste prevented
+                      restaurants providing meals
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-green-50 rounded-lg px-4 py-3 flex items-center">
+                  <TrendingUp className="w-5 h-5 text-green-600 mr-3" />
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {communityStats.foodWastePrevented || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      pounds of food waste prevented
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 rounded-lg px-4 py-3 flex items-center">
+                  <Cloud className="w-5 h-5 text-blue-600 mr-3" />
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {communityStats.carbonReduced || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      total carbon reduction
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 rounded-lg px-4 py-3 flex items-center">
+                  <CircleDollarSign className="w-5 h-5 text-amber-600 mr-3" />
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {communityStats.totalMoneySaved || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      dollars saved
                     </p>
                   </div>
                 </div>
@@ -1351,6 +1405,42 @@ const Dashboard = ({ user, onLogout }) => {
                       )}%`,
                     }}
                   />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                Community Podiums
+              </h2>
+              <p className="text-sm text-gray-600">
+                See who&apos;s rescued, reduced, and saved the most.
+              </p>
+              
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-4">
+                <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Meals Rescued
+                  </h3>
+                  <Podium medalists={communityStats.topUsers.mealsRescued}></Podium>
+                </div>
+                <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Waste Reduced
+                  </h3>
+                  <Podium medalists={communityStats.topUsers.wastePrevented}></Podium>
+                </div>
+                <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Carbon Reduced
+                  </h3>
+                  <Podium medalists={communityStats.topUsers.carbonReduced}></Podium>
+                </div>
+                <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Money Saved
+                  </h3>
+                  <Podium medalists={communityStats.topUsers.moneySaved}></Podium>
                 </div>
               </div>
             </div>
