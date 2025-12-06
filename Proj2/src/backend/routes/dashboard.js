@@ -260,56 +260,93 @@ router.get("/dashboard/restaurants-with-meals", async (req, res) => {
 //
 
 router.get("/dashboard/community-stats", (req, res) => {
-  try {
-    const orders = loadOrders();
+	try {
+		const orders = loadOrders();
 
-    let totalMealsRescued = 0;
-    let totalMoneySaved = 0;
-    const restaurantSet = new Set();
-    const userSet = new Set();
+		let totalMealsRescued = 0;
+		let totalMoneySaved = 0;
 
-    orders.forEach((order) => {
-      if (!order || !Array.isArray(order.items)) return;
+		const restaurantSet = new Set();
+		const userSet = new Set();
 
-      if (order.userEmail) {
-        userSet.add(order.userEmail);
-      }
+		// Per-user stats
+		const userStats = {}; 
+		// userStats[email] = { meals, moneySaved, waste, carbon }
 
-      order.items.forEach((item) => {
-        if (!item || !item.isRescueMeal) return;
+		orders.forEach((order) => {
+			if (!order || !Array.isArray(order.items)) return;
 
-        const qty = safeNumber(item.quantity, 0);
-        const price = safeNumber(item.price, 0);
-        const original = safeNumber(item.meal?.originalPrice, 0);
+			const email = order.userEmail;
+			if (email) {
+				userSet.add(email);
+				if (!userStats[email]) {
+					userStats[email] = {
+						meals: 0,
+						moneySaved: 0,
+						waste: 0,
+						carbon: 0,
+					};
+				}
+			}
 
-        totalMealsRescued += qty;
-        totalMoneySaved += qty * Math.max(original - price, 0);
+			order.items.forEach((item) => {
+				if (!item || !item.isRescueMeal) return;
 
-        if (item.restaurant) {
-          restaurantSet.add(item.restaurant);
-        }
-      });
-    });
+				const qty = safeNumber(item.quantity, 0);
+				const price = safeNumber(item.price, 0);
+				const original = safeNumber(item.meal?.originalPrice, 0);
 
-    const foodWastePrevented = totalMealsRescued * 2.5;
-    const carbonReduced = totalMealsRescued * 4;
+				totalMealsRescued += qty;
+				totalMoneySaved += qty * Math.max(original - price, 0);
 
-    return res.json({
-      totalMealsRescued,
-      totalMoneySaved,
-      foodWastePrevented,
-      carbonReduced,
-      participatingRestaurants: restaurantSet.size,
-      activeUsers: userSet.size,
-    });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("Error in /dashboard/community-stats:", err);
-    return res.status(500).json({
-      error: "Failed to compute community stats.",
-    });
-  }
+				if (email) {
+					userStats[email].meals += qty;
+					const saved = qty * Math.max(original - price, 0);
+					userStats[email].moneySaved += saved;
+					userStats[email].waste += qty * 2.5;
+					userStats[email].carbon += qty * 4;
+				}
+
+				if (item.restaurant) restaurantSet.add(item.restaurant);
+			});
+		});
+
+		const foodWastePrevented = totalMealsRescued * 2.5;
+		const carbonReduced = totalMealsRescued * 4;
+
+		// Helper function for generating top 3 lists
+		const top3 = (metric) =>
+			Object.entries(userStats)
+				.sort((a, b) => b[1][metric] - a[1][metric])
+				.slice(0, 3)
+				.map(([email]) => email);
+
+		// Top users for each category
+		const topUsers = {
+			mealsRescued: top3("meals"),
+			foodWastePrevented: top3("waste"),
+			moneySaved: top3("moneySaved"),
+			carbonReduced: top3("carbon"),
+		};
+
+		return res.json({
+			totalMealsRescued,
+			totalMoneySaved,
+			foodWastePrevented,
+			carbonReduced,
+			participatingRestaurants: restaurantSet.size,
+			activeUsers: userSet.size,
+			topUsers, // NEW
+		});
+	} catch (err) {
+		console.error("Error in /dashboard/community-stats:", err);
+		return res.status(500).json({
+			error: "Failed to compute community stats.",
+		});
+	}
 });
+
+
 
 // ---------- GET /dashboard/user-impact ----------
 //

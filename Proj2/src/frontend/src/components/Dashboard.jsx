@@ -136,6 +136,7 @@ const Dashboard = ({ user, onLogout }) => {
           ...prev,
           ...data,
         }));
+        console.log(data)
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
