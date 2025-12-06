@@ -93,8 +93,17 @@ const Dashboard = ({ user, onLogout }) => {
   });
   const [communityStats, setCommunityStats] = useState({
     activeUsers: 0,
-    mealsRescued: 0,
-    wastePreventedTons: 0,
+    totalMealsRescued: 0,
+    foodWastePrevented: 0,
+    moneySaved: 0,
+    carbonReduced: 0,
+    participatingRestaurants: 0,
+    topUsers: {
+      mealsRescued: ['', '', ''],
+      wastePrevented: ['', '', ''],
+      carbonReduced: ['', '', ''],
+      moneySaved: ['', '', ''],
+    }
   });
   const [userOrders, setUserOrders] = useState([]);
   const [ordersError, setOrdersError] = useState(null);
@@ -108,6 +117,8 @@ const Dashboard = ({ user, onLogout }) => {
       safeMeals > 0 ? Math.max(10, Math.ceil(safeMeals * 1.5)) : 10;
 
     const progress = Math.min(safeMeals, target);
+
+    console.log(communityStats);
 
     return { target, progress };
   }, [communityStats]);
@@ -136,7 +147,7 @@ const Dashboard = ({ user, onLogout }) => {
           ...prev,
           ...data,
         }));
-        console.log(data)
+        console.log(data);
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
@@ -1293,7 +1304,7 @@ const Dashboard = ({ user, onLogout }) => {
                   <Leaf className="w-5 h-5 text-green-600 mr-3" />
                   <div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {communityStats.mealsRescued || 0}
+                      {communityStats.totalMealsRescued || 0}
                     </p>
                     <p className="text-xs text-gray-600">
                       meals rescued this week
@@ -1317,10 +1328,10 @@ const Dashboard = ({ user, onLogout }) => {
                   <TrendingUp className="w-5 h-5 text-amber-600 mr-3" />
                   <div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {communityStats.wastePreventedTons || 0}
+                      {communityStats.foodWastePrevented || 0}
                     </p>
                     <p className="text-xs text-gray-600">
-                      tons of food waste prevented
+                      pounds of food waste prevented
                     </p>
                   </div>
                 </div>
