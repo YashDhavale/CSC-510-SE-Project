@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Cart from './Cart';
 import LeaderboardPanel from './LeaderboardPanel';
 import RestaurantDetail from './RestaurantDetail';
+import Podium from './Podium';
 import {
   ShoppingCart,
   Heart,
@@ -1404,6 +1405,42 @@ const Dashboard = ({ user, onLogout }) => {
                       )}%`,
                     }}
                   />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                Community Podiums
+              </h2>
+              <p className="text-sm text-gray-600">
+                See who&apos;s rescued, reduced, and saved the most.
+              </p>
+              
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-4">
+                <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Meals Rescued
+                  </h3>
+                  <Podium first={communityStats.topUsers.mealsRescued[0]} second={communityStats.topUsers.mealsRescued[1]} third={communityStats.topUsers.mealsRescued[2]}></Podium>
+                </div>
+                <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Waste Reduced
+                  </h3>
+                  <Podium first={communityStats.topUsers.wastePrevented[0]} second={communityStats.topUsers.wastePrevented[1]} third={communityStats.topUsers.wastePrevented[2]}></Podium>
+                </div>
+                <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Carbon Reduced
+                  </h3>
+                  <Podium first={communityStats.topUsers.carbonReduced[0]} second={communityStats.topUsers.carbonReduced[1]} third={communityStats.topUsers.carbonReduced[2]}></Podium>
+                </div>
+                <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Money Saved
+                  </h3>
+                  <Podium first={communityStats.topUsers.moneySaved[0]} second={communityStats.topUsers.moneySaved[1]} third={communityStats.topUsers.moneySaved[2]}></Podium>
                 </div>
               </div>
             </div>

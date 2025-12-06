@@ -324,7 +324,7 @@ router.get("/dashboard/community-stats", (req, res) => {
 		// Top users for each category
 		const topUsers = {
 			mealsRescued: top3("meals"),
-			foodWastePrevented: top3("waste"),
+			wastePrevented: top3("waste"),
 			moneySaved: top3("moneySaved"),
 			carbonReduced: top3("carbon"),
 		};
