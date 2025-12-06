@@ -18,6 +18,9 @@ import {
   Menu,
   X,
   Zap,
+  Store,
+  CircleDollarSign,
+  Cloud
 } from 'lucide-react';
 
 import { restaurants as staticRestaurants } from '../data/staticdata';
@@ -95,7 +98,7 @@ const Dashboard = ({ user, onLogout }) => {
     activeUsers: 0,
     totalMealsRescued: 0,
     foodWastePrevented: 0,
-    moneySaved: 0,
+    totalMoneySaved: 0,
     carbonReduced: 0,
     participatingRestaurants: 0,
     topUsers: {
@@ -1325,13 +1328,51 @@ const Dashboard = ({ user, onLogout }) => {
                 </div>
 
                 <div className="bg-amber-50 rounded-lg px-4 py-3 flex items-center">
-                  <TrendingUp className="w-5 h-5 text-amber-600 mr-3" />
+                  <Store className="w-5 h-5 text-amber-600 mr-3" />
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {communityStats.participatingRestaurants || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      restaurants providing meals
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-green-50 rounded-lg px-4 py-3 flex items-center">
+                  <TrendingUp className="w-5 h-5 text-green-600 mr-3" />
                   <div>
                     <p className="text-lg font-semibold text-gray-900">
                       {communityStats.foodWastePrevented || 0}
                     </p>
                     <p className="text-xs text-gray-600">
                       pounds of food waste prevented
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 rounded-lg px-4 py-3 flex items-center">
+                  <Cloud className="w-5 h-5 text-blue-600 mr-3" />
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {communityStats.carbonReduced || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      total carbon reduction
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 rounded-lg px-4 py-3 flex items-center">
+                  <CircleDollarSign className="w-5 h-5 text-amber-600 mr-3" />
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {communityStats.totalMoneySaved || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      dollars saved
                     </p>
                   </div>
                 </div>
