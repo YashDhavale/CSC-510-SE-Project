@@ -2349,5 +2349,103 @@
     },
     "pickupPreference": "any",
     "timestamp": "2025-12-06T23:15:41.008Z"
+  },
+  {
+    "id": "order_1765148808339",
+    "userEmail": "test@gmail.com",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": {
+          "id": "eastside-deli-veggie-grain-bowl",
+          "name": "Veggie Grain Bowl",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 12.99,
+          "rescuePrice": 7.99,
+          "pickupWindow": "1 hour",
+          "quantity": 3,
+          "availableQuantity": 1,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "price": 7.99,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": {
+          "id": "greenbite-cafe-paneer-tikka-bowl",
+          "name": "Paneer Tikka Bowl",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 14.99,
+          "rescuePrice": 9.99,
+          "pickupWindow": "1.5 hours",
+          "quantity": 3,
+          "availableQuantity": 1,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "price": 9.99,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 2,
+      "subtotal": 17.98,
+      "youSave": 10
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-12-07T23:06:48.339Z"
+  },
+  {
+    "id": "order_1765148847966",
+    "userEmail": "test@gmail.com",
+    "items": [
+      {
+        "restaurant": "GreenBite Cafe",
+        "meal": {
+          "id": "greenbite-cafe-veggie-thali",
+          "name": "Veggie Thali",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 13.99,
+          "rescuePrice": 8.99,
+          "pickupWindow": "2 hours",
+          "quantity": 5,
+          "availableQuantity": 1,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "price": 8.99,
+        "isRescueMeal": true
+      },
+      {
+        "restaurant": "Triangle BBQ Co.",
+        "meal": {
+          "id": "triangle-bbq-co-pulled-pork-sandwich",
+          "name": "Pulled Pork Sandwich",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 11.99,
+          "rescuePrice": 6.99,
+          "pickupWindow": "2 hours",
+          "quantity": 3,
+          "availableQuantity": 1,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "price": 6.99,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 2,
+      "subtotal": 15.98,
+      "youSave": 10
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-12-07T23:07:27.966Z"
   }
 ]

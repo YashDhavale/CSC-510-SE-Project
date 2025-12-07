@@ -10,6 +10,7 @@ import { ArrowLeft, Plus, Minus, Trash2 } from 'lucide-react';
 const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [pickupPreference, setPickupPreference] = useState('any');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [orderSuccess, setOrderSuccess] = useState(null); // { rescuedMeals, youSave }
 
   const safeCart = Array.isArray(cart) ? cart : [];
@@ -135,80 +136,99 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
 
   // ----- Submit order -----
 
-  const handlePlaceOrder = async () => {
-    if (!safeCart.length) {
+const handlePlaceOrder = async () => {
+  if (!safeCart.length) {
+    // eslint-disable-next-line no-alert
+    alert('Your cart is empty.');
+    return;
+  }
+
+  if (!paymentMethod) {
+    // eslint-disable-next-line no-alert
+    alert('Please choose a payment method to continue.');
+    return;
+  }
+
+  // For this milestone, ONLY Cash on Delivery actually places the order.
+  if (paymentMethod !== 'cash_on_delivery') {
+    // eslint-disable-next-line no-alert
+    alert(
+      'Online payment is just a demo here. Please select Cash on Delivery to actually place the order.'
+    );
+    return;
+  }
+
+  setIsPlacingOrder(true);
+
+  const payload = {
+    cart: safeCart.map((item) => ({
+      restaurant: item.restaurant,
+      meal: item.meal,
+      quantity: item.quantity,
+    })),
+    userEmail: user && user.email ? user.email : null,
+    totals: {
+      rescueMealCount: totals.count,
+      subtotal: Number(totals.subtotal.toFixed(2)),
+      youSave: Number(totals.youSave.toFixed(2)),
+    },
+    pickupPreference,
+    paymentMethod, // <-- NEW, send to backend
+  };
+
+  try {
+    // Backend checkout route (proxied to http://localhost:5000/checkout)
+    const response = await fetch('/checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => null);
+      const message =
+        errData && errData.error
+          ? errData.error
+          : 'Failed to place order. Please try again.';
+      // eslint-disable-next-line no-alert
+      alert(message);
+      setIsPlacingOrder(false);
       return;
     }
 
-    setIsPlacingOrder(true);
+    const data = await response.json();
 
-    const payload = {
-      cart: safeCart.map((item) => ({
-        restaurant: item.restaurant,
-        meal: item.meal,
-        quantity: item.quantity,
-      })),
-      userEmail: user && user.email ? user.email : null,
-      totals: {
-        rescueMealCount: totals.count,
-        subtotal: Number(totals.subtotal.toFixed(2)),
-        youSave: Number(totals.youSave.toFixed(2)),
-      },
-      pickupPreference,
-    };
+    const rescuedMeals = totals.count;
+    const youSave = totals.youSave;
 
-    try {
-      // Backend checkout route (proxied to http://localhost:5000/checkout)
-      const response = await fetch('/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+    setOrderSuccess({
+      rescuedMeals,
+      youSave,
+    });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => null);
-        const message =
-          errData && errData.error
-            ? errData.error
-            : 'Failed to place order. Please try again.';
-        // eslint-disable-next-line no-alert
-        alert(message);
-        setIsPlacingOrder(false);
-        return;
-      }
-
-      const data = await response.json();
-
-      const rescuedMeals = totals.count;
-      const youSave = totals.youSave;
-
-      setOrderSuccess({
+    if (typeof onOrderPlaced === 'function') {
+      onOrderPlaced({
+        order: data.order || null,
         rescuedMeals,
         youSave,
       });
-
-      if (typeof onOrderPlaced === 'function') {
-        onOrderPlaced({
-          order: data.order || null,
-          rescuedMeals,
-          youSave,
-        });
-      }
-
-      setCart([]);
-      setIsPlacingOrder(false);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Error placing order:', err);
-      // eslint-disable-next-line no-alert
-      alert(
-        'A network error occurred while placing your order. Please try again.'
-      );
-      setIsPlacingOrder(false);
     }
-  };
+
+    setCart([]);
+    setIsPlacingOrder(false);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Error placing order:', err);
+    // eslint-disable-next-line no-alert
+    alert(
+      'A network error occurred while placing your order. Please try again.'
+    );
+    setIsPlacingOrder(false);
+  }
+};
+
 
   // ----- UI states -----
 
@@ -479,6 +499,40 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
               ))}
             </div>
           </div>
+
+            <div>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Payment method
+              </h3>
+              <div className="space-y-2">
+                <label className="flex items-center space-x-3 text-sm text-gray-700">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="cash_on_delivery"
+                    checked={paymentMethod === 'cash_on_delivery'}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                  />
+                  <span>Cash on Delivery</span>
+                </label>
+
+                <label className="flex items-center space-x-3 text-sm text-gray-400">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="online"
+                    checked={paymentMethod === 'online'}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                  />
+                  <span>
+                    UPI / Card (demo only – choose COD to actually place order)
+                  </span>
+                </label>
+              </div>
+            </div>
+
 
           <div className="pt-2">
             <button
