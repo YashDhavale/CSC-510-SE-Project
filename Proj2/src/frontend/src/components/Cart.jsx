@@ -33,7 +33,6 @@ const RESCUE_STEPS = [
   },
 ];
 
-
 const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [pickupPreference, setPickupPreference] = useState('any');
@@ -51,24 +50,19 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
     setCurrentStep(0);
     return undefined;
   }
-
   let cancelled = false;
   const timeouts = [];
 
   const runStep = (stepIndex) => {
     if (cancelled || stepIndex >= RESCUE_STEPS.length) return;
-
     const step = RESCUE_STEPS[stepIndex];
     setCurrentStep(stepIndex);
-
     // Move the bar to this checkpoint
     setProgress(step.target);
-
     // Time for the bar to animate + pause at the checkpoint
     const ANIMATION_MS = 2000; // bar visually moves ~2s
     const PAUSE_MS = 4000;     // stays at checkpoint for 4s
     const TOTAL_WAIT = ANIMATION_MS + PAUSE_MS;
-
     // Schedule next checkpoint
     if (stepIndex < RESCUE_STEPS.length - 1) {
       const timeoutId = setTimeout(() => {
@@ -77,11 +71,9 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
       timeouts.push(timeoutId);
     }
   };
-
   // Start from the first checkpoint
   setProgress(0);
   runStep(0);
-
   // Cleanup if user leaves the screen or a new order starts
   return () => {
     cancelled = true;
@@ -103,7 +95,6 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
     }
     return 0;
   };
-
   const getOriginalPrice = (item) => {
     const meal = item.meal || {};
     const raw = Number(meal.originalPrice);
@@ -112,7 +103,6 @@ const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
     }
     return getUnitPrice(item);
   };
-
   const getMaxQuantityForItem = (item) => {
     const meal = item.meal || {};
 
@@ -303,16 +293,13 @@ const handlePlaceOrder = async () => {
   }
 };
 
-
   // ----- UI states -----
-
   // After successful checkout: full-screen thank-you message (no blank page)
   if (orderSuccess) {
     const activeStep =
       RESCUE_STEPS[
         Math.min(currentStep, RESCUE_STEPS.length - 1)
       ];
-
     return (
       <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-md border border-green-100 p-6 mt-4 space-y-6">
         {/* Header */}
@@ -348,7 +335,6 @@ const handlePlaceOrder = async () => {
               {Math.round(progress)}%
             </span>
           </div>
-
           {/* The bar */}
           <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden relative">
             <div
@@ -356,14 +342,11 @@ const handlePlaceOrder = async () => {
               style={{ width: `${progress}%` }}
             />
           </div>
-
-
           {/* Checkpoints (dots + labels) */}
           <div className="flex justify-between text-[11px] text-gray-500">
             {RESCUE_STEPS.map((step, index) => {
               const isDone = index < currentStep;
               const isActive = index === currentStep;
-
               return (
                 <div
                   key={step.label}
@@ -388,20 +371,17 @@ const handlePlaceOrder = async () => {
               );
             })}
           </div>
-
           {/* Description for the current checkpoint */}
           <p className="text-xs text-gray-600">
             {activeStep.description}
           </p>
         </div>
-
         {/* Impact blurb */}
         <div className="text-xs text-gray-500 bg-green-50 border border-green-100 rounded-xl p-3">
           By choosing a rescue meal, you&apos;re helping this restaurant
           reduce food waste and making better use of surplus food that would
           otherwise be thrown away.
         </div>
-
         <div className="pt-2 border-t border-gray-100 flex justify-between items-center">
           <button
             type="button"
@@ -414,9 +394,6 @@ const handlePlaceOrder = async () => {
       </div>
     );
   }
-
-
-
   // Empty-cart view (before placing any order)
   if (!safeCart.length) {
     return (
