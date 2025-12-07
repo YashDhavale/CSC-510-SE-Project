@@ -82,8 +82,7 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart, user }) => {
       }
       const existingMealId =
         item.meal.id ||
-        `${restaurant.name}-${item.meal.name || ''}-${
-          item.meal.pickupWindow || ''
+        `${restaurant.name}-${item.meal.name || ''}-${item.meal.pickupWindow || ''
         }`;
       return existingMealId === mealId;
     });
@@ -282,8 +281,8 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart, user }) => {
                 const buttonTitle = noAvailable
                   ? 'This rescue meal is sold out for today'
                   : isAtLimit
-                  ? 'You have reached the maximum for this meal'
-                  : 'Add this rescue meal to your cart';
+                    ? 'You have reached the maximum for this meal'
+                    : 'Add this rescue meal to your cart';
 
                 return (
                   <div
@@ -391,52 +390,83 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart, user }) => {
             </div>
           )}
 
-          {/* ─────────────────────────────────────────────── */}
-          {/* ⭐⭐ ADD TEMPORARY REVIEW UI (BOTTOM OF PAGE) ⭐⭐ */}
-          {/* ─────────────────────────────────────────────── */}
+          {/* ================================  
+      REVIEWS SECTION (FINAL UI)  
+   ================================ */}
+          <div className="mt-10 bg-white shadow rounded-xl p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Customer Reviews
+            </h3>
 
-          <div style={{ marginTop: "20px" }}>
-            <h3>Reviews</h3>
-
+            {/* REVIEWS LIST */}
             {reviews.length === 0 ? (
-              <p>No reviews yet.</p>
+              <p className="text-sm text-gray-500">
+                No reviews yet. Be the first to leave one!
+              </p>
             ) : (
-              reviews.map((r, idx) => (
-                <div key={idx}>
-                  <strong>{r.user}</strong> — {r.rating}⭐
-                  <p>{r.comment}</p>
-                </div>
-              ))
+              <div className="space-y-4">
+                {reviews.map((r, idx) => (
+                  <div key={idx} className="border rounded-lg p-3 bg-gray-50">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="font-semibold text-gray-800">{r.user}</p>
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Star
+                            key={n}
+                            className={`w-4 h-4 ${n <= r.rating ? "text-yellow-400" : "text-gray-300"
+                              }`}
+                            fill={n <= r.rating ? "#facc15" : "none"}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700">{r.comment}</p>
+                  </div>
+                ))}
+              </div>
             )}
 
-            <hr />
+            <hr className="my-6" />
 
-            <h4>Leave a Review:</h4>
+            {/* LEAVE A REVIEW */}
+            <h4 className="text-lg font-semibold text-gray-800 mb-2">
+              Leave a Review
+            </h4>
+
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Rating
+            </label>
 
             <select
               value={newRating}
               onChange={(e) => setNewRating(Number(e.target.value))}
+              className="border rounded-md p-2 mb-4 w-32"
             >
               {[1, 2, 3, 4, 5].map((n) => (
                 <option key={n} value={n}>
-                  {n} Stars
+                  {n} Star{n > 1 && "s"}
                 </option>
               ))}
             </select>
 
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Your Review
+            </label>
+
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Write your review"
+              placeholder="Write your review..."
+              className="border rounded-md p-2 w-full h-24 mb-4 resize-none"
             />
 
-            <button onClick={handleSubmitReview}>
+            <button
+              onClick={handleSubmitReview}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            >
               Submit Review
             </button>
-
           </div>
-          {/* ─────────────────────────────────────────────── */}
-
         </div>
       </main>
     </div>
