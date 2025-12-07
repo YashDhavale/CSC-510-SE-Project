@@ -4,16 +4,90 @@
 // - Sends pickupPreference to backend so orders carry a simple time-slot hint.
 // - After successful checkout, shows an in-app thank-you screen instead of a blank page.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, Minus, Trash2 } from 'lucide-react';
+
+const RESCUE_STEPS = [
+  {
+    target: 25,
+    label: 'Order received',
+    description: 'We have your rescue order and are logging your impact.',
+  },
+  {
+    target: 50,
+    label: 'Reserving surplus meals',
+    description:
+      'We’re reserving surplus portions at the restaurant so they don’t get wasted.',
+  },
+  {
+    target: 75,
+    label: 'Coordinating pickup window',
+    description:
+      'We’re aligning your pickup window with the restaurant’s closing routine.',
+  },
+  {
+    target: 100,
+    label: 'Ready for pickup window',
+    description:
+      'Your rescued meal will be ready during your chosen pickup window.',
+  },
+];
+
 
 const Cart = ({ cart, setCart, onBack, onOrderPlaced, user }) => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [pickupPreference, setPickupPreference] = useState('any');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [orderSuccess, setOrderSuccess] = useState(null); // { rescuedMeals, youSave }
+  const [progress, setProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
 
   const safeCart = Array.isArray(cart) ? cart : [];
+
+  useEffect(() => {
+  // If there is no successful order yet, reset and do nothing
+  if (!orderSuccess) {
+    setProgress(0);
+    setCurrentStep(0);
+    return undefined;
+  }
+
+  let cancelled = false;
+  const timeouts = [];
+
+  const runStep = (stepIndex) => {
+    if (cancelled || stepIndex >= RESCUE_STEPS.length) return;
+
+    const step = RESCUE_STEPS[stepIndex];
+    setCurrentStep(stepIndex);
+
+    // Move the bar to this checkpoint
+    setProgress(step.target);
+
+    // Time for the bar to animate + pause at the checkpoint
+    const ANIMATION_MS = 2000; // bar visually moves ~2s
+    const PAUSE_MS = 4000;     // stays at checkpoint for 4s
+    const TOTAL_WAIT = ANIMATION_MS + PAUSE_MS;
+
+    // Schedule next checkpoint
+    if (stepIndex < RESCUE_STEPS.length - 1) {
+      const timeoutId = setTimeout(() => {
+        runStep(stepIndex + 1);
+      }, TOTAL_WAIT);
+      timeouts.push(timeoutId);
+    }
+  };
+
+  // Start from the first checkpoint
+  setProgress(0);
+  runStep(0);
+
+  // Cleanup if user leaves the screen or a new order starts
+  return () => {
+    cancelled = true;
+    timeouts.forEach((id) => clearTimeout(id));
+  };
+}, [orderSuccess]);
 
   // ----- Helpers for pricing & limits -----
 
@@ -234,56 +308,114 @@ const handlePlaceOrder = async () => {
 
   // After successful checkout: full-screen thank-you message (no blank page)
   if (orderSuccess) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow">
-          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="w-6" />
-            <h1 className="text-lg font-semibold text-gray-800">
-              Thanks for rescuing food!
-            </h1>
-            <div className="w-6" />
-          </div>
-        </header>
+    const activeStep =
+      RESCUE_STEPS[
+        Math.min(currentStep, RESCUE_STEPS.length - 1)
+      ];
 
-        <main className="max-w-3xl mx-auto px-4 py-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center">
-            <p className="text-xl font-semibold text-gray-900 mb-2">
-              Order confirmed
-            </p>
-            <p className="text-sm text-gray-600 mb-4">
-              You rescued
-              {' '}
+    return (
+      <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-md border border-green-100 p-6 mt-4 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xl">
+            ✓
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Thanks for rescuing a meal!
+            </h2>
+            <p className="text-sm text-gray-600">
+              You&apos;ve rescued{' '}
               <span className="font-semibold text-green-700">
                 {orderSuccess.rescuedMeals}
-                {' '}
-                meals
-              </span>
-              {' '}
-              and saved
-              {' '}
+              </span>{' '}
+              meals and saved about{' '}
               <span className="font-semibold text-green-700">
-                $
-                {orderSuccess.youSave.toFixed(2)}
+                ${orderSuccess.youSave.toFixed(2)}
               </span>
               .
             </p>
-            <p className="text-sm text-gray-500 mb-6">
-              Show your confirmation at pickup. Your restaurant partner is
-              preparing your rescue meal.
-            </p>
-            <button
-              type="button"
-              onClick={onBack}
-              className="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700"
-            >
-              Back to browsing
-            </button>
           </div>
-        </main>
+        </div>
+
+        {/* Progress bar + checkpoints */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold text-gray-700 uppercase tracking-wide">
+              Order progress
+            </span>
+            <span className="text-gray-500">
+              {Math.round(progress)}%
+            </span>
+          </div>
+
+          {/* The bar */}
+          <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden relative">
+            <div
+              className="h-2.5 bg-green-600 transition-all duration-1000 ease-linear"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+
+          {/* Checkpoints (dots + labels) */}
+          <div className="flex justify-between text-[11px] text-gray-500">
+            {RESCUE_STEPS.map((step, index) => {
+              const isDone = index < currentStep;
+              const isActive = index === currentStep;
+
+              return (
+                <div
+                  key={step.label}
+                  className="flex-1 flex flex-col items-center"
+                >
+                  <div
+                    className={[
+                      'w-6 h-6 rounded-full border flex items-center justify-center text-[10px]',
+                      isDone
+                        ? 'bg-green-600 text-white border-green-600'
+                        : isActive
+                        ? 'bg-green-100 text-green-700 border-green-600'
+                        : 'bg-white text-gray-400 border-gray-300',
+                    ].join(' ')}
+                  >
+                    {isDone ? '✓' : index + 1}
+                  </div>
+                  <span className="mt-1 text-center leading-tight">
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Description for the current checkpoint */}
+          <p className="text-xs text-gray-600">
+            {activeStep.description}
+          </p>
+        </div>
+
+        {/* Impact blurb */}
+        <div className="text-xs text-gray-500 bg-green-50 border border-green-100 rounded-xl p-3">
+          By choosing a rescue meal, you&apos;re helping this restaurant
+          reduce food waste and making better use of surplus food that would
+          otherwise be thrown away.
+        </div>
+
+        <div className="pt-2 border-t border-gray-100 flex justify-between items-center">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-xs font-medium text-green-700 hover:text-green-800"
+          >
+            Back to restaurants
+          </button>
+        </div>
       </div>
     );
   }
+
+
 
   // Empty-cart view (before placing any order)
   if (!safeCart.length) {
