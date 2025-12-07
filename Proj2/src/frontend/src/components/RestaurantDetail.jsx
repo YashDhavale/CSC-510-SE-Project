@@ -1,5 +1,5 @@
 // Proj2/src/frontend/src/components/RestaurantDetail.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   Clock,
@@ -9,6 +9,9 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 
+// ⭐ NEW IMPORTS FOR REVIEWS ⭐
+import { fetchReviews, submitReview } from "../services/reviews";
+
 /**
  * Restaurant detail page showing rescue meals for a single restaurant.
  * Props:
@@ -17,9 +20,49 @@ import {
  *  - onBack: () => void
  *  - onAddToCart: (restaurant, meal) => void
  */
-const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
+const RestaurantDetail = ({ restaurant, onAddToCart, cart, onBack, onInventoryDemoUpdate }) => {
+
   if (!restaurant) {
     return null;
+  }
+
+  const restaurantId = restaurant.id;
+
+  // ⭐ NEW STATE FOR REVIEWS ⭐
+  const [reviews, setReviews] = useState([]);
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState("");
+
+  // ⭐ LOAD REVIEWS ON MOUNT ⭐
+  useEffect(() => {
+    async function loadReviews() {
+      const result = await fetchReviews(restaurantId);
+      if (result.success) setReviews(result.reviews);
+    }
+    loadReviews();
+  }, [restaurantId]);
+
+
+  // ⭐ SUBMIT REVIEW HANDLER ⭐
+  async function handleSubmitReview() {
+    if (!user) {
+      alert("You must be logged in to leave a review.");
+      return;
+    }
+
+    const result = await submitReview(restaurantId, {
+      rating: newRating,
+      comment: newComment,
+      user: user.name,
+    });
+
+    if (result.success) {
+      setReviews((prev) => [...prev, result.review]);
+      setNewComment("");
+      setNewRating(5);
+    } else {
+      alert("Error submitting review");
+    }
   }
 
   const menus = Array.isArray(restaurant.menus) ? restaurant.menus : [];
@@ -39,8 +82,7 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
       }
       const existingMealId =
         item.meal.id ||
-        `${restaurant.name}-${item.meal.name || ''}-${
-          item.meal.pickupWindow || ''
+        `${restaurant.name}-${item.meal.name || ''}-${item.meal.pickupWindow || ''
         }`;
       return existingMealId === mealId;
     });
@@ -106,6 +148,7 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
 
       <main className="px-4 py-6">
         <div className="max-w-6xl mx-auto">
+
           {/* back link */}
           <button
             type="button"
@@ -122,19 +165,23 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
               <h2 className="text-2xl font-bold text-gray-800 mb-1">
                 {restaurant.name}
               </h2>
+
               <p className="text-sm text-gray-600">
                 {restaurant.cuisine || 'Rescue-friendly cuisine'}
               </p>
+
               <div className="flex items-center text-xs text-gray-500 mt-2 space-x-3">
                 <span className="flex items-center">
                   <MapPin className="w-4 h-4 mr-1" />
                   {restaurant.address || 'Address not available'}
                 </span>
+
                 <span className="flex items-center">
                   <Clock className="w-4 h-4 mr-1" />
                   {restaurant.hours || 'Today · 11:00 AM – 8:00 PM'}
                 </span>
               </div>
+
               <div className="flex items-center text-xs text-gray-500 mt-2 space-x-3">
                 <span className="flex items-center">
                   <Star className="w-4 h-4 mr-1 text-yellow-400" />
@@ -148,12 +195,14 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                 </span>
               </div>
             </div>
+
             <div className="mt-4 md:mt-0">
               <div className="flex items-center space-x-2">
                 <div className="flex items-center text-xs text-green-700 bg-green-50 px-3 py-1 rounded-full">
                   <Leaf className="w-4 h-4 mr-1" />
                   <span>Community rescue partner</span>
                 </div>
+
                 <div className="flex items-center text-xs text-green-700 bg-green-50 px-3 py-1 rounded-full">
                   <Leaf className="w-4 h-4 mr-1" />
                   <span>
@@ -232,8 +281,8 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                 const buttonTitle = noAvailable
                   ? 'This rescue meal is sold out for today'
                   : isAtLimit
-                  ? 'You have reached the maximum for this meal'
-                  : 'Add this rescue meal to your cart';
+                    ? 'You have reached the maximum for this meal'
+                    : 'Add this rescue meal to your cart';
 
                 return (
                   <div
@@ -244,19 +293,23 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                       <h4 className="text-md font-semibold text-gray-800">
                         {meal.name || 'Rescue Meal'}
                       </h4>
+
                       <p className="text-sm text-gray-500 mt-1">
                         {meal.description ||
                           'Chef-selected rescue meal from today.'}
                       </p>
+
                       <p className="text-xs text-orange-600 mt-2">
                         Pickup:{' '}
                         {meal.pickupWindow || 'Pickup within today'}
                       </p>
+
                       {meal.expiresIn && (
                         <p className="text-xs text-red-500">
                           Expires in {meal.expiresIn}
                         </p>
                       )}
+
                       {Number.isFinite(available) && (
                         <p className="mt-1 text-xs text-gray-600">
                           {available} left today
@@ -277,10 +330,12 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                             <p className="text-sm font-semibold text-green-700">
                               ${rescuePriceNum.toFixed(2)} rescue price
                             </p>
+
                             <p className="text-xs text-gray-500">
                               <span className="line-through text-gray-400">
                                 ${originalPriceNum.toFixed(2)}
                               </span>{' '}
+
                               {savings !== null && savings > 0 && (
                                 <span className="text-green-600 font-semibold">
                                   · Save ${savings.toFixed(2)}
@@ -293,6 +348,7 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                             Rescue pricing available at checkout
                           </p>
                         )}
+
                         {maxQty !== Infinity && (
                           <p className="mt-1 text-[11px] text-gray-500">
                             Max {maxQty} per order
@@ -312,6 +368,7 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
                             In cart: {inCart}x
                           </p>
                         )}
+
                         <button
                           type="button"
                           onClick={handleClick}
@@ -332,6 +389,84 @@ const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart }) => {
               })}
             </div>
           )}
+
+          {/* ================================  
+      REVIEWS SECTION (FINAL UI)  
+   ================================ */}
+          <div className="mt-10 bg-white shadow rounded-xl p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Customer Reviews
+            </h3>
+
+            {/* REVIEWS LIST */}
+            {reviews.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No reviews yet. Be the first to leave one!
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((r, idx) => (
+                  <div key={idx} className="border rounded-lg p-3 bg-gray-50">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="font-semibold text-gray-800">{r.user}</p>
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Star
+                            key={n}
+                            className={`w-4 h-4 ${n <= r.rating ? "text-yellow-400" : "text-gray-300"
+                              }`}
+                            fill={n <= r.rating ? "#facc15" : "none"}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700">{r.comment}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <hr className="my-6" />
+
+            {/* LEAVE A REVIEW */}
+            <h4 className="text-lg font-semibold text-gray-800 mb-2">
+              Leave a Review
+            </h4>
+
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Rating
+            </label>
+
+            <select
+              value={newRating}
+              onChange={(e) => setNewRating(Number(e.target.value))}
+              className="border rounded-md p-2 mb-4 w-32"
+            >
+              {[1, 2, 3, 4, 5].map((n) => (
+                <option key={n} value={n}>
+                  {n} Star{n > 1 && "s"}
+                </option>
+              ))}
+            </select>
+
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Your Review
+            </label>
+
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Write your review..."
+              className="border rounded-md p-2 w-full h-24 mb-4 resize-none"
+            />
+
+            <button
+              onClick={handleSubmitReview}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            >
+              Submit Review
+            </button>
+          </div>
         </div>
       </main>
     </div>
