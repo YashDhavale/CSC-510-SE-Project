@@ -85,6 +85,8 @@ const Dashboard = ({ user, onLogout }) => {
   const [showCartToast, setShowCartToast] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [lastAddedInfo, setLastAddedInfo] = useState(null);
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+
 
   const [restaurants, setRestaurants] = useState([]);
   const [userImpact, setUserImpact] = useState({
@@ -213,10 +215,10 @@ const Dashboard = ({ user, onLogout }) => {
       .then((orders) => {
         const sorted = Array.isArray(orders)
           ? [...orders].sort(
-              (a, b) =>
-                new Date(b.createdAt || b.date) -
-                new Date(a.createdAt || a.date)
-            )
+            (a, b) =>
+              new Date(b.createdAt || b.date) -
+              new Date(a.createdAt || a.date)
+          )
           : [];
 
         if (sorted.length > 0) {
@@ -283,12 +285,12 @@ const Dashboard = ({ user, onLogout }) => {
       typeof mealForCart.availableQuantity === 'number'
         ? mealForCart.availableQuantity
         : typeof mealForCart.quantity === 'number'
-        ? mealForCart.quantity
-        : Infinity;
+          ? mealForCart.quantity
+          : Infinity;
 
     const perOrderCap =
       typeof mealForCart.maxPerOrder === 'number' &&
-      Number.isFinite(mealForCart.maxPerOrder)
+        Number.isFinite(mealForCart.maxPerOrder)
         ? mealForCart.maxPerOrder
         : Infinity;
 
@@ -502,12 +504,12 @@ const Dashboard = ({ user, onLogout }) => {
 
             const currentAvailable =
               typeof meal.availableQuantity === 'number' &&
-              Number.isFinite(meal.availableQuantity)
+                Number.isFinite(meal.availableQuantity)
                 ? meal.availableQuantity
                 : typeof meal.quantity === 'number' &&
                   Number.isFinite(meal.quantity)
-                ? meal.quantity
-                : null;
+                  ? meal.quantity
+                  : null;
 
             if (currentAvailable === null) {
               return meal;
@@ -697,55 +699,50 @@ const Dashboard = ({ user, onLogout }) => {
               <button
                 type="button"
                 onClick={() => handleNavClick('browse')}
-                className={`text-sm font-medium ${
-                  currentView === 'browse'
-                    ? 'text-green-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`text-sm font-medium ${currentView === 'browse'
+                  ? 'text-green-600'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 Browse
               </button>
               <button
                 type="button"
                 onClick={() => handleNavClick('impact')}
-                className={`text-sm font-medium ${
-                  currentView === 'impact'
-                    ? 'text-green-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`text-sm font-medium ${currentView === 'impact'
+                  ? 'text-green-600'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 My Impact
               </button>
               <button
                 type="button"
                 onClick={() => handleNavClick('community')}
-                className={`text-sm font-medium ${
-                  currentView === 'community'
-                    ? 'text-green-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`text-sm font-medium ${currentView === 'community'
+                  ? 'text-green-600'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 Community
               </button>
               <button
                 type="button"
                 onClick={() => handleNavClick('leaderboard')}
-                className={`text-sm font-medium ${
-                  currentView === 'leaderboard'
-                    ? 'text-green-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`text-sm font-medium ${currentView === 'leaderboard'
+                  ? 'text-green-600'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 Leaderboard
               </button>
               <button
                 type="button"
                 onClick={() => handleNavClick('cart')}
-                className={`relative flex items-center text-sm font-medium ${
-                  currentView === 'cart'
-                    ? 'text-green-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`relative flex items-center text-sm font-medium ${currentView === 'cart'
+                  ? 'text-green-600'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 <ShoppingCart className="w-5 h-5 mr-1" />
                 Cart
@@ -792,55 +789,50 @@ const Dashboard = ({ user, onLogout }) => {
               <button
                 type="button"
                 onClick={() => handleNavClick('browse')}
-                className={`block w-full text-left text-sm py-1 ${
-                  currentView === 'browse'
-                    ? 'text-green-600'
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
+                className={`block w-full text-left text-sm py-1 ${currentView === 'browse'
+                  ? 'text-green-600'
+                  : 'text-gray-700 hover:text-gray-900'
+                  }`}
               >
                 Browse
               </button>
               <button
                 type="button"
                 onClick={() => handleNavClick('impact')}
-                className={`block w-full text-left text-sm py-1 ${
-                  currentView === 'impact'
-                    ? 'text-green-600'
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
+                className={`block w-full text-left text-sm py-1 ${currentView === 'impact'
+                  ? 'text-green-600'
+                  : 'text-gray-700 hover:text-gray-900'
+                  }`}
               >
                 My Impact
               </button>
               <button
                 type="button"
                 onClick={() => handleNavClick('community')}
-                className={`block w-full text-left text-sm py-1 ${
-                  currentView === 'community'
-                    ? 'text-green-600'
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
+                className={`block w-full text-left text-sm py-1 ${currentView === 'community'
+                  ? 'text-green-600'
+                  : 'text-gray-700 hover:text-gray-900'
+                  }`}
               >
                 Community
               </button>
               <button
                 type="button"
                 onClick={() => handleNavClick('leaderboard')}
-                className={`block w-full text-left text-sm py-1 ${
-                  currentView === 'leaderboard'
-                    ? 'text-green-600'
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
+                className={`block w-full text-left text-sm py-1 ${currentView === 'leaderboard'
+                  ? 'text-green-600'
+                  : 'text-gray-700 hover:text-gray-900'
+                  }`}
               >
                 Leaderboard
               </button>
               <button
                 type="button"
                 onClick={() => handleNavClick('cart')}
-                className={`block w-full text-left text-sm py-1 ${
-                  currentView === 'cart'
-                    ? 'text-green-600'
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
+                className={`block w-full text-left text-sm py-1 ${currentView === 'cart'
+                  ? 'text-green-600'
+                  : 'text-gray-700 hover:text-gray-900'
+                  }`}
               >
                 Cart
               </button>
@@ -1007,7 +999,11 @@ const Dashboard = ({ user, onLogout }) => {
                 return (
                   <div
                     key={restaurantId}
-                    className="bg-white rounded-xl shadow hover:shadow-md transition p-4 flex"
+                    className="bg-white rounded-xl shadow hover:shadow-md transition p-4 flex cursor-pointer"
+                    onClick={() => {
+                      setSelectedRestaurant(restaurant);
+                      setCurrentView('restaurant-detail');
+                    }}
                   >
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
@@ -1038,9 +1034,8 @@ const Dashboard = ({ user, onLogout }) => {
                           className="p-1 rounded-full hover:bg-gray-100"
                         >
                           <Heart
-                            className={`w-5 h-5 ${
-                              isFavorite ? 'text-red-500' : 'text-gray-400'
-                            }`}
+                            className={`w-5 h-5 ${isFavorite ? 'text-red-500' : 'text-gray-400'
+                              }`}
                             fill={isFavorite ? 'currentColor' : 'none'}
                           />
                         </button>
@@ -1066,7 +1061,7 @@ const Dashboard = ({ user, onLogout }) => {
                         </p>
                         <div className="space-y-2">
                           {Array.isArray(restaurant.menus) &&
-                          restaurant.menus.length > 0 ? (
+                            restaurant.menus.length > 0 ? (
                             restaurant.menus.map((meal) => {
                               const available =
                                 typeof meal.availableQuantity === 'number'
@@ -1121,11 +1116,10 @@ const Dashboard = ({ user, onLogout }) => {
                                         })
                                       }
                                       disabled={isSoldOut}
-                                      className={`px-3 py-1 text-xs font-medium rounded-full border ${
-                                        isSoldOut
-                                          ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-100'
-                                          : 'border-green-600 text-green-700 hover:bg-green-50'
-                                      }`}
+                                      className={`px-3 py-1 text-xs font-medium rounded-full border ${isSoldOut
+                                        ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-100'
+                                        : 'border-green-600 text-green-700 hover:bg-green-50'
+                                        }`}
                                     >
                                       {isSoldOut
                                         ? 'Sold Out'
@@ -1401,7 +1395,7 @@ const Dashboard = ({ user, onLogout }) => {
                       width: `${Math.min(
                         100,
                         (communityGoal.progress / (communityGoal.target || 1)) *
-                          100
+                        100
                       )}%`,
                     }}
                   />
@@ -1416,7 +1410,7 @@ const Dashboard = ({ user, onLogout }) => {
               <p className="text-sm text-gray-600">
                 See who&apos;s rescued, reduced, and saved the most.
               </p>
-              
+
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-4">
                 <div className="bg-gray-50 rounded-lg px-4 py-3 flex flex-col items-center">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -1469,12 +1463,13 @@ const Dashboard = ({ user, onLogout }) => {
         {currentView === 'restaurant-detail' && (
           <section className="space-y-4">
             <RestaurantDetail
-              restaurants={restaurants}
+              restaurant={selectedRestaurant}
               onAddToCart={handleAddToCart}
               cart={cart}
-              onBackToBrowse={() => setCurrentView('browse')}
+              onBack={() => setCurrentView('browse')}
               onInventoryDemoUpdate={handleInventoryDemoUpdate}
             />
+
           </section>
         )}
       </main>

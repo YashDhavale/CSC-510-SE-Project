@@ -20,7 +20,7 @@ import { fetchReviews, submitReview } from "../services/reviews";
  *  - onBack: () => void
  *  - onAddToCart: (restaurant, meal) => void
  */
-const RestaurantDetail = ({ restaurant, cart, onBack, onAddToCart, user }) => {
+const RestaurantDetail = ({ restaurant, onAddToCart, cart, onBack, onInventoryDemoUpdate }) => {
 
   if (!restaurant) {
     return null;
