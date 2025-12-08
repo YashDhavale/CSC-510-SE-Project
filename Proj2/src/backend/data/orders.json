@@ -2540,5 +2540,36 @@
     },
     "pickupPreference": "any",
     "timestamp": "2025-12-08T00:07:50.404Z"
+  },
+  {
+    "id": "order_1765152877913",
+    "userEmail": "test@gmail.com",
+    "items": [
+      {
+        "restaurant": "Eastside Deli",
+        "meal": {
+          "id": "eastside-deli-veggie-grain-bowl",
+          "name": "Veggie Grain Bowl",
+          "description": "Chef-selected surplus meal from today's unsold portions.",
+          "originalPrice": 12.99,
+          "rescuePrice": 7.99,
+          "pickupWindow": "1 hour",
+          "quantity": 6,
+          "availableQuantity": 3,
+          "maxPerOrder": 3,
+          "isRescueMeal": true
+        },
+        "quantity": 1,
+        "price": 7.99,
+        "isRescueMeal": true
+      }
+    ],
+    "totals": {
+      "rescueMealCount": 1,
+      "subtotal": 7.99,
+      "youSave": 5
+    },
+    "pickupPreference": "any",
+    "timestamp": "2025-12-08T00:14:37.913Z"
   }
 ]
