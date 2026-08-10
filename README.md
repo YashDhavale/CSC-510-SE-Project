@@ -1,4 +1,3 @@
-# CSC-510-SE-Project
 # TiffinTrails
 
 [![Contributors](https://img.shields.io/github/contributors/YashDhavale/CSC-510-SE-Project
